@@ -1,0 +1,70 @@
+<main class="relative min-h-screen overflow-hidden bg-background text-ink">
+  <div class="pointer-events-none absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-secondary blur-3xl"></div>
+
+  <section class="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
+    <div class="grid items-center gap-12 lg:grid-cols-2">
+      <article>
+        <p class="mb-4 inline-flex items-center rounded-full border border-border bg-surface px-4 py-1 text-sm font-semibold text-primary">
+          Bienvenidos a COLONY
+        </p>
+
+        <h1 class="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+          Gestion de politicas de negocio y workflows con base solida
+        </h1>
+
+        <p class="mt-6 max-w-2xl text-base leading-relaxed text-ink-light sm:text-lg">
+          Colony centraliza tus reglas de negocio, facilita la ejecucion de flujos y mantiene una arquitectura limpia, actual y lista para escalar.
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a
+            routerLink="/auth"
+            class="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary-hover"
+          >
+            Iniciar sesion
+          </a>
+          <a
+            routerLink="/auth"
+            class="rounded-xl border border-border bg-surface px-6 py-3 text-sm font-semibold text-ink transition hover:bg-secondary"
+          >
+            Crear cuenta
+          </a>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-border bg-surface p-6 shadow-xl sm:p-8">
+        <h2 class="text-xl font-semibold">Por que elegir Colony</h2>
+
+        <ul class="mt-6 space-y-4 text-sm text-ink-light sm:text-base">
+          <li class="rounded-2xl border border-border bg-background p-4">
+            <p class="font-semibold text-ink">Codigo limpio y mantenible</p>
+            <p class="mt-1">Estructura moderna para evolucionar sin acumular deuda tecnica.</p>
+          </li>
+          <li class="rounded-2xl border border-border bg-background p-4">
+            <p class="font-semibold text-ink">Workflows orientados al negocio</p>
+            <p class="mt-1">Disena y adapta procesos segun tus politicas y reglas operativas.</p>
+          </li>
+          <li class="rounded-2xl border border-border bg-background p-4">
+            <p class="font-semibold text-ink">Observabilidad y control</p>
+            <p class="mt-1">Base preparada para monitoreo, trazabilidad y mejoras continuas.</p>
+          </li>
+        </ul>
+      </article>
+    </div>
+
+    <section class="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <article class="rounded-2xl border border-border bg-surface p-5">
+        <p class="text-sm font-semibold text-primary">Politicas claras</p>
+        <p class="mt-2 text-sm text-ink-light">Define reglas con una estructura consistente y facil de mantener.</p>
+      </article>
+      <article class="rounded-2xl border border-border bg-surface p-5">
+        <p class="text-sm font-semibold text-primary">Flujos escalables</p>
+        <p class="mt-2 text-sm text-ink-light">Crece desde procesos simples hasta orquestaciones mas complejas.</p>
+      </article>
+      <article class="rounded-2xl border border-border bg-surface p-5 sm:col-span-2 lg:col-span-1">
+        <p class="text-sm font-semibold text-primary">Arquitectura vigente</p>
+        <p class="mt-2 text-sm text-ink-light">Aplicacion moderna, responsive y preparada para nuevas capacidades.</p>
+      </article>
+    </section>
+  </section>
+</main>

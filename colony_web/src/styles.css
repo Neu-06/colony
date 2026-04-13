@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 1. FONDOS Y SUPERFICIES (Para dar profundidad limpia) */
+  --color-background: #f8fafc; /* Gris hiper claro para el fondo principal de la App */
+  --color-surface: #ffffff; /* Blanco puro para las Tarjetas, Modales y el Canvas */
+
+  /* 2. TEXTOS Y BORDES (Contraste perfecto para lectura) */
+  --color-ink: #0f172a; /* Texto principal (casi negro, más elegante que el #000) */
+  --color-ink-light: #64748b; /* Texto secundario (Para subtítulos, fechas, labels) */
+  --color-border: #e2e8f0; /* Líneas divisorias muy sutiles (minimalismo puro) */
+
+  /* 3. COLORES DE ACCIÓN / MARCA */
+  --color-primary: #2563eb; /* Azul principal (Botones primarios, enlaces activos) */
+  --color-primary-hover: #1d4ed8; /* Azul más oscuro al pasar el mouse */
+
+  --color-secondary: #f1f5f9; /* Botones secundarios (Fondo gris claro, texto ink) */
+  --color-secondary-hover: #e2e8f0;
+
+  /* 4. SEMÁNTICA DE ESTADOS (El Semáforo del Workflow) */
+  --color-success: #10b981; /* Verde Esmeralda: Trámite Finalizado / OK */
+  --color-warning: #f59e0b; /* Amarillo Ámbar: Trámite Pendiente / En revisión */
+  --color-danger: #ef4444; /* Rojo: Trámite Rechazado / Error / Eliminar */
+  --color-info: #3b82f6; /* Azul claro: Alertas informativas */
+
+  /* COLORES ESPECÍFICOS DEL CANVAS (Nodos y Calles) */
+  --color-canvas-bg: #f1f5f9;         /* Gris muy claro para el fondo del lienzo (estilo Miro/Figma) */
+  --color-canvas-grid: #cbd5e1;       /* Gris medio para los puntos o líneas de la cuadrícula */
+  --color-swimlane-border: #94a3b8;   /* Borde para separar las calles/departamentos */
+  --color-swimlane-bg-alt: #ffffff;   /* Fondo alterno para las calles (cebreado sutil) */
+  
+  /* Semántica de Nodos */
+  --color-node-start: #10b981;        /* Verde: Nodo de Inicio */
+  --color-node-task: #ffffff;         /* Blanco con borde primario: Nodo de Actividad (Tarea) */
+  --color-node-gateway: #f59e0b;      /* Naranja/Ámbar: Nodo de Compuerta (Decisión/Paralelo) */
+  --color-node-end: #ef4444;          /* Rojo: Nodo de Fin */
+  --color-node-line: #64748b;         /* Color de las flechas conectoras */
+
+  /* Alias para clases utilitarias en el Canvas */
+  --canvas-bg: var(--color-canvas-bg);
+  --canvas-grid: var(--color-canvas-grid);
+  --swimlane-border: var(--color-swimlane-border);
+  --node-start: var(--color-node-start);
+  --node-task: var(--color-node-task);
+  --node-gateway: var(--color-node-gateway);
+  --node-end: var(--color-node-end);
+  --node-line: var(--color-node-line);
+}
+
+@layer base {
+  html,
+  body {
+    min-height: 100%;
+    background: var(--color-background);
+    color: var(--color-ink);
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  a,
+  button,
+  input {
+    transition: 160ms ease;
+  }
+}

@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/colony_db
+
+security:
+  jwt:
+    secret: bXktY29sb255LWp3dC1zZWNyZXQtbXV5LWxhcmdvLWQzLWVudHJvcGlhLXBhcmEtaHMyNTY=
+    expiration-ms: 86400000

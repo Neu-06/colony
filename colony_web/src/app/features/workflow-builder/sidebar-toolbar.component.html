@@ -1,0 +1,31 @@
+<aside class="flex h-full w-72 flex-col border-r border-border bg-surface p-4">
+  <div class="mb-4">
+    <h2 class="text-base font-bold">Elementos</h2>
+    <p class="text-sm text-ink-light">Arrastra los nodos al lienzo</p>
+  </div>
+
+  <div
+    [id]="toolbarDropListId"
+    cdkDropList
+    [cdkDropListData]="tools()"
+    [cdkDropListSortingDisabled]="true"
+    class="space-y-3"
+  >
+    @for (tool of tools(); track trackTool($index, tool)) {
+      <button
+        type="button"
+        cdkDrag
+        [cdkDragData]="tool.type"
+        class="flex w-full cursor-grab items-center gap-3 rounded-xl border border-border bg-background px-3 py-3 text-left active:cursor-grabbing"
+      >
+        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-xs font-bold text-primary">
+          {{ tool.label.slice(0, 1) }}
+        </span>
+        <span class="block">
+          <span class="block text-sm font-semibold text-ink">{{ tool.label }}</span>
+          <span class="block text-xs text-ink-light">{{ tool.description }}</span>
+        </span>
+      </button>
+    }
+  </div>
+</aside>

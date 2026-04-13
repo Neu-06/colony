@@ -1,0 +1,105 @@
+<main class="relative min-h-screen overflow-hidden bg-background text-ink">
+    <div class="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-secondary blur-3xl"></div>
+
+    <section
+        class="relative mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+        <article class="hidden rounded-3xl border border-border bg-surface p-8 lg:block lg:p-10">
+            <p
+                class="inline-flex rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                Acceso Seguro
+            </p>
+            <h1 class="mt-5 text-4xl font-bold leading-tight">Conecta tu equipo a una gestion moderna de workflows</h1>
+            <p class="mt-4 text-base text-ink-light">
+                Inicia sesion o crea una cuenta para trabajar con politicas de negocio, procesos versionables y una
+                plataforma preparada para crecer sin codigo obsoleto.
+            </p>
+
+            <div class="mt-8 space-y-3 text-sm text-ink-light">
+                <p class="rounded-xl border border-border bg-background px-4 py-3">Arquitectura limpia y mantenible.</p>
+                <p class="rounded-xl border border-border bg-background px-4 py-3">Autenticacion real con JWT.</p>
+                <p class="rounded-xl border border-border bg-background px-4 py-3">Experiencia responsive para
+                    escritorio y movil.</p>
+            </div>
+        </article>
+
+        <section class="w-full rounded-3xl border border-border bg-surface p-6 shadow-xl sm:p-8">
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-primary">COLONY</p>
+                    <h2 class="text-2xl font-bold">{{ selectedMode === 'login' ? 'Iniciar sesion' : 'Crear cuenta' }}
+                    </h2>
+                </div>
+                <a routerLink="/" class="text-sm font-semibold text-ink-light transition hover:text-primary">Volver</a>
+            </div>
+
+            <div class="mb-6 grid grid-cols-2 rounded-xl border border-border bg-background p-1">
+                <button type="button" (click)="setMode('login')"
+                    class="rounded-lg px-3 py-2 text-sm font-semibold transition"
+                    [class.bg-primary]="selectedMode === 'login'" [class.text-white]="selectedMode === 'login'"
+                    [class.text-ink]="selectedMode !== 'login'">
+                    Login
+                </button>
+                <button type="button" (click)="setMode('register')"
+                    class="rounded-lg px-3 py-2 text-sm font-semibold transition"
+                    [class.bg-primary]="selectedMode === 'register'" [class.text-white]="selectedMode === 'register'"
+                    [class.text-ink]="selectedMode !== 'register'">
+                    Registro
+                </button>
+            </div>
+
+            <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" novalidate>
+                <div *ngIf="selectedMode === 'register'">
+                    <label for="nombre" class="mb-1 block text-sm font-medium text-ink">Nombre</label>
+                    <input id="nombre" type="text" formControlName="nombre"
+                        class="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary"
+                        placeholder="Tu nombre" />
+                    <p *ngIf="form.controls.nombre.touched && form.controls.nombre.invalid"
+                        class="mt-1 text-xs font-medium text-danger">
+                        Ingresa un nombre valido (2 a 80 caracteres).
+                    </p>
+                </div>
+
+                <div>
+                    <label for="email" class="mb-1 block text-sm font-medium text-ink">Correo</label>
+                    <input id="email" type="email" formControlName="email"
+                        class="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary"
+                        placeholder="usuario@colony.dev" />
+                    <p *ngIf="form.controls.email.touched && form.controls.email.invalid"
+                        class="mt-1 text-xs font-medium text-danger">
+                        Ingresa un correo valido.
+                    </p>
+                </div>
+
+                <div>
+                    <label for="password" class="mb-1 block text-sm font-medium text-ink">Contrasena</label>
+                    <input id="password" type="password" formControlName="password"
+                        class="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary"
+                        placeholder="******" />
+                    <p *ngIf="form.controls.password.touched && form.controls.password.invalid"
+                        class="mt-1 text-xs font-medium text-danger">
+                        La contrasena debe tener al menos {{ minPasswordLength }} caracteres.
+                    </p>
+                </div>
+
+                <p *ngIf="errorMessage"
+                    class="rounded-xl border border-danger px-3 py-2 text-sm font-medium text-danger">
+                    {{ errorMessage }}
+                </p>
+
+                <button type="submit" [disabled]="isLoading"
+                    class="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
+                    {{ isLoading ? 'Procesando...' : (selectedMode === 'login' ? 'Ingresar' : 'Crear mi
+                    cuenta') }}
+                </button>
+            </form>
+
+            <p class="mt-4 text-center text-xs text-ink-light">
+                {{ selectedMode === 'login' ? 'No tienes cuenta?' : 'Ya tienes cuenta?' }}
+                <button type="button" (click)="setMode(selectedMode === 'login' ? 'register' : 'login')"
+                    class="font-semibold text-primary">
+                    {{ selectedMode === 'login' ? 'Registrate' : 'Inicia sesion' }}
+                </button>
+            </p>
+        </section>
+    </section>
+</main>
