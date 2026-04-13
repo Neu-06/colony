@@ -62,7 +62,7 @@ export class AuthComponent {
 
     const request$ = this.selectedMode === 'login'
       ? this.authService.login({ email, password })
-      : this.authService.register({ nombre: safeName, email, password });
+      : this.authService.register({ nombres: safeName, email, password });
 
     request$
       .pipe(finalize(() => {

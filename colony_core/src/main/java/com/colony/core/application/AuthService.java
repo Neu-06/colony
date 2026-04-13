@@ -2,6 +2,7 @@ package com.colony.core.application;
 
 import com.colony.core.application.dto.AuthRequest;
 import com.colony.core.application.dto.AuthResponse;
+import com.colony.core.application.dto.AuthUsuarioDto;
 import com.colony.core.application.dto.RegisterRequest;
 import com.colony.core.config.security.JwtService;
 import com.colony.core.domain.Usuario;
@@ -36,10 +37,12 @@ public class AuthService {
         usuario.setNombres(request.nombres().trim());
         usuario.setEmail(email);
         usuario.setPassword(passwordEncoder.encode(request.password()));
+        usuario.setRol("FUNCIONARIO");
+        usuario.setDepartamento("SIN_ASIGNAR");
 
         Usuario saved = usuarioRepository.save(usuario);
         String token = jwtService.generateToken(saved);
-        return new AuthResponse(token);
+        return new AuthResponse(token, mapAuthUser(saved));
     }
 
     public AuthResponse login(AuthRequest request) {
@@ -57,10 +60,23 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"));
 
         String token = jwtService.generateToken(usuario);
-        return new AuthResponse(token);
+        return new AuthResponse(token, mapAuthUser(usuario));
     }
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private AuthUsuarioDto mapAuthUser(Usuario usuario) {
+        String rol = (usuario.getRol() == null || usuario.getRol().isBlank()) ? "FUNCIONARIO" : usuario.getRol();
+        String departamento = (usuario.getDepartamento() == null || usuario.getDepartamento().isBlank())
+            ? "SIN_ASIGNAR"
+            : usuario.getDepartamento();
+
+        return new AuthUsuarioDto(
+                usuario.getEmail(),
+            rol,
+            departamento
+        );
     }
 }

@@ -1,5 +1,6 @@
 package com.colony.core.config.security;
 
+import com.colony.core.domain.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -28,7 +29,18 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> claims = new HashMap<>();
+
+        if (userDetails instanceof Usuario usuario) {
+            String rol = (usuario.getRol() == null || usuario.getRol().isBlank()) ? "FUNCIONARIO" : usuario.getRol();
+            String departamento = (usuario.getDepartamento() == null || usuario.getDepartamento().isBlank())
+                    ? "SIN_ASIGNAR"
+                    : usuario.getDepartamento();
+            claims.put("rol", rol);
+            claims.put("departamento", departamento);
+        }
+
+        return generateToken(claims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

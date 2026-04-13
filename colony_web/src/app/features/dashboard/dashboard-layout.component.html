@@ -14,6 +14,7 @@
         <div>
           <p class="text-xs font-semibold uppercase tracking-wider text-primary">COLONY</p>
           <h2 class="text-lg font-bold">Panel de control</h2>
+          <p class="mt-1 text-xs text-ink-light">Rol: {{ currentRole || 'N/A' }}</p>
         </div>
         <button
           type="button"
@@ -27,22 +28,50 @@
       </div>
 
       <nav class="space-y-2">
-        <a
-          *ngFor="let item of navItems"
-          [routerLink]="item.link"
-          [routerLinkActiveOptions]="{ exact: item.exact }"
-          routerLinkActive="bg-primary text-white"
-          (click)="closeSidebar()"
-          class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
-        >
-          <p class="font-semibold">{{ item.label }}</p>
-          <p class="mt-1 text-xs opacity-80">{{ item.description }}</p>
-        </a>
+        @if (!isPendingAssignment()) {
+          <a
+            routerLink="/app/workflow-builder"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Workspaces</p>
+            <p class="mt-1 text-xs opacity-80">Gestion de flujos y archivos</p>
+          </a>
+        }
+
+        <!-- @if (canAccessCanvas() && !isPendingAssignment()) {
+          <a
+            routerLink="/app/canvas"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Modelador de Flujos (Canvas)</p>
+            <p class="mt-1 text-xs opacity-80">Diseno visual por nodos y calles</p>
+          </a>
+        } -->
+
+        @if (isSuperAdmin() && !isPendingAssignment()) {
+          <a
+            routerLink="/app/admin/users"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Gestion de Usuarios</p>
+            <p class="mt-1 text-xs opacity-80">Roles y departamentos del sistema</p>
+          </a>
+        }
       </nav>
 
       <div class="mt-6 rounded-xl border border-border bg-background p-4">
         <p class="text-xs font-semibold text-primary">Estado</p>
-        <p class="mt-1 text-sm text-ink-light">Sesion activa y lista para gestionar workflows.</p>
+        @if (isPendingAssignment()) {
+          <p class="mt-1 text-sm text-warning">Cuenta pendiente de asignacion.</p>
+        } @else {
+          <p class="mt-1 text-sm text-ink-light">Sesion activa y lista para gestionar workflows.</p>
+        }
       </div>
     </aside>
 
@@ -79,9 +108,19 @@
       </header>
 
       <main class="flex-1 overflow-auto px-4 py-5 sm:px-6 lg:px-8">
-        <div class="mx-auto h-full w-full max-w-7xl">
-          <router-outlet />
-        </div>
+        @if (isPendingAssignment()) {
+          <section class="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center">
+            <article class="w-full rounded-3xl border border-border bg-surface px-8 py-12 text-center shadow-sm">
+              <p class="text-sm font-semibold uppercase tracking-wide text-warning">Acceso Restringido</p>
+              <h3 class="mt-3 text-3xl font-bold">Tu cuenta esta pendiente de asignacion</h3>
+              <p class="mt-3 text-base text-ink-light">Contacta al administrador.</p>
+            </article>
+          </section>
+        } @else {
+          <div class="mx-auto h-full w-full max-w-7xl">
+            <router-outlet />
+          </div>
+        }
       </main>
     </div>
   </div>

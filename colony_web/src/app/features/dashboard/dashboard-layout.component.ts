@@ -3,13 +3,6 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
-interface DashboardNavItem {
-  label: string;
-  description: string;
-  link: string;
-  exact: boolean;
-}
-
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
@@ -19,16 +12,10 @@ interface DashboardNavItem {
 export class DashboardLayoutComponent {
   private authService = inject(AuthService);
 
-  isSidebarOpen = false;
+  readonly currentRole = this.authService.getCurrentRole();
+  readonly currentDepartment = this.authService.getCurrentDepartment();
 
-  readonly navItems: DashboardNavItem[] = [
-    {
-      label: 'Workspaces',
-      description: 'Gestion de flujos y archivos',
-      link: '/app/workflow-builder',
-      exact: false
-    }
-  ];
+  isSidebarOpen = false;
 
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
@@ -40,5 +27,17 @@ export class DashboardLayoutComponent {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  isSuperAdmin(): boolean {
+    return this.currentRole === 'SUPER_ADMIN';
+  }
+
+  canAccessCanvas(): boolean {
+    return this.currentRole === 'SUPER_ADMIN' || this.currentRole === 'ADMIN';
+  }
+
+  isPendingAssignment(): boolean {
+    return this.currentRole === 'FUNCIONARIO' && this.currentDepartment === 'SIN_ASIGNAR';
   }
 }

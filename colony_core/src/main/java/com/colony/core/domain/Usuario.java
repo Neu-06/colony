@@ -2,13 +2,14 @@ package com.colony.core.domain;
 
 import java.sql.Date;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Data
@@ -30,7 +31,7 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return List.of(new SimpleGrantedAuthority("ROLE_" + normalizeRole()));
     }
 
     @Override
@@ -56,5 +57,12 @@ public class Usuario implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    private String normalizeRole() {
+        if (rol == null || rol.isBlank()) {
+            return "FUNCIONARIO";
+        }
+        return rol.trim().toUpperCase();
     }
 }
