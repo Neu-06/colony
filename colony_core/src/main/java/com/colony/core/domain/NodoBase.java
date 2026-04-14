@@ -1,5 +1,6 @@
 package com.colony.core.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.Map;
@@ -23,9 +24,11 @@ import lombok.NoArgsConstructor;
         @JsonSubTypes.Type(value = NodoCompuerta.class, name = "compuerta"),
         @JsonSubTypes.Type(value = NodoCompuerta.class, name = "gateway")
 })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class NodoBase {
 
     private String idNodo;
     private String tipo;
     private Map<String, Double> posicion;
+        private String swimlaneId;
 }

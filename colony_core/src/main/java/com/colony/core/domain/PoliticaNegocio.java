@@ -1,5 +1,6 @@
 package com.colony.core.domain;
 
+import java.util.Date;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ public class PoliticaNegocio {
     private Integer version;
     private String estado;
     private String creadoPor;
+    private Date fechaCreacion;
     private List<NodoBase> nodos;
     private List<Arista> aristas;
 }

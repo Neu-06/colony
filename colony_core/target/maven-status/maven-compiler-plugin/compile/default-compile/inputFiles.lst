@@ -5,6 +5,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\RegisterRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\UsuarioAsignacionRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\UsuarioResumenDto.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\PoliticaService.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\UsuarioDetailsService.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\ColonyCoreApplication.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\CorsConfig.java
@@ -23,6 +24,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Tramite.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Usuario.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\AuthController.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\PoliticaController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\UsuarioController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\repository\PoliticaNegocioRepository.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\repository\UsuarioRepository.java

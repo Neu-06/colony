@@ -1,40 +1,88 @@
-<main class="h-screen w-screen flex overflow-hidden bg-[var(--canvas-bg)] text-ink">
-  <app-sidebar-toolbar class="shrink-0"></app-sidebar-toolbar>
+<main class="h-screen w-screen overflow-hidden bg-[var(--canvas-bg)] text-ink">
+  <section class="flex h-full min-w-0 flex-col">
+    <header class="border-b border-border bg-surface px-4 py-3 sm:px-6">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex min-w-[260px] flex-1 items-center gap-3">
+          <a
+            routerLink="/app"
+            class="rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-ink hover:bg-secondary"
+          >
+            Volver
+          </a>
 
-  <section class="relative flex min-w-0 flex-1 flex-col">
-    <header class="flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 sm:px-6">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Workflow Builder</p>
-        <h1 class="text-lg font-bold sm:text-xl">Canvas de Diagramas por Calles</h1>
+          <input
+            [(ngModel)]="flowName"
+            type="text"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold outline-none focus:border-primary"
+            placeholder="Nombre del flujo"
+          />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="toggleLeftSidebar()"
+            class="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-secondary"
+          >
+            {{ isLeftSidebarCollapsed ? 'Mostrar Herramientas' : 'Ocultar Herramientas' }}
+          </button>
+          <button
+            type="button"
+            (click)="toggleRightSidebar()"
+            class="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-secondary"
+          >
+            {{ isRightSidebarCollapsed ? 'Mostrar Propiedades' : 'Ocultar Propiedades' }}
+          </button>
+          <button
+            type="button"
+            (click)="saveDraft()"
+            [disabled]="isSaving"
+            class="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-secondary disabled:opacity-70"
+          >
+            Guardar Borrador
+          </button>
+          <button
+            type="button"
+            (click)="publishGraph()"
+            [disabled]="isSaving"
+            class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-70"
+          >
+            Publicar Flujo
+          </button>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          (click)="clearBoard()"
-          class="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-secondary"
-        >
-          Limpiar
-        </button>
-        <a
-          routerLink="/app"
-          class="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-secondary"
-        >
-          Volver al dashboard
-        </a>
-      </div>
+      @if (saveMessage) {
+        <p class="mt-2 text-xs font-medium text-ink-light">{{ saveMessage }}</p>
+      }
+
+      @if (isLoadingPolicy) {
+        <p class="mt-2 text-xs font-medium text-primary">Cargando borrador...</p>
+      }
     </header>
 
-    <div class="min-h-0 flex-1 p-3 sm:p-4">
-      <app-canvas-board></app-canvas-board>
-    </div>
-
-    <button
-      type="button"
-      (click)="publishGraph()"
-      class="absolute bottom-5 right-5 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-primary-hover"
+    <section
+      class="grid min-h-0 flex-1 grid-cols-1"
+      [ngClass]="{
+        'lg:grid-cols-[260px_minmax(0,1fr)_320px]': !isLeftSidebarCollapsed && !isRightSidebarCollapsed,
+        'lg:grid-cols-[0px_minmax(0,1fr)_320px]': isLeftSidebarCollapsed && !isRightSidebarCollapsed,
+        'lg:grid-cols-[260px_minmax(0,1fr)_0px]': !isLeftSidebarCollapsed && isRightSidebarCollapsed,
+        'lg:grid-cols-[0px_minmax(0,1fr)_0px]': isLeftSidebarCollapsed && isRightSidebarCollapsed
+      }"
     >
-      Publicar / Guardar
-    </button>
+      <div class="min-h-0 overflow-hidden">
+        @if (!isLeftSidebarCollapsed) {
+          <app-toolbar class="min-h-0"></app-toolbar>
+        }
+      </div>
+      <div class="min-h-0 p-3 sm:p-4">
+        <app-board class="block h-full"></app-board>
+      </div>
+      <div class="min-h-0 overflow-hidden">
+        @if (!isRightSidebarCollapsed) {
+          <app-config-panel class="min-h-0"></app-config-panel>
+        }
+      </div>
+    </section>
   </section>
 </main>

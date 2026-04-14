@@ -1,0 +1,33 @@
+<aside class="h-full border-b border-border bg-surface p-4 lg:border-b-0 lg:border-r">
+  <h2 class="text-sm font-bold uppercase tracking-wide text-primary">Herramientas</h2>
+  <p class="mt-1 text-sm text-ink-light">Arrastra nodos al lienzo</p>
+
+  <div class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-1">
+    @for (item of items; track item.dragType) {
+      <button
+        type="button"
+        draggable="true"
+        (dragstart)="onDragStart($event, item.dragType)"
+        class="flex cursor-grab items-center gap-3 rounded-xl border border-border bg-background px-3 py-3 text-left active:cursor-grabbing"
+      >
+        @if (item.key === 'start') {
+          <span class="h-8 w-8 rounded-full bg-[var(--node-start)]"></span>
+        }
+        @if (item.key === 'task') {
+          <span class="h-8 w-10 rounded-md border-2 border-[var(--color-primary)] bg-[var(--node-task)]"></span>
+        }
+        @if (item.key === 'gateway') {
+          <span class="h-8 w-8 rotate-45 rounded-sm bg-[var(--node-gateway)]"></span>
+        }
+        @if (item.key === 'end') {
+          <span class="h-8 w-8 rounded-full bg-[var(--node-end)]"></span>
+        }
+
+        <span class="block min-w-0">
+          <span class="block truncate text-sm font-semibold text-ink">{{ item.label }}</span>
+          <span class="block truncate text-xs text-ink-light">{{ item.hint }}</span>
+        </span>
+      </button>
+    }
+  </div>
+</aside>

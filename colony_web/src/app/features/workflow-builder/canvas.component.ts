@@ -1,14 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { PoliticaNegocio } from '../../core/models/canvas.models';
+import { PoliticaService } from '../../core/services/politica.service';
 
-interface WorkflowCard {
-  id: string;
-  title: string;
-  updatedAt: string;
-  laneCount: number;
-  nodeCount: number;
-}
 
 @Component({
   selector: 'app-canvas',
@@ -16,28 +11,30 @@ interface WorkflowCard {
   imports: [CommonModule, RouterModule],
   templateUrl: './canvas.component.html'
 })
-export class CanvasComponent {
-  readonly workflows: WorkflowCard[] = [
-    {
-      id: 'wf-1',
-      title: 'Aprobacion de Compras',
-      updatedAt: 'Actualizado hace 2 horas',
-      laneCount: 4,
-      nodeCount: 16
-    },
-    {
-      id: 'wf-2',
-      title: 'Onboarding de Personal',
-      updatedAt: 'Actualizado ayer',
-      laneCount: 5,
-      nodeCount: 23
-    },
-    {
-      id: 'wf-3',
-      title: 'Control de Incidencias',
-      updatedAt: 'Actualizado hace 3 dias',
-      laneCount: 3,
-      nodeCount: 12
-    }
-  ];
+export class CanvasComponent implements OnInit {
+  private readonly politicaService = inject(PoliticaService);
+
+  borradores: PoliticaNegocio[] = [];
+  isLoading = false;
+  errorMessage = '';
+
+  ngOnInit(): void {
+    this.loadDrafts();
+  }
+
+  loadDrafts(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.politicaService.obtenerMisBorradores().subscribe({
+      next: (borradores) => {
+        this.borradores = borradores;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        this.errorMessage = 'No se pudieron cargar tus borradores.';
+      }
+    });
+  }
 }

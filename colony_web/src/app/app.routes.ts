@@ -24,6 +24,11 @@ export const routes: Routes = [
 		canActivate: [authGuard, adminGuard]
 	},
 	{
+		path: 'app/canvas/:id',
+		component: CanvasPageComponent,
+		canActivate: [authGuard, adminGuard]
+	},
+	{
 		path: 'app',
 		component: DashboardLayoutComponent,
 		canActivate: [authGuard],
