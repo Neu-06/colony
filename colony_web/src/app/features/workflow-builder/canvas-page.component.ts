@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
+import { PoliticaNegocio } from '../../core/models/canvas.models';
 import { PoliticaService } from '../../core/services/politica.service';
 import { BoardComponent } from './board.component';
 import { ConfigPanelComponent } from './config-panel.component';
@@ -20,13 +22,19 @@ export class CanvasPageComponent {
   private readonly canvasState = inject(CanvasStateService);
   private readonly politicaService = inject(PoliticaService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   flowName = 'Nuevo Flujo';
   isSaving = false;
+  isDeleting = false;
   isLoadingPolicy = false;
   saveMessage = '';
   isLeftSidebarCollapsed = false;
   isRightSidebarCollapsed = false;
+  isMobileToolsOpen = false;
+  isMobilePropertiesOpen = false;
+
+  readonly activePolicyId = this.canvasState.activePolicyId;
 
   constructor() {
     this.route.paramMap.subscribe((params) => {
@@ -35,6 +43,8 @@ export class CanvasPageComponent {
       if (!policyId) {
         this.canvasState.resetCanvas();
         this.flowName = 'Nuevo Flujo';
+        this.isMobileToolsOpen = false;
+        this.isMobilePropertiesOpen = false;
         return;
       }
 
@@ -45,6 +55,8 @@ export class CanvasPageComponent {
           this.canvasState.hydrateFromPolitica(politica);
           this.flowName = politica.nombre || 'Flujo sin nombre';
           this.isLoadingPolicy = false;
+          this.isMobileToolsOpen = false;
+          this.isMobilePropertiesOpen = false;
         },
         error: () => {
           this.isLoadingPolicy = false;
@@ -62,6 +74,56 @@ export class CanvasPageComponent {
     this.isRightSidebarCollapsed = !this.isRightSidebarCollapsed;
   }
 
+  toggleMobileTools(): void {
+    this.isMobileToolsOpen = !this.isMobileToolsOpen;
+    if (this.isMobileToolsOpen) {
+      this.isMobilePropertiesOpen = false;
+    }
+  }
+
+  toggleMobileProperties(): void {
+    this.isMobilePropertiesOpen = !this.isMobilePropertiesOpen;
+    if (this.isMobilePropertiesOpen) {
+      this.isMobileToolsOpen = false;
+    }
+  }
+
+  closeMobilePanels(): void {
+    this.isMobileToolsOpen = false;
+    this.isMobilePropertiesOpen = false;
+  }
+
+  deleteCurrentDiagram(): void {
+    const policyId = this.activePolicyId();
+    if (!policyId) {
+      this.saveMessage = 'Primero guarda el flujo para poder eliminarlo.';
+      return;
+    }
+
+    const confirmed = window.confirm('Se eliminara permanentemente este diagrama. Esta accion no se puede deshacer.');
+    if (!confirmed) {
+      return;
+    }
+
+    this.isDeleting = true;
+    this.saveMessage = '';
+
+    this.politicaService.eliminarPolitica(policyId).subscribe({
+      next: () => {
+        this.isDeleting = false;
+        this.closeMobilePanels();
+        this.canvasState.resetCanvas();
+        this.flowName = 'Nuevo Flujo';
+        this.saveMessage = 'Diagrama eliminado permanentemente.';
+        void this.router.navigate(['/app/canvas']);
+      },
+      error: () => {
+        this.isDeleting = false;
+        this.saveMessage = 'No se pudo eliminar el diagrama.';
+      }
+    });
+  }
+
   saveDraft(): void {
     this.persistPolicy('BORRADOR');
   }
@@ -76,15 +138,21 @@ export class CanvasPageComponent {
     this.saveMessage = '';
 
     this.politicaService.guardarPolitica(politica).subscribe({
-      next: () => {
+      next: (saved: PoliticaNegocio) => {
         this.isSaving = false;
+        this.canvasState.hydrateFromPolitica(saved);
+        this.flowName = saved.nombre || this.flowName;
+        this.closeMobilePanels();
+
+        if (saved.id) {
+          void this.router.navigate(['/app/canvas', saved.id], { replaceUrl: true });
+        }
+
         this.saveMessage = `Flujo guardado como ${estado}.`;
-        window.alert(this.saveMessage);
       },
       error: () => {
         this.isSaving = false;
         this.saveMessage = 'No se pudo guardar el flujo. Verifica permisos y conexion con backend.';
-        window.alert(this.saveMessage);
       }
     });
   }

@@ -60,6 +60,19 @@ public class PoliticaService {
         return politica;
     }
 
+    public void eliminarPoliticaPropia(String politicaId) {
+        String usuarioId = resolveAuthenticatedUserId();
+
+        PoliticaNegocio politica = politicaNegocioRepository.findById(politicaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Politica no encontrada"));
+
+        if (politica.getCreadoPor() == null || !politica.getCreadoPor().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes acceso a esta politica");
+        }
+
+        politicaNegocioRepository.deleteById(politicaId);
+    }
+
     private String resolveAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

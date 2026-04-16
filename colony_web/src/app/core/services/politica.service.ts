@@ -21,4 +21,8 @@ export class PoliticaService {
   obtenerPoliticaPorId(id: string): Observable<PoliticaNegocio> {
     return this.http.get<PoliticaNegocio>(`${this.apiUrl}/${id}`);
   }
+
+  eliminarPolitica(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }

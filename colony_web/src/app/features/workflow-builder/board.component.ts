@@ -6,24 +6,25 @@ import {
   DestroyRef,
   ElementRef,
   HostListener,
-  Injector,
   ViewChild,
   computed,
   effect,
   inject,
   signal
 } from '@angular/core';
-import { NodeEditor } from 'rete';
-import { AngularArea2D, AngularPlugin, Presets as AngularPresets } from 'rete-angular-plugin/18';
-import { AreaExtensions, AreaPlugin } from 'rete-area-plugin';
-import { ConnectionPlugin, Presets as ConnectionPresets } from 'rete-connection-plugin';
-import { Arista, NodoCanvas } from '../../core/models/canvas.models';
-import { WorkflowNode, WorkflowScheme, createWorkflowConnection, createWorkflowSocket, toWorkflowKind } from './rete-nodes';
+import { jsPlumb } from 'jsplumb';
+import { NodoCanvas } from '../../core/models/canvas.models';
 import { CanvasStateService, ToolNodeType } from './services/canvas-state.service';
 
 interface NodeSize {
   width: number;
   height: number;
+}
+
+interface ExistingNodeDragPayload {
+  idNodo: string;
+  offsetX: number;
+  offsetY: number;
 }
 
 @Component({
@@ -35,53 +36,62 @@ interface NodeSize {
 })
 export class BoardComponent implements AfterViewInit {
   private readonly canvasState = inject(CanvasStateService);
-  private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly workflowSocket = createWorkflowSocket();
 
-  @ViewChild('boardScroll', { static: true })
-  private boardScrollRef!: ElementRef<HTMLElement>;
-
-  @ViewChild('reteHost', { static: true })
-  private reteHostRef!: ElementRef<HTMLElement>;
+  @ViewChild('boardSurface', { static: true })
+  private boardSurfaceRef!: ElementRef<HTMLElement>;
 
   readonly swimlanes = this.canvasState.swimlanes;
   readonly nodos = this.canvasState.nodos;
   readonly aristas = this.canvasState.aristas;
   readonly selectedNode = this.canvasState.nodoSeleccionado;
-  readonly editorReady = signal(false);
-  readonly boardMinHeight = computed(() => Math.max(this.swimlanes().length * 250 + 96, 520));
 
   readonly editingLaneId = signal<string | null>(null);
 
-  private editor: NodeEditor<WorkflowScheme> | null = null;
-  private area: AreaPlugin<WorkflowScheme, AngularArea2D<WorkflowScheme>> | null = null;
-  private connection: ConnectionPlugin<WorkflowScheme> | null = null;
+  readonly nodesByLane = computed(() => {
+    const grouped = new Map<string, NodoCanvas[]>();
 
-  private isSyncingFromState = false;
-  private isSyncingFromEditor = false;
+    for (const lane of this.swimlanes()) {
+      grouped.set(lane.id, []);
+    }
+
+    for (const nodo of this.nodos()) {
+      const laneNodes = grouped.get(nodo.swimlaneId) ?? [];
+      laneNodes.push(nodo);
+      grouped.set(nodo.swimlaneId, laneNodes);
+    }
+
+    return grouped;
+  });
+
+  private readonly dragMimeType = 'application/x-canvas-node';
+  private readonly existingNodeDragMimeType = 'application/x-canvas-existing-node';
+
+  private jsPlumbInstance: any = null;
+  private viewReady = false;
+  private redrawHandle: number | null = null;
 
   constructor() {
     effect(() => {
-      const nodos = this.nodos();
-      const aristas = this.aristas();
-
-      if (!this.editorReady() || !this.editor || !this.area || this.isSyncingFromEditor || this.isSyncingFromState) {
-        return;
-      }
-
-      void this.syncEditorWithState(nodos, aristas);
+      this.swimlanes();
+      this.nodos();
+      this.aristas();
+      this.scheduleConnectionsRedraw();
     });
 
     this.destroyRef.onDestroy(() => {
-      this.disposeEditor();
+      this.destroyJsPlumb();
+      if (this.redrawHandle !== null) {
+        cancelAnimationFrame(this.redrawHandle);
+        this.redrawHandle = null;
+      }
     });
   }
 
-  async ngAfterViewInit(): Promise<void> {
-    await this.initializeEditor();
-    this.editorReady.set(true);
-    await this.syncEditorWithState(this.nodos(), this.aristas());
+  ngAfterViewInit(): void {
+    this.initializeJsPlumb();
+    this.viewReady = true;
+    this.scheduleConnectionsRedraw();
   }
 
   addLane(): void {
@@ -101,21 +111,69 @@ export class BoardComponent implements AfterViewInit {
     this.editingLaneId.set(null);
   }
 
-  onNativeDragOver(event: DragEvent): void {
+  getNodesForLane(laneId: string): NodoCanvas[] {
+    return this.nodesByLane().get(laneId) ?? [];
+  }
+
+  nodeElementId(nodeId: string): string {
+    return `node-${nodeId}`;
+  }
+
+  isSelected(nodeId: string): boolean {
+    return this.selectedNode()?.idNodo === nodeId;
+  }
+
+  nodeType(node: NodoCanvas): 'start' | 'end' | 'gateway' | 'task' {
+    if (node.tipo === 'compuerta' || node.tipo === 'gateway') {
+      return 'gateway';
+    }
+
+    if (node.tipo === 'start') {
+      return 'start';
+    }
+
+    if (node.tipo === 'end') {
+      return 'end';
+    }
+
+    return 'task';
+  }
+
+  nodeLabel(node: NodoCanvas): string {
+    const type = this.nodeType(node);
+
+    if (type === 'gateway') {
+      return (node as { condicionLogica?: string }).condicionLogica?.trim() || 'Compuerta';
+    }
+
+    if (type === 'task') {
+      return (node as { nombre?: string }).nombre?.trim() || 'Tarea';
+    }
+
+    return (node as { nombre?: string }).nombre?.trim() || (type === 'start' ? 'Inicio' : 'Fin');
+  }
+
+  onLaneDragOver(event: DragEvent): void {
     const types = event.dataTransfer?.types;
     if (!types) {
       return;
     }
 
-    if (Array.from(types).includes('application/x-canvas-node') || Array.from(types).includes('text/plain')) {
-      event.preventDefault();
-      if (event.dataTransfer) {
-        event.dataTransfer.dropEffect = 'copy';
-      }
+    const accepted = Array.from(types).some(
+      (mime) => mime === this.dragMimeType || mime === this.existingNodeDragMimeType || mime === 'text/plain'
+    );
+
+    if (!accepted) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
     }
   }
 
-  onNativeDrop(event: DragEvent): void {
+  onLaneDrop(event: DragEvent, laneId: string, dropzone: HTMLElement): void {
     event.preventDefault();
 
     const dataTransfer = event.dataTransfer;
@@ -123,37 +181,61 @@ export class BoardComponent implements AfterViewInit {
       return;
     }
 
-    const dragType = dataTransfer.getData('application/x-canvas-node') || dataTransfer.getData('text/plain');
+    const existingRaw = dataTransfer.getData(this.existingNodeDragMimeType);
+    if (existingRaw) {
+      this.handleExistingNodeDrop(existingRaw, event, laneId, dropzone);
+      return;
+    }
+
+    const dragType = dataTransfer.getData(this.dragMimeType) || dataTransfer.getData('text/plain');
     const toolType = this.mapDragTypeToNodeType(dragType);
     if (!toolType) {
       return;
     }
 
-    const boardElement = this.boardScrollRef.nativeElement;
-    const boardRect = boardElement.getBoundingClientRect();
     const nodeSize = this.resolveNodeSize(toolType);
+    const position = this.resolveDropPosition(event, dropzone, nodeSize, nodeSize.width / 2, nodeSize.height / 2);
 
-    const x = event.clientX - boardRect.left + boardElement.scrollLeft - nodeSize.width / 2;
-    const y = event.clientY - boardRect.top + boardElement.scrollTop - nodeSize.height / 2;
-
-    const laneId = this.findLaneIdByRelativeY(y + nodeSize.height / 2) ?? this.swimlanes()[0]?.id;
-    if (!laneId) {
-      return;
-    }
-
-    this.canvasState.addNode(toolType, laneId, {
-      x: Math.max(x, 0),
-      y: Math.max(y, 0)
-    });
+    this.canvasState.addNode(toolType, laneId, position);
+    this.scheduleConnectionsRedraw();
   }
 
-  deleteSelectedNode(): void {
-    const node = this.selectedNode();
-    if (!node) {
+  onNodeDragStart(event: DragEvent, node: NodoCanvas): void {
+    if (!event.dataTransfer) {
       return;
     }
 
-    this.canvasState.removeNode(node.idNodo);
+    const target = event.currentTarget as HTMLElement | null;
+    const rect = target?.getBoundingClientRect();
+
+    const payload: ExistingNodeDragPayload = {
+      idNodo: node.idNodo,
+      offsetX: rect ? event.clientX - rect.left : this.resolveNodeSize(this.nodeType(node)).width / 2,
+      offsetY: rect ? event.clientY - rect.top : this.resolveNodeSize(this.nodeType(node)).height / 2
+    };
+
+    event.dataTransfer.setData(this.existingNodeDragMimeType, JSON.stringify(payload));
+    event.dataTransfer.effectAllowed = 'move';
+  }
+
+  onNodeClick(node: NodoCanvas, event: MouseEvent): void {
+    event.stopPropagation();
+    this.canvasState.setNodoSeleccionado(node.idNodo);
+  }
+
+  clearSelection(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+
+    if (target.closest('[data-node-card], button, input, textarea, select, [data-lane-header]')) {
+      return;
+    }
+
+    this.canvasState.setNodoSeleccionado(null);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.scheduleConnectionsRedraw();
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -175,18 +257,50 @@ export class BoardComponent implements AfterViewInit {
     this.deleteSelectedNode();
   }
 
-  clearSelection(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-
-    if (target.closest('button, input, textarea, select, [data-lane-header]')) {
+  deleteSelectedNode(): void {
+    const node = this.selectedNode();
+    if (!node) {
       return;
     }
 
-    if (target.closest('rete-node, [data-rete-node]')) {
+    this.canvasState.removeNode(node.idNodo);
+    this.scheduleConnectionsRedraw();
+  }
+
+  private handleExistingNodeDrop(rawPayload: string, event: DragEvent, laneId: string, dropzone: HTMLElement): void {
+    let payload: ExistingNodeDragPayload | null = null;
+
+    try {
+      payload = JSON.parse(rawPayload) as ExistingNodeDragPayload;
+    } catch {
+      payload = null;
+    }
+
+    if (!payload?.idNodo) {
       return;
     }
 
-    this.canvasState.setNodoSeleccionado(null);
+    const node = this.nodos().find((item) => item.idNodo === payload.idNodo);
+    if (!node) {
+      return;
+    }
+
+    const nodeSize = this.resolveNodeSize(this.nodeType(node));
+    const position = this.resolveDropPosition(
+      event,
+      dropzone,
+      nodeSize,
+      Number.isFinite(payload.offsetX) ? payload.offsetX : nodeSize.width / 2,
+      Number.isFinite(payload.offsetY) ? payload.offsetY : nodeSize.height / 2
+    );
+
+    this.canvasState.updateNode(node.idNodo, {
+      swimlaneId: laneId,
+      posicion: position
+    });
+
+    this.canvasState.setNodoSeleccionado(node.idNodo);
+    this.scheduleConnectionsRedraw();
   }
 
   private mapDragTypeToNodeType(dragType: unknown): ToolNodeType | null {
@@ -204,207 +318,111 @@ export class BoardComponent implements AfterViewInit {
     }
   }
 
-  private resolveNodeSize(type: string): NodeSize {
-    if (type === 'compuerta' || type === 'gateway') {
-      return { width: 84, height: 84 };
+  private resolveDropPosition(
+    event: DragEvent,
+    dropzone: HTMLElement,
+    nodeSize: NodeSize,
+    pointerOffsetX: number,
+    pointerOffsetY: number
+  ): { x: number; y: number } {
+    const rect = dropzone.getBoundingClientRect();
+    const rawX = event.clientX - rect.left - pointerOffsetX;
+    const rawY = event.clientY - rect.top - pointerOffsetY;
+
+    const maxX = Math.max(0, dropzone.clientWidth - nodeSize.width);
+    const maxY = Math.max(0, dropzone.clientHeight - nodeSize.height);
+
+    return {
+      x: Math.min(Math.max(rawX, 0), maxX),
+      y: Math.min(Math.max(rawY, 0), maxY)
+    };
+  }
+
+  private resolveNodeSize(type: ToolNodeType | 'start' | 'end' | 'gateway' | 'task'): NodeSize {
+    if (type === 'gateway') {
+      return { width: 80, height: 80 };
     }
 
     if (type === 'start' || type === 'end') {
-      return { width: 64, height: 64 };
+      return { width: 48, height: 48 };
     }
 
-    return { width: 180, height: 78 };
+    return { width: 128, height: 64 };
   }
 
-  private findLaneIdByRelativeY(relativeY: number): string | null {
-    const board = this.boardScrollRef.nativeElement;
-    const lanes = board.querySelectorAll<HTMLElement>('[data-lane-drop="true"]');
+  private initializeJsPlumb(): void {
+    const container = this.boardSurfaceRef.nativeElement;
 
-    for (const laneElement of Array.from(lanes)) {
-      const top = laneElement.offsetTop;
-      const bottom = top + laneElement.offsetHeight;
-      if (relativeY >= top && relativeY <= bottom) {
-        return laneElement.dataset['laneId'] ?? null;
-      }
-    }
-
-    return null;
-  }
-
-  private async initializeEditor(): Promise<void> {
-    const editor = new NodeEditor<WorkflowScheme>();
-    const area = new AreaPlugin<WorkflowScheme, AngularArea2D<WorkflowScheme>>(this.reteHostRef.nativeElement);
-    const connection = new ConnectionPlugin<WorkflowScheme>();
-    const render = new AngularPlugin<WorkflowScheme, AngularArea2D<WorkflowScheme>>({ injector: this.injector });
-
-    render.addPreset(AngularPresets.classic.setup());
-    connection.addPreset(ConnectionPresets.classic.setup());
-
-    editor.use(area);
-    area.use(connection);
-    area.use(render);
-
-    AreaExtensions.simpleNodesOrder(area);
-    AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
-      accumulating: AreaExtensions.accumulateOnCtrl()
+    this.jsPlumbInstance = jsPlumb.getInstance({
+      Container: container
     });
 
-    area.addPipe((context) => {
-      if (!context || typeof context !== 'object' || !('type' in context)) {
-        return context;
-      }
-
-      if (this.isSyncingFromState) {
-        return context;
-      }
-
-      if (context.type === 'nodepicked') {
-        this.canvasState.setNodoSeleccionado(context.data.id);
-        return context;
-      }
-
-      if (context.type === 'nodetranslated') {
-        const editorNode = editor.getNode(context.data.id) as WorkflowNode | undefined;
-        if (!editorNode) {
-          return context;
-        }
-
-        const size = this.resolveNodeSize(editorNode.payload.tipo);
-        const laneId = this.findLaneIdByRelativeY(context.data.position.y + size.height / 2) ?? editorNode.payload.swimlaneId;
-
-        this.isSyncingFromEditor = true;
-        try {
-          this.canvasState.updateNode(context.data.id, {
-            posicion: {
-              x: Math.max(context.data.position.x, 0),
-              y: Math.max(context.data.position.y, 0)
-            },
-            swimlaneId: laneId
-          });
-        } finally {
-          this.isSyncingFromEditor = false;
-        }
-
-        return context;
-      }
-
-      if (context.type === 'connectioncreated') {
-        const created = editor.getConnection(context.data.id);
-        if (!created) {
-          return context;
-        }
-
-        this.isSyncingFromEditor = true;
-        try {
-          this.canvasState.connectNodes(created.source, created.target);
-        } finally {
-          this.isSyncingFromEditor = false;
-        }
-
-        return context;
-      }
-
-      if (context.type === 'connectionremoved') {
-        const removed = context.data;
-
-        this.isSyncingFromEditor = true;
-        try {
-          this.canvasState.removeConnection(removed.source, removed.target);
-        } finally {
-          this.isSyncingFromEditor = false;
-        }
-
-        return context;
-      }
-
-      return context;
-    });
-
-    this.editor = editor;
-    this.area = area;
-    this.connection = connection;
+    this.applyJsPlumbDefaults();
   }
 
-  private async syncEditorWithState(nodos: NodoCanvas[], aristas: Arista[]): Promise<void> {
-    if (!this.editor || !this.area) {
+  private applyJsPlumbDefaults(): void {
+    if (!this.jsPlumbInstance) {
       return;
     }
 
-    this.isSyncingFromState = true;
-
-    try {
-      const editor = this.editor;
-      const area = this.area;
-
-      const expectedNodes = new Map(nodos.map((node) => [node.idNodo, node]));
-      const expectedEdges = new Set(aristas.map((edge) => `${edge.origenNodoId}->${edge.destinoNodoId}`));
-
-      for (const existingConnection of editor.getConnections()) {
-        const key = `${existingConnection.source}->${existingConnection.target}`;
-        if (!expectedEdges.has(key)) {
-          await editor.removeConnection(existingConnection.id);
-        }
-      }
-
-      for (const existingNode of editor.getNodes()) {
-        if (!expectedNodes.has(existingNode.id)) {
-          await editor.removeNode(existingNode.id);
-        }
-      }
-
-      for (const nodePayload of nodos) {
-        let editorNode = editor.getNode(nodePayload.idNodo) as WorkflowNode | undefined;
-        const expectedKind = toWorkflowKind(nodePayload.tipo);
-
-        if (!editorNode) {
-          editorNode = new WorkflowNode(nodePayload, this.workflowSocket);
-          await editor.addNode(editorNode);
-        } else if (editorNode.kind !== expectedKind) {
-          await editor.removeNode(editorNode.id);
-          editorNode = new WorkflowNode(nodePayload, this.workflowSocket);
-          await editor.addNode(editorNode);
-        } else {
-          editorNode.syncPayload(nodePayload);
-          await area.update('node', editorNode.id);
-        }
-
-        await area.translate(editorNode.id, {
-          x: Number(nodePayload.posicion.x),
-          y: Number(nodePayload.posicion.y)
-        });
-      }
-
-      for (const edge of aristas) {
-        const source = editor.getNode(edge.origenNodoId) as WorkflowNode | undefined;
-        const target = editor.getNode(edge.destinoNodoId) as WorkflowNode | undefined;
-        if (!source || !target) {
-          continue;
-        }
-
-        const exists = editor
-          .getConnections()
-          .some((connection) => connection.source === edge.origenNodoId && connection.target === edge.destinoNodoId);
-
-        if (exists) {
-          continue;
-        }
-
-        const connection = createWorkflowConnection(source, target);
-        if (connection) {
-          await editor.addConnection(connection);
-        }
-      }
-
-    } finally {
-      this.isSyncingFromState = false;
-    }
+    this.jsPlumbInstance.importDefaults({
+      Connector: ['Flowchart', { stub: 24, gap: 10, cornerRadius: 5 }],
+      PaintStyle: { stroke: '#475569', strokeWidth: 2 },
+      Endpoint: 'Blank'
+    });
   }
 
-  private disposeEditor(): void {
-    this.area?.destroy();
-    this.editor = null;
-    this.area = null;
-    this.connection = null;
-    this.editorReady.set(false);
+  private drawConnections(): void {
+    if (!this.jsPlumbInstance) {
+      return;
+    }
+
+    const container = this.boardSurfaceRef.nativeElement;
+
+    this.jsPlumbInstance.reset();
+    this.jsPlumbInstance.setContainer(container);
+    this.applyJsPlumbDefaults();
+
+    for (const arista of this.aristas()) {
+      const sourceId = this.nodeElementId(arista.origenNodoId);
+      const targetId = this.nodeElementId(arista.destinoNodoId);
+
+      if (!document.getElementById(sourceId) || !document.getElementById(targetId)) {
+        continue;
+      }
+
+      this.jsPlumbInstance.connect({
+        source: sourceId,
+        target: targetId,
+        anchors: ['Continuous', 'Continuous'],
+        overlays: [['Arrow', { location: 1, width: 10, length: 10 }]]
+      });
+    }
+
+    this.jsPlumbInstance.repaintEverything();
+  }
+
+  private scheduleConnectionsRedraw(): void {
+    if (!this.viewReady || !this.jsPlumbInstance) {
+      return;
+    }
+
+    if (this.redrawHandle !== null) {
+      cancelAnimationFrame(this.redrawHandle);
+    }
+
+    this.redrawHandle = requestAnimationFrame(() => {
+      this.redrawHandle = null;
+      this.drawConnections();
+    });
+  }
+
+  private destroyJsPlumb(): void {
+    if (!this.jsPlumbInstance) {
+      return;
+    }
+
+    this.jsPlumbInstance.reset();
+    this.jsPlumbInstance = null;
   }
 }

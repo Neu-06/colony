@@ -17,7 +17,7 @@ export class CanvasStateService {
   private readonly _activePolicyId = signal<string | null>(null);
 
   private readonly _swimlanes = signal<Swimlane[]>([
-    { id: 'lane-1', nombre: 'Nueva Calle', orden: 1 }
+    { id: 'lane-1', nombre: 'Departamento 1', orden: 1 }
   ]);
   private readonly _nodos = signal<NodoCanvas[]>([]);
   private readonly _aristas = signal<Arista[]>([]);
@@ -58,10 +58,11 @@ export class CanvasStateService {
       return;
     }
 
-    const fallbackLaneId = lanes.find((lane) => lane.id !== swimlaneId)?.id;
-    if (!fallbackLaneId) {
-      return;
-    }
+    const removedNodeIds = new Set(
+      this._nodos()
+        .filter((node) => node.swimlaneId === swimlaneId)
+        .map((node) => node.idNodo)
+    );
 
     this._swimlanes.set(
       lanes
@@ -69,16 +70,24 @@ export class CanvasStateService {
         .map((lane, index) => ({ ...lane, orden: index + 1 }))
     );
 
-    this._nodos.update((current) =>
-      current.map((node) =>
-        node.swimlaneId === swimlaneId
-          ? {
-              ...node,
-              swimlaneId: fallbackLaneId
-            }
-          : node
+    this._nodos.update((current) => current.filter((node) => node.swimlaneId !== swimlaneId));
+    this._aristas.update((current) =>
+      current.filter(
+        (edge) => !removedNodeIds.has(edge.origenNodoId) && !removedNodeIds.has(edge.destinoNodoId)
       )
     );
+
+    const selectedId = this._selectedNodeId();
+    if (selectedId && removedNodeIds.has(selectedId)) {
+      this._selectedNodeId.set(null);
+    }
+
+    const pendingOriginId = this._pendingConnectionOriginId();
+    if (pendingOriginId && removedNodeIds.has(pendingOriginId)) {
+      this._pendingConnectionOriginId.set(null);
+    }
+
+    this.recomputeSequences();
   }
 
   updateSwimlaneName(swimlaneId: string, name: string): void {
@@ -123,6 +132,20 @@ export class CanvasStateService {
     );
   }
 
+  updateNodeInfo(node: NodoCanvas): void {
+    const normalized = this.normalizeNode(node);
+
+    this._nodos.update((current) =>
+      current.map((item) =>
+        item.idNodo === normalized.idNodo
+          ? {
+              ...normalized
+            }
+          : item
+      )
+    );
+  }
+
   removeNode(nodeId: string): void {
     this._nodos.update((current) => current.filter((node) => node.idNodo !== nodeId));
     this._aristas.update((current) =>
@@ -151,7 +174,13 @@ export class CanvasStateService {
       return;
     }
 
-    this._aristas.update((current) => [...current, { origenNodoId, destinoNodoId }]);
+    this._aristas.update((current) => [
+      ...current,
+      {
+        origenNodoId,
+        destinoNodoId
+      }
+    ]);
   }
 
   removeConnection(origenNodoId: string, destinoNodoId: string): void {
@@ -174,6 +203,15 @@ export class CanvasStateService {
     const graph = fromPoliticaToWorkflowGraph(politica);
 
     this._activePolicyId.set(politica.id ?? null);
+    this._swimlanes.set(
+      (graph.swimlanes.length ? graph.swimlanes : [{ id: 'lane-1', nombre: 'Departamento 1', orden: 1 }])
+        .map((lane, index) => ({
+          id: lane.id || `lane-${index + 1}`,
+          nombre: lane.nombre?.trim() || `Departamento ${index + 1}`,
+          orden: Number(lane.orden ?? index + 1)
+        }))
+        .sort((a, b) => a.orden - b.orden)
+    );
     this._nodos.set(graph.nodos.map((node) => this.normalizeNode(node)));
     this._aristas.set(graph.aristas);
     this._selectedNodeId.set(null);
@@ -182,6 +220,18 @@ export class CanvasStateService {
   }
 
   syncGraphSnapshot(snapshot: WorkflowGraphSnapshot): void {
+    if (snapshot.swimlanes?.length) {
+      this._swimlanes.set(
+        snapshot.swimlanes
+          .map((lane, index) => ({
+            id: lane.id || `lane-${index + 1}`,
+            nombre: lane.nombre?.trim() || `Departamento ${index + 1}`,
+            orden: Number(lane.orden ?? index + 1)
+          }))
+          .sort((a, b) => a.orden - b.orden)
+      );
+    }
+
     this._nodos.set(snapshot.nodos.map((node) => this.normalizeNode(node)));
     this._aristas.set(snapshot.aristas.map((edge) => ({ ...edge })));
 
@@ -195,7 +245,7 @@ export class CanvasStateService {
 
   resetCanvas(): void {
     this._activePolicyId.set(null);
-    this._swimlanes.set([{ id: 'lane-1', nombre: 'Nueva Calle', orden: 1 }]);
+    this._swimlanes.set([{ id: 'lane-1', nombre: 'Departamento 1', orden: 1 }]);
     this._nodos.set([]);
     this._aristas.set([]);
     this._selectedNodeId.set(null);
@@ -207,6 +257,7 @@ export class CanvasStateService {
   toPoliticaNegocio(nombre: string, estado: string, version = 1): PoliticaNegocio {
     return toPoliticaFromWorkflowGraph(
       {
+        swimlanes: this._swimlanes().map((lane) => ({ ...lane })),
         nodos: this._nodos().map((node) => this.normalizeNode(node)),
         aristas: this._aristas().map((edge) => ({ ...edge }))
       },

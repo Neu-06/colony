@@ -2,6 +2,7 @@ package com.colony.core.domain;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -21,6 +22,7 @@ public class PoliticaNegocio {
     private String estado;
     private String creadoPor;
     private Date fechaCreacion;
+    private List<Map<String, Object>> swimlanes;
     private List<NodoBase> nodos;
     private List<Arista> aristas;
 }

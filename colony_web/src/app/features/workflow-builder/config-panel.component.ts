@@ -94,6 +94,15 @@ export class ConfigPanelComponent {
     this.fields.removeAt(index);
   }
 
+  deleteSelectedNode(): void {
+    const node = this.selectedNode();
+    if (!node) {
+      return;
+    }
+
+    this.canvasState.removeNode(node.idNodo);
+  }
+
   isActividad(node: NodoCanvas | null): node is NodoActividad {
     if (!node) {
       return false;

@@ -1,9 +1,7 @@
-import { NodeEditor } from 'rete';
-import { AreaPlugin } from 'rete-area-plugin';
 import { Arista, NodoActividad, NodoCanvas, NodoCompuerta, PoliticaNegocio } from '../../core/models/canvas.models';
-import { WorkflowNode, WorkflowScheme, isGatewayNode } from './rete-nodes';
 
 export interface WorkflowGraphSnapshot {
+  swimlanes: { id: string; nombre: string; orden: number }[];
   nodos: NodoCanvas[];
   aristas: Arista[];
 }
@@ -18,11 +16,26 @@ export interface PolicyMeta {
 }
 
 export function fromPoliticaToWorkflowGraph(politica: PoliticaNegocio): WorkflowGraphSnapshot {
+  const swimlanes = (politica.swimlanes ?? [])
+    .map((lane, index) => ({
+      id: lane.id || `lane-${index + 1}`,
+      nombre: lane.nombre?.trim() || `Departamento ${index + 1}`,
+      orden: Number(lane.orden ?? index + 1)
+    }))
+    .sort((a, b) => a.orden - b.orden);
+
+  const normalizedSwimlanes = swimlanes.length
+    ? swimlanes
+    : [{ id: 'lane-1', nombre: 'Departamento 1', orden: 1 }];
+
   return {
+    swimlanes: normalizedSwimlanes,
     nodos: (politica.nodos ?? []).map((node) => cloneNode(node)),
     aristas: (politica.aristas ?? []).map((edge) => ({
       origenNodoId: edge.origenNodoId,
-      destinoNodoId: edge.destinoNodoId
+      destinoNodoId: edge.destinoNodoId,
+      sourceOutputKey: edge.sourceOutputKey,
+      targetInputKey: edge.targetInputKey
     }))
   };
 }
@@ -35,37 +48,19 @@ export function toPoliticaFromWorkflowGraph(snapshot: WorkflowGraphSnapshot, met
     version: meta.version,
     creadoPor: meta.creadoPor,
     fechaCreacion: meta.fechaCreacion,
+    swimlanes: snapshot.swimlanes.map((lane, index) => ({
+      id: lane.id,
+      nombre: lane.nombre?.trim() || `Departamento ${index + 1}`,
+      orden: Number(lane.orden ?? index + 1)
+    })),
     nodos: snapshot.nodos.map((node) => cloneNode(node)),
     aristas: snapshot.aristas.map((edge) => ({
       origenNodoId: edge.origenNodoId,
-      destinoNodoId: edge.destinoNodoId
+      destinoNodoId: edge.destinoNodoId,
+      sourceOutputKey: edge.sourceOutputKey,
+      targetInputKey: edge.targetInputKey
     }))
   };
-}
-
-export function fromEditorToWorkflowGraph(
-  editor: NodeEditor<WorkflowScheme>,
-  area: AreaPlugin<WorkflowScheme>
-): WorkflowGraphSnapshot {
-  const nodos = editor.getNodes().map((node) => {
-    const workflowNode = node as WorkflowNode;
-    const position = area.nodeViews.get(workflowNode.id)?.position ?? workflowNode.payload.posicion;
-    const payload = cloneNode(workflowNode.payload);
-
-    payload.posicion = {
-      x: Number(position?.x ?? 0),
-      y: Number(position?.y ?? 0)
-    };
-
-    return payload;
-  });
-
-  const aristas = editor.getConnections().map((edge) => ({
-    origenNodoId: edge.source,
-    destinoNodoId: edge.target
-  }));
-
-  return { nodos, aristas };
 }
 
 function cloneNode(node: NodoCanvas): NodoCanvas {
@@ -99,4 +94,8 @@ function cloneNode(node: NodoCanvas): NodoCanvas {
       requerido: !!field.requerido
     }))
   };
+}
+
+function isGatewayNode(node: NodoCanvas): node is NodoCompuerta {
+  return node.tipo === 'compuerta' || node.tipo === 'gateway';
 }

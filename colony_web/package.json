@@ -20,11 +20,7 @@
     "@angular/platform-browser": "^18.2.0",
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
-    "rete": "^2.0.6",
-    "rete-angular-plugin": "^2.6.0",
-    "rete-area-plugin": "^2.1.5",
-    "rete-connection-plugin": "^2.0.5",
-    "rete-render-utils": "^2.0.3",
+    "jsplumb": "^2.15.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"

@@ -7,6 +7,8 @@ export interface CampoForm {
 export interface Arista {
   origenNodoId: string;
   destinoNodoId: string;
+  sourceOutputKey?: string;
+  targetInputKey?: string;
 }
 
 export interface Swimlane {
@@ -43,6 +45,7 @@ export interface PoliticaNegocio {
   estado: string;
   creadoPor?: string;
   fechaCreacion?: string;
+  swimlanes?: Swimlane[];
   nodos: NodoCanvas[];
   aristas: Arista[];
 }
