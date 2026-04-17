@@ -19,7 +19,6 @@ public class Tramite {
 
     @Indexed(unique = true)
     private String codigo;
-
     private String politicaId;
     private String iniciadoPor;
     private String estadoGeneral;

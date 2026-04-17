@@ -34,6 +34,7 @@ export function fromPoliticaToWorkflowGraph(politica: PoliticaNegocio): Workflow
     aristas: (politica.aristas ?? []).map((edge) => ({
       origenNodoId: edge.origenNodoId,
       destinoNodoId: edge.destinoNodoId,
+      etiqueta: edge.etiqueta,
       sourceOutputKey: edge.sourceOutputKey,
       targetInputKey: edge.targetInputKey
     }))
@@ -57,6 +58,7 @@ export function toPoliticaFromWorkflowGraph(snapshot: WorkflowGraphSnapshot, met
     aristas: snapshot.aristas.map((edge) => ({
       origenNodoId: edge.origenNodoId,
       destinoNodoId: edge.destinoNodoId,
+      etiqueta: edge.etiqueta,
       sourceOutputKey: edge.sourceOutputKey,
       targetInputKey: edge.targetInputKey
     }))

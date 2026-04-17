@@ -13,7 +13,6 @@ public class Historial {
 
     @Id
     private String id;
-
     private String tramiteId;
     private String nodoOrigen;
     private String nodoDestino;

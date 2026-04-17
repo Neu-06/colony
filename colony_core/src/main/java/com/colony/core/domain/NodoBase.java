@@ -9,26 +9,20 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXISTING_PROPERTY,
-        property = "tipo",
-        visible = true,
-        defaultImpl = NodoActividad.class
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "tipo", visible = true, defaultImpl = NodoActividad.class)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NodoActividad.class, name = "actividad"),
-        @JsonSubTypes.Type(value = NodoActividad.class, name = "task"),
-        @JsonSubTypes.Type(value = NodoActividad.class, name = "start"),
-        @JsonSubTypes.Type(value = NodoActividad.class, name = "end"),
-        @JsonSubTypes.Type(value = NodoCompuerta.class, name = "compuerta"),
-        @JsonSubTypes.Type(value = NodoCompuerta.class, name = "gateway")
+                @JsonSubTypes.Type(value = NodoActividad.class, name = "actividad"),
+                @JsonSubTypes.Type(value = NodoActividad.class, name = "tarea"),
+                @JsonSubTypes.Type(value = NodoActividad.class, name = "inicio"),
+                @JsonSubTypes.Type(value = NodoActividad.class, name = "fin"),
+                @JsonSubTypes.Type(value = NodoCompuerta.class, name = "compuerta"),
+                @JsonSubTypes.Type(value = NodoCompuerta.class, name = "salida_condicional"),
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class NodoBase {
 
-    private String idNodo;
-    private String tipo;
-    private Map<String, Double> posicion;
-        private String swimlaneId;
+        private String idNodo;
+        private String tipo;
+        private Map<String, Double> posicion;
+        private String carrilId;
 }

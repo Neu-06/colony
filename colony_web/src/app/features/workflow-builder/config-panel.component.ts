@@ -15,6 +15,7 @@ export class ConfigPanelComponent {
   private readonly canvasState = inject(CanvasStateService);
 
   readonly selectedNode = this.canvasState.nodoSeleccionado;
+  readonly selectedEdge = this.canvasState.aristaSeleccionada;
   readonly fieldTypes = ['Texto', 'Numero', 'Fecha'];
 
   readonly actividadForm = this.fb.nonNullable.group({
@@ -26,23 +27,31 @@ export class ConfigPanelComponent {
     condicionLogica: ''
   });
 
+  readonly aristaForm = this.fb.nonNullable.group({
+    etiqueta: ''
+  });
+
   constructor() {
     effect(() => {
       const node = this.selectedNode();
+      const edge = this.selectedEdge();
 
       if (!node) {
         this.clearFieldArray();
         this.actividadForm.reset({ nombre: '', esquemaFormulario: [] }, { emitEvent: false });
         this.compuertaForm.reset({ condicionLogica: '' }, { emitEvent: false });
-        return;
       }
 
-      if (this.isActividad(node)) {
-        this.actividadForm.controls.nombre.setValue(node.nombre, { emitEvent: false });
-        this.rebuildFieldArray(node.esquemaFormulario);
-      } else {
-        this.compuertaForm.controls.condicionLogica.setValue(node.condicionLogica, { emitEvent: false });
+      if (node) {
+        if (this.isActividad(node)) {
+          this.actividadForm.controls.nombre.setValue(node.nombre, { emitEvent: false });
+          this.rebuildFieldArray(node.esquemaFormulario);
+        } else {
+          this.compuertaForm.controls.condicionLogica.setValue(node.condicionLogica, { emitEvent: false });
+        }
       }
+
+      this.aristaForm.controls.etiqueta.setValue(edge?.etiqueta ?? '', { emitEvent: false });
     });
 
     this.actividadForm.valueChanges.subscribe((value) => {
@@ -74,6 +83,19 @@ export class ConfigPanelComponent {
         condicionLogica: value.condicionLogica ?? ''
       });
     });
+
+    this.aristaForm.valueChanges.subscribe((value) => {
+      const selected = this.selectedEdge();
+      if (!selected) {
+        return;
+      }
+
+      this.canvasState.updateAristaEtiqueta(
+        selected.origenNodoId,
+        selected.destinoNodoId,
+        value.etiqueta ?? ''
+      );
+    });
   }
 
   get fields(): FormArray {
@@ -101,6 +123,10 @@ export class ConfigPanelComponent {
     }
 
     this.canvasState.removeNode(node.idNodo);
+  }
+
+  clearSelectedEdge(): void {
+    this.canvasState.clearAristaSeleccionada();
   }
 
   isActividad(node: NodoCanvas | null): node is NodoActividad {

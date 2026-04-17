@@ -86,9 +86,9 @@
     <section
       class="grid min-h-0 flex-1 grid-cols-1"
       [ngClass]="{
-        'lg:grid-cols-[260px_minmax(0,1fr)_320px]': !isLeftSidebarCollapsed && !isRightSidebarCollapsed,
+        'lg:grid-cols-[192px_minmax(0,1fr)_320px]': !isLeftSidebarCollapsed && !isRightSidebarCollapsed,
         'lg:grid-cols-[0px_minmax(0,1fr)_320px]': isLeftSidebarCollapsed && !isRightSidebarCollapsed,
-        'lg:grid-cols-[260px_minmax(0,1fr)_0px]': !isLeftSidebarCollapsed && isRightSidebarCollapsed,
+        'lg:grid-cols-[192px_minmax(0,1fr)_0px]': !isLeftSidebarCollapsed && isRightSidebarCollapsed,
         'lg:grid-cols-[0px_minmax(0,1fr)_0px]': isLeftSidebarCollapsed && isRightSidebarCollapsed
       }"
     >
@@ -97,7 +97,7 @@
           <app-toolbar class="min-h-0"></app-toolbar>
         }
       </div>
-      <div class="min-h-0 p-2 sm:p-4">
+      <div class="flex-1 min-h-0 p-2 sm:p-4">
         <app-board class="block h-full"></app-board>
       </div>
       <div class="hidden min-h-0 overflow-hidden lg:block">

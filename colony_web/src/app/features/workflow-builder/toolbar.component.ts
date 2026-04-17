@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { CanvasStateService } from './services/canvas-state.service';
 
 interface ToolItem {
   key: 'start' | 'task' | 'gateway' | 'end';
@@ -16,7 +17,10 @@ interface ToolItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToolbarComponent {
+  private readonly canvasState = inject(CanvasStateService);
+
   readonly dragMimeType = 'application/x-canvas-node';
+  readonly zoomLevel = this.canvasState.zoomLevel;
 
   readonly items: ToolItem[] = [
     { key: 'start', dragType: 'INICIO', label: 'Inicio', hint: 'Nodo inicial del flujo' },
@@ -33,5 +37,13 @@ export class ToolbarComponent {
     event.dataTransfer.setData(this.dragMimeType, dragType);
     event.dataTransfer.setData('text/plain', dragType);
     event.dataTransfer.effectAllowed = 'copy';
+  }
+
+  zoomOut(): void {
+    this.canvasState.decreaseZoom();
+  }
+
+  zoomIn(): void {
+    this.canvasState.increaseZoom();
   }
 }

@@ -7,6 +7,7 @@ export interface CampoForm {
 export interface Arista {
   origenNodoId: string;
   destinoNodoId: string;
+  etiqueta?: string;
   sourceOutputKey?: string;
   targetInputKey?: string;
 }

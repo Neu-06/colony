@@ -11,6 +11,6 @@ public class Arista {
 
     private String origenNodoId;
     private String destinoNodoId;
-    private String sourceOutputKey;
-    private String targetInputKey;
+    private String salidaOrigenId;
+    private String entradaDestinoId;
 }

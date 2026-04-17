@@ -12,6 +12,9 @@ export type ToolNodeType = 'start' | 'task' | 'gateway' | 'end';
   providedIn: 'root'
 })
 export class CanvasStateService {
+  private static readonly MIN_ZOOM = 0.5;
+  private static readonly MAX_ZOOM = 2;
+
   private readonly nodeSequence = signal(0);
   private readonly laneSequence = signal(1);
   private readonly _activePolicyId = signal<string | null>(null);
@@ -22,13 +25,16 @@ export class CanvasStateService {
   private readonly _nodos = signal<NodoCanvas[]>([]);
   private readonly _aristas = signal<Arista[]>([]);
   private readonly _selectedNodeId = signal<string | null>(null);
+  private readonly _selectedEdgeKey = signal<string | null>(null);
   private readonly _pendingConnectionOriginId = signal<string | null>(null);
+  private readonly _zoomLevel = signal(1);
 
   readonly swimlanes = this._swimlanes.asReadonly();
   readonly nodos = this._nodos.asReadonly();
   readonly aristas = this._aristas.asReadonly();
   readonly pendingConnectionOriginId = this._pendingConnectionOriginId.asReadonly();
   readonly activePolicyId = this._activePolicyId.asReadonly();
+  readonly zoomLevel = this._zoomLevel.asReadonly();
 
   readonly nodoSeleccionado = computed(() => {
     const selectedId = this._selectedNodeId();
@@ -36,6 +42,14 @@ export class CanvasStateService {
       return null;
     }
     return this._nodos().find((node) => node.idNodo === selectedId) ?? null;
+  });
+
+  readonly aristaSeleccionada = computed(() => {
+    const selectedKey = this._selectedEdgeKey();
+    if (!selectedKey) {
+      return null;
+    }
+    return this._aristas().find((edge) => this.edgeKey(edge.origenNodoId, edge.destinoNodoId) === selectedKey) ?? null;
   });
 
   addSwimlane(): void {
@@ -82,6 +96,12 @@ export class CanvasStateService {
       this._selectedNodeId.set(null);
     }
 
+    const selectedEdge = this.aristaSeleccionada();
+    if (selectedEdge && (removedNodeIds.has(selectedEdge.origenNodoId) || removedNodeIds.has(selectedEdge.destinoNodoId))) {
+      this._selectedEdgeKey.set(null);
+    }
+    this.clearMissingSelectedEdge();
+
     const pendingOriginId = this._pendingConnectionOriginId();
     if (pendingOriginId && removedNodeIds.has(pendingOriginId)) {
       this._pendingConnectionOriginId.set(null);
@@ -109,6 +129,7 @@ export class CanvasStateService {
 
     this._nodos.update((current) => [...current, node]);
     this._selectedNodeId.set(node.idNodo);
+    this._selectedEdgeKey.set(null);
 
     return node;
   }
@@ -159,11 +180,17 @@ export class CanvasStateService {
     if (this._pendingConnectionOriginId() === nodeId) {
       this._pendingConnectionOriginId.set(null);
     }
+
+    const selectedEdge = this.aristaSeleccionada();
+    if (selectedEdge && (selectedEdge.origenNodoId === nodeId || selectedEdge.destinoNodoId === nodeId)) {
+      this._selectedEdgeKey.set(null);
+    }
+    this.clearMissingSelectedEdge();
   }
 
-  connectNodes(origenNodoId: string, destinoNodoId: string): void {
+  connectNodes(origenNodoId: string, destinoNodoId: string): Arista | null {
     if (origenNodoId === destinoNodoId) {
-      return;
+      return null;
     }
 
     const alreadyExists = this._aristas().some(
@@ -171,16 +198,23 @@ export class CanvasStateService {
     );
 
     if (alreadyExists) {
-      return;
+      return null;
     }
+
+    const arista: Arista = {
+      origenNodoId,
+      destinoNodoId
+    };
 
     this._aristas.update((current) => [
       ...current,
-      {
-        origenNodoId,
-        destinoNodoId
-      }
+      arista
     ]);
+
+    this._selectedNodeId.set(null);
+    this._selectedEdgeKey.set(this.edgeKey(origenNodoId, destinoNodoId));
+
+    return arista;
   }
 
   removeConnection(origenNodoId: string, destinoNodoId: string): void {
@@ -189,14 +223,59 @@ export class CanvasStateService {
         (edge) => !(edge.origenNodoId === origenNodoId && edge.destinoNodoId === destinoNodoId)
       )
     );
+
+    if (this._selectedEdgeKey() === this.edgeKey(origenNodoId, destinoNodoId)) {
+      this._selectedEdgeKey.set(null);
+    }
+    this.clearMissingSelectedEdge();
   }
 
   setNodoSeleccionado(nodeId: string | null): void {
     this._selectedNodeId.set(nodeId);
+    if (nodeId) {
+      this._selectedEdgeKey.set(null);
+    }
+  }
+
+  setAristaSeleccionada(origenNodoId: string, destinoNodoId: string): void {
+    this._selectedEdgeKey.set(this.edgeKey(origenNodoId, destinoNodoId));
+    this._selectedNodeId.set(null);
+  }
+
+  clearAristaSeleccionada(): void {
+    this._selectedEdgeKey.set(null);
+  }
+
+  updateAristaEtiqueta(origenNodoId: string, destinoNodoId: string, etiqueta: string): void {
+    const normalizedLabel = etiqueta.trim();
+
+    this._aristas.update((current) =>
+      current.map((edge) =>
+        edge.origenNodoId === origenNodoId && edge.destinoNodoId === destinoNodoId
+          ? {
+              ...edge,
+              etiqueta: normalizedLabel || undefined
+            }
+          : edge
+      )
+    );
   }
 
   setPendingConnectionOrigin(nodeId: string | null): void {
     this._pendingConnectionOriginId.set(nodeId);
+  }
+
+  setZoom(level: number): void {
+    const clamped = Math.min(CanvasStateService.MAX_ZOOM, Math.max(CanvasStateService.MIN_ZOOM, level));
+    this._zoomLevel.set(Number(clamped.toFixed(2)));
+  }
+
+  increaseZoom(step = 0.1): void {
+    this.setZoom(this._zoomLevel() + step);
+  }
+
+  decreaseZoom(step = 0.1): void {
+    this.setZoom(this._zoomLevel() - step);
   }
 
   hydrateFromPolitica(politica: PoliticaNegocio): void {
@@ -215,7 +294,9 @@ export class CanvasStateService {
     this._nodos.set(graph.nodos.map((node) => this.normalizeNode(node)));
     this._aristas.set(graph.aristas);
     this._selectedNodeId.set(null);
+    this._selectedEdgeKey.set(null);
     this._pendingConnectionOriginId.set(null);
+    this._zoomLevel.set(1);
     this.recomputeSequences();
   }
 
@@ -240,6 +321,8 @@ export class CanvasStateService {
       this._selectedNodeId.set(null);
     }
 
+    this.clearMissingSelectedEdge();
+
     this.recomputeSequences();
   }
 
@@ -249,7 +332,9 @@ export class CanvasStateService {
     this._nodos.set([]);
     this._aristas.set([]);
     this._selectedNodeId.set(null);
+    this._selectedEdgeKey.set(null);
     this._pendingConnectionOriginId.set(null);
+    this._zoomLevel.set(1);
     this.nodeSequence.set(0);
     this.laneSequence.set(1);
   }
@@ -368,5 +453,24 @@ export class CanvasStateService {
     }, 1);
 
     this.laneSequence.set(maxLane);
+  }
+
+  private edgeKey(origenNodoId: string, destinoNodoId: string): string {
+    return `${origenNodoId}::${destinoNodoId}`;
+  }
+
+  private clearMissingSelectedEdge(): void {
+    const selectedKey = this._selectedEdgeKey();
+    if (!selectedKey) {
+      return;
+    }
+
+    const stillExists = this._aristas().some(
+      (edge) => this.edgeKey(edge.origenNodoId, edge.destinoNodoId) === selectedKey
+    );
+
+    if (!stillExists) {
+      this._selectedEdgeKey.set(null);
+    }
   }
 }

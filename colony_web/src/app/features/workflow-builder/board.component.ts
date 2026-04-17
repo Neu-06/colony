@@ -13,7 +13,7 @@ import {
   signal
 } from '@angular/core';
 import { jsPlumb } from 'jsplumb';
-import { NodoCanvas } from '../../core/models/canvas.models';
+import { Arista, NodoCanvas, Swimlane } from '../../core/models/canvas.models';
 import { CanvasStateService, ToolNodeType } from './services/canvas-state.service';
 
 interface NodeSize {
@@ -45,6 +45,8 @@ export class BoardComponent implements AfterViewInit {
   readonly nodos = this.canvasState.nodos;
   readonly aristas = this.canvasState.aristas;
   readonly selectedNode = this.canvasState.nodoSeleccionado;
+  readonly selectedEdge = this.canvasState.aristaSeleccionada;
+  readonly zoomLevel = this.canvasState.zoomLevel;
 
   readonly editingLaneId = signal<string | null>(null);
 
@@ -70,13 +72,18 @@ export class BoardComponent implements AfterViewInit {
   private jsPlumbInstance: any = null;
   private viewReady = false;
   private redrawHandle: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private readonly initializedEndpointKinds = new Map<string, string>();
+  private syncingFromState = false;
 
   constructor() {
     effect(() => {
       this.swimlanes();
       this.nodos();
       this.aristas();
-      this.scheduleConnectionsRedraw();
+      this.selectedEdge();
+      this.zoomLevel();
+      this.scheduleBoardSync();
     });
 
     this.destroyRef.onDestroy(() => {
@@ -90,8 +97,9 @@ export class BoardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.initializeJsPlumb();
+    this.initializeResizeObserver();
     this.viewReady = true;
-    this.scheduleConnectionsRedraw();
+    this.scheduleBoardSync();
   }
 
   addLane(): void {
@@ -153,27 +161,11 @@ export class BoardComponent implements AfterViewInit {
     return (node as { nombre?: string }).nombre?.trim() || (type === 'start' ? 'Inicio' : 'Fin');
   }
 
-  onLaneDragOver(event: DragEvent): void {
-    const types = event.dataTransfer?.types;
-    if (!types) {
-      return;
-    }
-
-    const accepted = Array.from(types).some(
-      (mime) => mime === this.dragMimeType || mime === this.existingNodeDragMimeType || mime === 'text/plain'
-    );
-
-    if (!accepted) {
-      return;
-    }
-
+  allowDrop(event: DragEvent): void {
     event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
   }
 
-  onLaneDrop(event: DragEvent, laneId: string, dropzone: HTMLElement): void {
+  onDrop(event: DragEvent, carril: Swimlane): void {
     event.preventDefault();
 
     const dataTransfer = event.dataTransfer;
@@ -181,9 +173,14 @@ export class BoardComponent implements AfterViewInit {
       return;
     }
 
+    const dropzone = event.currentTarget as HTMLElement | null;
+    if (!dropzone) {
+      return;
+    }
+
     const existingRaw = dataTransfer.getData(this.existingNodeDragMimeType);
     if (existingRaw) {
-      this.handleExistingNodeDrop(existingRaw, event, laneId, dropzone);
+      this.handleExistingNodeDrop(existingRaw, event, carril.id, dropzone);
       return;
     }
 
@@ -194,10 +191,11 @@ export class BoardComponent implements AfterViewInit {
     }
 
     const nodeSize = this.resolveNodeSize(toolType);
-    const position = this.resolveDropPosition(event, dropzone, nodeSize, nodeSize.width / 2, nodeSize.height / 2);
+    const position = this.resolveDropPositionByOffset(event, dropzone, nodeSize);
 
-    this.canvasState.addNode(toolType, laneId, position);
-    this.scheduleConnectionsRedraw();
+    const createdNode = this.canvasState.addNode(toolType, carril.id, position);
+    (createdNode as NodoCanvas & { departamento?: string }).departamento = carril.nombre;
+    this.scheduleBoardSync();
   }
 
   onNodeDragStart(event: DragEvent, node: NodoCanvas): void {
@@ -231,11 +229,12 @@ export class BoardComponent implements AfterViewInit {
     }
 
     this.canvasState.setNodoSeleccionado(null);
+    this.canvasState.clearAristaSeleccionada();
   }
 
   @HostListener('window:resize')
   onWindowResize(): void {
-    this.scheduleConnectionsRedraw();
+    this.scheduleBoardSync();
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -249,12 +248,19 @@ export class BoardComponent implements AfterViewInit {
       return;
     }
 
-    if (!this.selectedNode()) {
+    event.preventDefault();
+
+    const selectedNode = this.selectedNode();
+    if (selectedNode) {
+      this.deleteSelectedNode();
       return;
     }
 
-    event.preventDefault();
-    this.deleteSelectedNode();
+    const selectedEdge = this.selectedEdge();
+    if (selectedEdge) {
+      this.canvasState.removeConnection(selectedEdge.origenNodoId, selectedEdge.destinoNodoId);
+      this.scheduleBoardSync();
+    }
   }
 
   deleteSelectedNode(): void {
@@ -264,7 +270,7 @@ export class BoardComponent implements AfterViewInit {
     }
 
     this.canvasState.removeNode(node.idNodo);
-    this.scheduleConnectionsRedraw();
+    this.scheduleBoardSync();
   }
 
   private handleExistingNodeDrop(rawPayload: string, event: DragEvent, laneId: string, dropzone: HTMLElement): void {
@@ -300,7 +306,7 @@ export class BoardComponent implements AfterViewInit {
     });
 
     this.canvasState.setNodoSeleccionado(node.idNodo);
-    this.scheduleConnectionsRedraw();
+    this.scheduleBoardSync();
   }
 
   private mapDragTypeToNodeType(dragType: unknown): ToolNodeType | null {
@@ -326,8 +332,29 @@ export class BoardComponent implements AfterViewInit {
     pointerOffsetY: number
   ): { x: number; y: number } {
     const rect = dropzone.getBoundingClientRect();
-    const rawX = event.clientX - rect.left - pointerOffsetX;
-    const rawY = event.clientY - rect.top - pointerOffsetY;
+    const zoom = this.zoomLevel();
+    const localX = (event.clientX - rect.left) / zoom;
+    const localY = (event.clientY - rect.top) / zoom;
+    const rawX = localX - pointerOffsetX;
+    const rawY = localY - pointerOffsetY;
+
+    const maxX = Math.max(0, dropzone.clientWidth - nodeSize.width);
+    const maxY = Math.max(0, dropzone.clientHeight - nodeSize.height);
+
+    return {
+      x: Math.min(Math.max(rawX, 0), maxX),
+      y: Math.min(Math.max(rawY, 0), maxY)
+    };
+  }
+
+  private resolveDropPositionByOffset(event: DragEvent, dropzone: HTMLElement, nodeSize: NodeSize): { x: number; y: number } {
+    const rect = dropzone.getBoundingClientRect();
+    const zoom = this.zoomLevel();
+    const localX = (event.clientX - rect.left) / zoom;
+    const localY = (event.clientY - rect.top) / zoom;
+
+    const rawX = localX - nodeSize.width / 2;
+    const rawY = localY - nodeSize.height / 2;
 
     const maxX = Math.max(0, dropzone.clientWidth - nodeSize.width);
     const maxY = Math.max(0, dropzone.clientHeight - nodeSize.height);
@@ -358,6 +385,7 @@ export class BoardComponent implements AfterViewInit {
     });
 
     this.applyJsPlumbDefaults();
+    this.bindJsPlumbEvents();
   }
 
   private applyJsPlumbDefaults(): void {
@@ -368,8 +396,149 @@ export class BoardComponent implements AfterViewInit {
     this.jsPlumbInstance.importDefaults({
       Connector: ['Flowchart', { stub: 24, gap: 10, cornerRadius: 5 }],
       PaintStyle: { stroke: '#475569', strokeWidth: 2 },
-      Endpoint: 'Blank'
+      Endpoint: 'Blank',
+      ConnectionOverlays: [
+        ['Arrow', { location: 1, width: 10, length: 10 }],
+        ['Label', { id: 'label', label: '', cssClass: 'wf-edge-label' }]
+      ]
     });
+  }
+
+  private bindJsPlumbEvents(): void {
+    if (!this.jsPlumbInstance) {
+      return;
+    }
+
+    this.jsPlumbInstance.bind('connection', (info: any) => {
+      if (this.syncingFromState) {
+        return;
+      }
+
+      const sourceNodeId = this.extractNodeId(info?.sourceId);
+      const targetNodeId = this.extractNodeId(info?.targetId);
+      if (!sourceNodeId || !targetNodeId) {
+        return;
+      }
+
+      const created = this.canvasState.connectNodes(sourceNodeId, targetNodeId);
+      if (!created) {
+        this.jsPlumbInstance.deleteConnection(info.connection);
+        return;
+      }
+
+      this.applyConnectionLabel(info.connection, created.etiqueta ?? '');
+      this.canvasState.setAristaSeleccionada(sourceNodeId, targetNodeId);
+      this.scheduleBoardSync();
+    });
+
+    this.jsPlumbInstance.bind('click', (connection: any, originalEvent?: MouseEvent) => {
+      originalEvent?.stopPropagation();
+
+      const sourceNodeId = this.extractNodeId(connection?.sourceId);
+      const targetNodeId = this.extractNodeId(connection?.targetId);
+      if (!sourceNodeId || !targetNodeId) {
+        return;
+      }
+
+      this.canvasState.setAristaSeleccionada(sourceNodeId, targetNodeId);
+      this.scheduleBoardSync();
+    });
+  }
+
+  private syncNodeEndpoints(): void {
+    if (!this.jsPlumbInstance) {
+      return;
+    }
+
+    const activeNodeIds = new Set(this.nodos().map((node) => node.idNodo));
+    for (const nodeId of this.initializedEndpointKinds.keys()) {
+      if (!activeNodeIds.has(nodeId)) {
+        this.initializedEndpointKinds.delete(nodeId);
+      }
+    }
+
+    for (const node of this.nodos()) {
+      const endpointKind = this.resolveEndpointKind(node);
+      if (this.initializedEndpointKinds.get(node.idNodo) === endpointKind) {
+        continue;
+      }
+
+      this.initNodeEndpoints(node.idNodo, endpointKind);
+      this.initializedEndpointKinds.set(node.idNodo, endpointKind);
+    }
+  }
+
+  private initNodeEndpoints(nodeId: string, endpointKind: 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA'): void {
+    if (!this.jsPlumbInstance) {
+      return;
+    }
+
+    const elementId = this.nodeElementId(nodeId);
+    if (!document.getElementById(elementId)) {
+      return;
+    }
+
+    this.jsPlumbInstance.unmakeSource(elementId);
+    this.jsPlumbInstance.unmakeTarget(elementId);
+
+    const policy = this.getEndpointPolicy(endpointKind);
+
+    if (policy.sourceMax !== null) {
+      this.jsPlumbInstance.makeSource(elementId, {
+        anchor: 'Continuous',
+        endpoint: 'Blank',
+        maxConnections: policy.sourceMax,
+        allowLoopback: false,
+        connector: ['Flowchart', { stub: 24, gap: 10, cornerRadius: 5 }],
+        connectorStyle: { stroke: '#475569', strokeWidth: 2 },
+        connectorOverlays: [
+          ['Arrow', { location: 1, width: 10, length: 10 }],
+          ['Label', { id: 'label', label: '', cssClass: 'wf-edge-label' }]
+        ]
+      });
+    }
+
+    if (policy.targetMax !== null) {
+      this.jsPlumbInstance.makeTarget(elementId, {
+        anchor: 'Continuous',
+        endpoint: 'Blank',
+        maxConnections: policy.targetMax,
+        allowLoopback: false
+      });
+    }
+  }
+
+  private getEndpointPolicy(endpointKind: 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA'): {
+    sourceMax: number | null;
+    targetMax: number | null;
+  } {
+    switch (endpointKind) {
+      case 'INICIO':
+        return { sourceMax: 1, targetMax: null };
+      case 'FIN':
+        return { sourceMax: null, targetMax: -1 };
+      case 'COMPUERTA':
+        return { sourceMax: -1, targetMax: -1 };
+      case 'TAREA':
+      default:
+        return { sourceMax: 1, targetMax: -1 };
+    }
+  }
+
+  private resolveEndpointKind(node: NodoCanvas): 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA' {
+    if (node.tipo === 'start') {
+      return 'INICIO';
+    }
+
+    if (node.tipo === 'end') {
+      return 'FIN';
+    }
+
+    if (node.tipo === 'compuerta' || node.tipo === 'gateway') {
+      return 'COMPUERTA';
+    }
+
+    return 'TAREA';
   }
 
   private drawConnections(): void {
@@ -377,32 +546,108 @@ export class BoardComponent implements AfterViewInit {
       return;
     }
 
-    const container = this.boardSurfaceRef.nativeElement;
+    this.syncingFromState = true;
+    try {
+      this.jsPlumbInstance.deleteEveryConnection();
 
-    this.jsPlumbInstance.reset();
-    this.jsPlumbInstance.setContainer(container);
-    this.applyJsPlumbDefaults();
+      for (const arista of this.aristas()) {
+        const sourceId = this.nodeElementId(arista.origenNodoId);
+        const targetId = this.nodeElementId(arista.destinoNodoId);
 
-    for (const arista of this.aristas()) {
-      const sourceId = this.nodeElementId(arista.origenNodoId);
-      const targetId = this.nodeElementId(arista.destinoNodoId);
+        if (!document.getElementById(sourceId) || !document.getElementById(targetId)) {
+          continue;
+        }
 
-      if (!document.getElementById(sourceId) || !document.getElementById(targetId)) {
-        continue;
+        const connection = this.jsPlumbInstance.connect({
+          source: sourceId,
+          target: targetId,
+          anchors: ['Continuous', 'Continuous']
+        });
+
+        if (!connection) {
+          continue;
+        }
+
+        this.applyConnectionLabel(connection, arista.etiqueta ?? '');
+        this.applyConnectionSelectionStyle(connection, arista);
       }
-
-      this.jsPlumbInstance.connect({
-        source: sourceId,
-        target: targetId,
-        anchors: ['Continuous', 'Continuous'],
-        overlays: [['Arrow', { location: 1, width: 10, length: 10 }]]
-      });
+    } finally {
+      this.syncingFromState = false;
     }
 
+    this.syncJsPlumbZoom();
+    this.refreshResizeObserverTargets();
     this.jsPlumbInstance.repaintEverything();
   }
 
-  private scheduleConnectionsRedraw(): void {
+  private applyConnectionLabel(connection: any, label: string): void {
+    const overlay = connection.getOverlay('label');
+    if (!overlay) {
+      return;
+    }
+
+    overlay.setLabel(label || '');
+  }
+
+  private applyConnectionSelectionStyle(connection: any, edge: Arista): void {
+    const selectedEdge = this.selectedEdge();
+    const isSelected =
+      !!selectedEdge &&
+      selectedEdge.origenNodoId === edge.origenNodoId &&
+      selectedEdge.destinoNodoId === edge.destinoNodoId;
+
+    connection.setPaintStyle({
+      stroke: isSelected ? '#1d4ed8' : '#475569',
+      strokeWidth: isSelected ? 3 : 2
+    });
+  }
+
+  private syncJsPlumbZoom(): void {
+    if (!this.jsPlumbInstance) {
+      return;
+    }
+
+    this.jsPlumbInstance.setZoom(this.zoomLevel());
+  }
+
+  private initializeResizeObserver(): void {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      if (!this.jsPlumbInstance) {
+        return;
+      }
+
+      this.jsPlumbInstance.repaintEverything();
+    });
+
+    this.refreshResizeObserverTargets();
+  }
+
+  private refreshResizeObserverTargets(): void {
+    if (!this.resizeObserver) {
+      return;
+    }
+
+    this.resizeObserver.disconnect();
+    this.resizeObserver.observe(this.boardSurfaceRef.nativeElement);
+
+    this.boardSurfaceRef.nativeElement
+      .querySelectorAll<HTMLElement>('[data-lane-dropzone], [data-node-card]')
+      .forEach((element) => this.resizeObserver?.observe(element));
+  }
+
+  private extractNodeId(elementId: string | undefined): string | null {
+    if (!elementId || !elementId.startsWith('node-')) {
+      return null;
+    }
+
+    return elementId.slice(5);
+  }
+
+  private scheduleBoardSync(): void {
     if (!this.viewReady || !this.jsPlumbInstance) {
       return;
     }
@@ -413,16 +658,26 @@ export class BoardComponent implements AfterViewInit {
 
     this.redrawHandle = requestAnimationFrame(() => {
       this.redrawHandle = null;
+      this.syncNodeEndpoints();
       this.drawConnections();
     });
   }
 
   private destroyJsPlumb(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+
     if (!this.jsPlumbInstance) {
       return;
     }
 
     this.jsPlumbInstance.reset();
+    if (typeof this.jsPlumbInstance.destroy === 'function') {
+      this.jsPlumbInstance.destroy();
+    }
+
     this.jsPlumbInstance = null;
   }
 }
