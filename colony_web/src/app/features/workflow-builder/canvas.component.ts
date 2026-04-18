@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { PoliticaNegocio } from '../../core/models/canvas.models';
+import { AlertaService } from '../../core/services/alerta.service';
 import { PoliticaService } from '../../core/services/politica.service';
 
 
@@ -13,6 +14,7 @@ import { PoliticaService } from '../../core/services/politica.service';
 })
 export class CanvasComponent implements OnInit {
   private readonly politicaService = inject(PoliticaService);
+  private readonly alertaService = inject(AlertaService);
 
   borradores: PoliticaNegocio[] = [];
   isLoading = false;
@@ -35,16 +37,20 @@ export class CanvasComponent implements OnInit {
       error: () => {
         this.isLoading = false;
         this.errorMessage = 'No se pudieron cargar tus borradores.';
+        this.alertaService.mostrarError(this.errorMessage);
       }
     });
   }
 
-  deleteDraft(politica: PoliticaNegocio): void {
+  async deleteDraft(politica: PoliticaNegocio): Promise<void> {
     if (!politica.id) {
       return;
     }
 
-    const confirmed = window.confirm(`Se eliminara permanentemente el flujo "${politica.nombre || 'Sin nombre'}". Deseas continuar?`);
+    const confirmed = await this.alertaService.confirmarAccion(
+      'Eliminar borrador',
+      `Se eliminara permanentemente el flujo "${politica.nombre || 'Sin nombre'}".`
+    );
     if (!confirmed) {
       return;
     }
@@ -55,10 +61,12 @@ export class CanvasComponent implements OnInit {
       next: () => {
         this.deletingId = null;
         this.borradores = this.borradores.filter((item) => item.id !== politica.id);
+        this.alertaService.mostrarExito('Borrador eliminado correctamente.');
       },
       error: () => {
         this.deletingId = null;
         this.errorMessage = 'No se pudo eliminar el borrador.';
+        this.alertaService.mostrarError(this.errorMessage);
       }
     });
   }

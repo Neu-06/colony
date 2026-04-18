@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 public abstract class NodoBase {
 
         private String idNodo;
+        private String nombre;
         private String tipo;
         private Map<String, Double> posicion;
         private String carrilId;

@@ -11,8 +11,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @NoArgsConstructor
-@Document(collection = "tramites")
-public class Tramite {
+@Document(collection = "instancias")
+public class Instancia {
 
     @Id
     private String id;
@@ -28,4 +28,5 @@ public class Tramite {
     private List<Observacion> observaciones;
     private Date fechaInicio;
     private Date fechaFin;
+    private List<String> dispositivosSuscritos;
 }

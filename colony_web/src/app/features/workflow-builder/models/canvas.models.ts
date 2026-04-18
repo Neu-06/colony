@@ -1,0 +1,57 @@
+export interface CampoFormulario {
+  nombre: string;
+  tipo: string;
+  requerido: boolean;
+}
+
+export interface Arista {
+  origenNodoId: string;
+  destinoNodoId: string;
+  salidaOrigenId?: string;
+  entradaDestinoId?: string;
+  etiqueta?: string;
+}
+
+export interface Carril {
+  id: string;
+  nombre: string;
+  orden: number;
+}
+
+export interface NodoBase {
+  idNodo: string;
+  tipo: string;
+  posicion: {
+    x: number;
+    y: number;
+  };
+  carrilId: string;
+}
+
+export interface NodoActividad extends NodoBase {
+  nombre: string;
+  dptoResponsable?: string;
+  esquemaFormulario: CampoFormulario[];
+}
+
+export interface NodoCompuerta extends NodoBase {
+  condicionLogica: string;
+}
+
+export type NodoCanvas = NodoActividad | NodoCompuerta;
+
+export interface PoliticaNegocio {
+  id?: string;
+  nombre: string;
+  codigoInvitacion?: string;
+  editoresAutorizados?: string[];
+  version: number;
+  estado: string;
+  creadoPor?: string;
+  fechaCreacion?: string;
+  carriles?: Carril[];
+  nodos: NodoCanvas[];
+  aristas: Arista[];
+}
+
+export type TipoNodoHerramienta = 'inicio' | 'tarea' | 'compuerta' | 'fin';

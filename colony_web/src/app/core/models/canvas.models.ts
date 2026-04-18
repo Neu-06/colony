@@ -7,12 +7,12 @@ export interface CampoForm {
 export interface Arista {
   origenNodoId: string;
   destinoNodoId: string;
+  salidaOrigenId?: string;
+  entradaDestinoId?: string;
   etiqueta?: string;
-  sourceOutputKey?: string;
-  targetInputKey?: string;
 }
 
-export interface Swimlane {
+export interface Carril {
   id: string;
   nombre: string;
   orden: number;
@@ -25,11 +25,12 @@ export interface NodoBase {
     x: number;
     y: number;
   };
-  swimlaneId: string;
+  carrilId: string;
 }
 
 export interface NodoActividad extends NodoBase {
   nombre: string;
+  dptoResponsable?: string;
   esquemaFormulario: CampoForm[];
 }
 
@@ -42,11 +43,13 @@ export type NodoCanvas = NodoActividad | NodoCompuerta;
 export interface PoliticaNegocio {
   id?: string;
   nombre: string;
+  codigoInvitacion?: string;
+  editoresAutorizados?: string[];
   version: number;
   estado: string;
   creadoPor?: string;
   fechaCreacion?: string;
-  swimlanes?: Swimlane[];
+  carriles?: Carril[];
   nodos: NodoCanvas[];
   aristas: Arista[];
 }

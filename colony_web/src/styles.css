@@ -26,17 +26,20 @@
   --color-info: #3b82f6; /* Azul claro: Alertas informativas */
 
   /* COLORES ESPECÍFICOS DEL CANVAS (Nodos y Calles) */
-  --color-canvas-bg: #f1f5f9;         /* Gris muy claro para el fondo del lienzo (estilo Miro/Figma) */
+  --color-canvas-bg: #f8fafc;         /* Gris muy claro para el fondo del lienzo (estilo Miro/Figma) */
+  --color-lane-header: #f1f5f9;
   --color-canvas-grid: #cbd5e1;       /* Gris medio para los puntos o líneas de la cuadrícula */
   --color-swimlane-border: #94a3b8;   /* Borde para separar las calles/departamentos */
   --color-swimlane-bg-alt: #ffffff;   /* Fondo alterno para las calles (cebreado sutil) */
   
   /* Semántica de Nodos */
   --color-node-start: #10b981;        /* Verde: Nodo de Inicio */
-  --color-node-task: #ffffff;         /* Blanco con borde primario: Nodo de Actividad (Tarea) */
-  --color-node-gateway: #f59e0b;      /* Naranja/Ámbar: Nodo de Compuerta (Decisión/Paralelo) */
+  --color-node-task: #dbeafe;         /* Azul claro para nodo de tarea */
+  --color-node-border: #3b82f6;
+  --color-node-gateway: #312e81;      /* Azul indigo para nodo de compuerta */
   --color-node-end: #ef4444;          /* Rojo: Nodo de Fin */
   --color-node-line: #64748b;         /* Color de las flechas conectoras */
+  --color-glow-success: #22c55e;
 
   /* Alias para clases utilitarias en el Canvas */
   --canvas-bg: var(--color-canvas-bg);
@@ -75,8 +78,14 @@
 }
 
 @layer components {
-  /* Trazo mas organico para aristas del editor */
-  rete-connection path,
+  .edge-label {
+    z-index: 50 !important;
+    background-color: white !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
   .connection path,
   svg.connection path {
     stroke: #111111 !important;
@@ -86,7 +95,6 @@
     filter: drop-shadow(0 1px 0 rgba(15, 23, 42, 0.08));
   }
 
-  rete-connection marker path,
   .connection marker path,
   svg.connection marker path {
     fill: #111111 !important;

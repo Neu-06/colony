@@ -12,6 +12,5 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodoActividad extends NodoBase {
 
-    private String nombre;
     private List<CampoForm> esquemaFormulario;
 }

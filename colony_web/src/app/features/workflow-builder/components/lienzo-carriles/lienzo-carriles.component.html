@@ -1,0 +1,73 @@
+<section class="relative h-full w-full overflow-auto rounded-2xl border border-gray-300 bg-[var(--color-canvas-bg)]">
+  <div
+    class="relative min-w-[1100px] origin-top-left transition-transform duration-150"
+    [style.transform]="'scale(' + zoomNivel() + ')'"
+    [style.height.px]="altoTotalCanvasPx()"
+  >
+    <div #boardSurface class="absolute inset-0">
+      <div class="absolute inset-0 z-0 flex flex-col">
+        @for (carril of carriles(); track carril.id; let laneIndex = $index) {
+          <section
+            data-lane-visual
+            class="relative border-b border-gray-300"
+            [style.height.px]="altoCarrilPx"
+            [ngClass]="laneIndex % 2 === 0 ? 'bg-slate-50' : 'bg-white'"
+          ></section>
+        }
+      </div>
+
+      <div
+        #jsplumbContainer
+        id="jsplumb-container"
+        data-lane-dropzone
+        class="absolute inset-0 z-10 h-full w-full"
+        (dragover)="allowDrop($event)"
+        (drop)="onDrop($event)"
+        (click)="clearSelection($event)"
+      >
+        @for (nodo of nodos(); track nodo.idNodo) {
+          <article
+            [id]="nodeElementId(nodo.idNodo)"
+            data-node-card
+            (click)="onNodeClick(nodo, $event)"
+            class="absolute z-20 cursor-move select-none"
+            [style.left.px]="nodo.posicion.x"
+            [style.top.px]="nodo.posicion.y"
+            [ngClass]="isSelected(nodo.idNodo) ? 'ring-2 ring-blue-500 ring-offset-1 rounded-md' : ''"
+          >
+            <app-nodo-visual [datos]="nodo"></app-nodo-visual>
+          </article>
+        }
+      </div>
+
+      <div class="pointer-events-none absolute inset-y-0 left-0 z-30 flex w-20 flex-col">
+        @for (carril of carriles(); track carril.id) {
+          <section class="relative border-b border-gray-300" [style.height.px]="altoCarrilPx">
+            <div class="pointer-events-auto absolute inset-y-0 left-0 flex w-20 items-center justify-center border-r border-gray-300 bg-[var(--color-lane-header)] px-2">
+              @if (carrilEditandoId === carril.id) {
+                <input
+                  type="text"
+                  [attr.data-lane-input-for]="carril.id"
+                  [(ngModel)]="carril.nombre"
+                  (ngModelChange)="actualizarNombreCarril(carril.id, $event)"
+                  (blur)="finalizarEdicionCarril()"
+                  (keydown.enter)="finalizarEdicionCarril()"
+                  class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none focus:ring-1 focus:ring-blue-400 [text-orientation:mixed] [writing-mode:vertical-rl]"
+                />
+              } @else {
+                <button
+                  type="button"
+                  (click)="iniciarEdicionCarril(carril.id)"
+                  class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none [text-orientation:mixed] [writing-mode:vertical-rl]"
+                  title="Haz clic para renombrar carril"
+                >
+                  {{ carril.nombre || 'CARRIL' }}
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,12 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { CanvasStateService } from './services/canvas-state.service';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 interface ToolItem {
-  key: 'start' | 'task' | 'gateway' | 'end';
+  key: 'inicio' | 'tarea' | 'compuerta' | 'fin';
   dragType: 'INICIO' | 'TAREA' | 'COMPUERTA' | 'FIN';
-  label: string;
-  hint: string;
+  title: string;
 }
 
 @Component({
@@ -17,16 +15,13 @@ interface ToolItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToolbarComponent {
-  private readonly canvasState = inject(CanvasStateService);
-
-  readonly dragMimeType = 'application/x-canvas-node';
-  readonly zoomLevel = this.canvasState.zoomLevel;
+  readonly dragMimeType = 'application/x-diagramador-node';
 
   readonly items: ToolItem[] = [
-    { key: 'start', dragType: 'INICIO', label: 'Inicio', hint: 'Nodo inicial del flujo' },
-    { key: 'task', dragType: 'TAREA', label: 'Tarea', hint: 'Actividad del proceso' },
-    { key: 'gateway', dragType: 'COMPUERTA', label: 'Compuerta', hint: 'Condicion o desvio' },
-    { key: 'end', dragType: 'FIN', label: 'Fin', hint: 'Cierre del flujo' }
+    { key: 'inicio', dragType: 'INICIO', title: 'Inicio' },
+    { key: 'tarea', dragType: 'TAREA', title: 'Tarea' },
+    { key: 'compuerta', dragType: 'COMPUERTA', title: 'Compuerta' },
+    { key: 'fin', dragType: 'FIN', title: 'Fin' }
   ];
 
   onDragStart(event: DragEvent, dragType: ToolItem['dragType']): void {
@@ -35,15 +30,8 @@ export class ToolbarComponent {
     }
 
     event.dataTransfer.setData(this.dragMimeType, dragType);
+    event.dataTransfer.setData('application/x-canvas-node', dragType);
     event.dataTransfer.setData('text/plain', dragType);
     event.dataTransfer.effectAllowed = 'copy';
-  }
-
-  zoomOut(): void {
-    this.canvasState.decreaseZoom();
-  }
-
-  zoomIn(): void {
-    this.canvasState.increaseZoom();
   }
 }

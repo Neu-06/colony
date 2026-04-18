@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AlertaService } from '../../../core/services/alerta.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface UserRow {
@@ -29,6 +30,7 @@ interface UpdateUserPayload {
 export class UserManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
+  private readonly alertaService = inject(AlertaService);
   private readonly apiUrl = 'http://localhost:8080/api/usuarios';
   private readonly rootSuperAdminEmail = 'super@colony.com';
 
@@ -57,6 +59,7 @@ export class UserManagementComponent implements OnInit {
         this.isLoading = false;
         this.statusType = 'error';
         this.statusMessage = 'No se pudo cargar la lista de usuarios.';
+        this.alertaService.mostrarError(this.statusMessage);
       }
     });
   }
@@ -65,6 +68,7 @@ export class UserManagementComponent implements OnInit {
     if (this.isProtectedUser(user)) {
       this.statusType = 'error';
       this.statusMessage = 'El super admin principal no se puede degradar.';
+      this.alertaService.mostrarError(this.statusMessage);
       return;
     }
 
@@ -81,7 +85,7 @@ export class UserManagementComponent implements OnInit {
         this.isSavingMap[user.id] = false;
         this.statusType = 'success';
         this.statusMessage = `Cambios guardados para ${updatedUser.email}.`;
-        window.alert('Usuario actualizado correctamente.');
+        this.alertaService.mostrarExito('Usuario actualizado correctamente.');
       },
       error: (error: HttpErrorResponse) => {
         this.isSavingMap[user.id] = false;
@@ -89,11 +93,13 @@ export class UserManagementComponent implements OnInit {
         if (error.status === 401 || error.status === 403) {
           this.statusType = 'error';
           this.statusMessage = 'No tienes permisos suficientes para actualizar usuarios. Vuelve a iniciar sesion.';
+          this.alertaService.mostrarError(this.statusMessage);
           return;
         }
 
         this.statusType = 'error';
         this.statusMessage = `No se pudo actualizar ${user.email}.`;
+        this.alertaService.mostrarError(this.statusMessage);
       }
     });
   }

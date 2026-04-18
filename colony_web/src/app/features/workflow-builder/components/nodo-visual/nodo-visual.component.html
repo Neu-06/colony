@@ -1,0 +1,37 @@
+@switch (tipoNodo()) {
+  @case ('tarea') {
+    <div class="group relative">
+      <div class="w-40 max-w-[12rem] min-h-[4rem] h-auto flex flex-col justify-center items-center p-3 rounded-md border bg-[var(--color-node-task)] shadow-sm" [style.border-color]="'var(--color-node-border)'">
+        <span class="text-center text-wrap break-words overflow-hidden w-full text-xs font-semibold text-blue-900">
+          {{ etiquetaNodo() }}
+        </span>
+      </div>
+      <div class="conector-handle absolute -right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 cursor-crosshair items-center justify-center rounded-full border-2 border-slate-300 bg-white text-xs text-slate-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">+</div>
+    </div>
+  }
+  @case ('compuerta') {
+    <div class="group relative">
+      <div class="relative flex h-20 w-20 resize items-center justify-center overflow-hidden">
+        <div class="absolute h-14 w-14 rotate-45 rounded-sm bg-[var(--color-node-gateway)] shadow-sm"></div>
+        <span class="relative z-10 max-w-[52px] text-center text-[10px] font-semibold text-white">{{ etiquetaNodo() }}</span>
+      </div>
+      <div class="conector-handle absolute -right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 cursor-crosshair items-center justify-center rounded-full border-2 border-slate-300 bg-white text-xs text-slate-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">+</div>
+    </div>
+  }
+  @case ('inicio') {
+    <div class="group relative">
+      <div class="flex h-12 w-12 items-center justify-center rounded-full border border-emerald-500 bg-emerald-100 text-[10px] font-bold text-emerald-700 shadow-sm">
+        {{ etiquetaNodo() }}
+      </div>
+      <div class="conector-handle absolute -right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 cursor-crosshair items-center justify-center rounded-full border-2 border-slate-300 bg-white text-xs text-slate-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">+</div>
+    </div>
+  }
+  @case ('fin') {
+    <div class="group relative">
+      <div class="flex h-12 w-12 items-center justify-center rounded-full border border-rose-500 bg-rose-100 text-[10px] font-bold text-rose-700 shadow-sm">
+        {{ etiquetaNodo() }}
+      </div>
+      <div class="conector-handle absolute -right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 cursor-crosshair items-center justify-center rounded-full border-2 border-slate-300 bg-white text-xs text-slate-400 opacity-0 shadow-sm transition-opacity group-hover:opacity-100">+</div>
+    </div>
+  }
+}

@@ -1,53 +1,25 @@
-<aside class="h-full border-b border-border bg-surface p-4 lg:border-b-0 lg:border-r">
-  <h2 class="text-sm font-bold uppercase tracking-wide text-primary">Herramientas</h2>
-  <p class="mt-1 text-sm text-ink-light">Arrastra nodos al lienzo</p>
-
-  <div class="mt-4 rounded-xl border border-border bg-background p-3">
-    <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Zoom</p>
-    <div class="mt-2 flex items-center justify-between gap-2">
-      <button
-        type="button"
-        (click)="zoomOut()"
-        class="rounded-md border border-border px-2 py-1 text-sm font-semibold text-ink hover:border-primary"
-      >
-        -
-      </button>
-      <span class="text-sm font-semibold text-ink">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-      <button
-        type="button"
-        (click)="zoomIn()"
-        class="rounded-md border border-border px-2 py-1 text-sm font-semibold text-ink hover:border-primary"
-      >
-        +
-      </button>
-    </div>
-  </div>
-
-  <div class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-1">
+<aside class="h-full border-r border-border bg-surface p-3">
+  <div class="flex flex-row items-center gap-3">
     @for (item of items; track item.dragType) {
       <button
         type="button"
         draggable="true"
+        [title]="item.title"
         (dragstart)="onDragStart($event, item.dragType)"
-        class="flex cursor-grab items-center gap-3 rounded-xl border border-border bg-background px-3 py-3 text-left active:cursor-grabbing"
+        class="flex h-10 w-10 cursor-grab items-center justify-center rounded-lg border border-border bg-background active:cursor-grabbing"
       >
-        @if (item.key === 'start') {
-          <span class="h-8 w-8 rounded-full bg-[var(--node-start)]"></span>
+        @if (item.key === 'inicio') {
+          <span class="h-5 w-5 rounded-full bg-emerald-500"></span>
         }
-        @if (item.key === 'task') {
-          <span class="h-8 w-10 rounded-md border-2 border-[var(--color-primary)] bg-[var(--node-task)]"></span>
+        @if (item.key === 'tarea') {
+          <span class="h-5 w-7 rounded-md border border-[var(--color-node-border)] bg-[var(--color-node-task)]"></span>
         }
-        @if (item.key === 'gateway') {
-          <span class="h-8 w-8 rotate-45 rounded-sm bg-[var(--node-gateway)]"></span>
+        @if (item.key === 'compuerta') {
+          <span class="h-5 w-5 rotate-45 rounded-sm bg-[var(--color-node-gateway)]"></span>
         }
-        @if (item.key === 'end') {
-          <span class="h-8 w-8 rounded-full bg-[var(--node-end)]"></span>
+        @if (item.key === 'fin') {
+          <span class="h-5 w-5 rounded-full bg-rose-500"></span>
         }
-
-        <span class="block min-w-0">
-          <span class="block truncate text-sm font-semibold text-ink">{{ item.label }}</span>
-          <span class="block truncate text-xs text-ink-light">{{ item.hint }}</span>
-        </span>
       </button>
     }
   </div>
