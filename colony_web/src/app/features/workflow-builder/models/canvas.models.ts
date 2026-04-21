@@ -1,4 +1,5 @@
 export interface CampoFormulario {
+  id?: string;
   nombre: string;
   tipo: string;
   requerido: boolean;

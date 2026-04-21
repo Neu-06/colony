@@ -344,8 +344,9 @@ export class DiagramadorEstadoService {
         nombre: nodo.nombre || 'Nueva Tarea',
         dptoResponsable: nodo.dptoResponsable ?? '',
         esquemaFormulario: (nodo.esquemaFormulario ?? []).map((campo) => ({
+          id: campo.id || crypto.randomUUID(),
           nombre: campo.nombre ?? '',
-          tipo: campo.tipo ?? 'Texto',
+          tipo: this.normalizarTipoCampo(campo.tipo),
           requerido: !!campo.requerido
         }))
       };
@@ -365,6 +366,24 @@ export class DiagramadorEstadoService {
 
   private esActividad(nodo: NodoCanvas): nodo is NodoActividad {
     return nodo.tipo !== 'compuerta' && nodo.tipo !== 'salida_condicional' && nodo.tipo !== 'gateway';
+  }
+
+  private normalizarTipoCampo(tipo: string | undefined): string {
+    const valor = (tipo ?? '').toLowerCase();
+
+    if (valor === 'numero' || valor === 'number') {
+      return 'number';
+    }
+
+    if (valor === 'fecha' || valor === 'date') {
+      return 'date';
+    }
+
+    if (valor === 'booleano' || valor === 'boolean' || valor === 'bool') {
+      return 'boolean';
+    }
+
+    return 'text';
   }
 
   private nombreActividadPorTipo(tipo: TipoNodoHerramienta): string {

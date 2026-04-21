@@ -96,8 +96,9 @@ function clonarNodo(nodo: NodoCanvas): NodoCanvas {
     nombre: actividad.nombre ?? 'Nueva Tarea',
     dptoResponsable: actividad.dptoResponsable ?? '',
     esquemaFormulario: (actividad.esquemaFormulario ?? []).map((campo) => ({
+      id: campo.id || crypto.randomUUID(),
       nombre: campo.nombre ?? '',
-      tipo: campo.tipo ?? 'Texto',
+      tipo: normalizarTipoCampo(campo.tipo),
       requerido: !!campo.requerido
     }))
   };
@@ -125,4 +126,22 @@ function normalizarTipo(tipo: string): string {
   }
 
   return tipo || 'tarea';
+}
+
+function normalizarTipoCampo(tipo: string | undefined): string {
+  const valor = (tipo ?? '').toLowerCase();
+
+  if (valor === 'numero' || valor === 'number') {
+    return 'number';
+  }
+
+  if (valor === 'fecha' || valor === 'date') {
+    return 'date';
+  }
+
+  if (valor === 'booleano' || valor === 'boolean' || valor === 'bool') {
+    return 'boolean';
+  }
+
+  return 'text';
 }
