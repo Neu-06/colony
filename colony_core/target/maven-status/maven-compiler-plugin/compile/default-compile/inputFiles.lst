@@ -15,6 +15,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\security\JwtAuthFilter.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\security\JwtService.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\security\SecurityConfig.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\WebSocketConfig.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Arista.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\CampoForm.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Carril.java
@@ -28,6 +29,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\PoliticaNegocio.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Usuario.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\AuthController.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\CollaborativeWorkflowController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\DepartamentoController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\PoliticaController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\UsuarioController.java

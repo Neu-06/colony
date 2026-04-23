@@ -8,6 +8,16 @@ import { WorkflowTemplateService } from '../../services/workflow-template.servic
 import { HeaderToolbarComponent } from '../header-toolbar/header-toolbar.component';
 import { LienzoCarrilesComponent } from '../lienzo-carriles/lienzo-carriles.component';
 import { PanelPropiedadesComponent } from '../panel-propiedades/panel-propiedades.component';
+import { CollabService } from '../../services/collab.service';
+import { effect, computed, signal, HostListener } from '@angular/core';
+import { Subscription } from 'rxjs';
+
+export interface CursorInfo {
+  x: number;
+  y: number;
+  name: string;
+  color: string;
+}
 
 @Component({
   selector: 'app-diagramador-page',
@@ -25,6 +35,10 @@ export class DiagramadorPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly workflowTemplateService = inject(WorkflowTemplateService);
+  private readonly collabService = inject(CollabService);
+
+  private collabSub?: Subscription;
+  private isApplyingSync = false;
 
   flowName = 'Nuevo Flujo';
   isSaving = false;
@@ -36,13 +50,101 @@ export class DiagramadorPageComponent {
 
   readonly politicaActivaId = this.estado.politicaActivaId;
   readonly zoomNivel = this.estado.zoomNivel;
+  
+  readonly roomCode = this.collabService.roomCode;
+  readonly isInitiator = this.collabService.isInitiator;
+
+  // Cursos colaborativos
+  readonly cursors = signal<Record<string, CursorInfo>>({});
+  readonly cursorsArray = computed(() => {
+    const obj = this.cursors();
+    return Object.keys(obj).map(key => ({ id: key, ...obj[key] }));
+  });
+  readonly myName = 'Admin-' + this.collabService.clientId.substring(0, 4);
+  private cursorTimeouts: Record<string, any> = {};
+
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    if (this.collabService.isConnected()) {
+      // Throttle manual simple (opcional, pero ayuda a no saturar el socket)
+      if (this.lastMouseMove && Date.now() - this.lastMouseMove < 50) return;
+      this.lastMouseMove = Date.now();
+
+      this.collabService.sendAction({
+        type: 'CURSOR_MOVE',
+        payload: { x: event.clientX, y: event.clientY, name: this.myName, color: '#ec4899' }
+      });
+    }
+  }
+  private lastMouseMove = 0;
 
   constructor() {
+    effect(() => {
+      // Dependencias del effect (se llamará cuando cambien)
+      const carriles = this.estado.carriles();
+      const nodos = this.estado.nodos();
+      const aristas = this.estado.aristas();
+      const zoom = this.estado.zoomNivel();
+
+      if (this.collabService.isConnected() && !this.isApplyingSync) {
+        const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+        this.collabService.sendAction({
+          type: 'SYNC_STATE',
+          payload: { flowName: this.flowName, politica }
+        });
+      }
+    });
+
+    this.collabSub = this.collabService.actionReceived$.subscribe(action => {
+      if (action.type === 'SYNC_STATE') {
+        this.isApplyingSync = true;
+        this.flowName = action.payload.flowName;
+        this.estado.hidratarDesdePolitica(action.payload.politica);
+        // Pequeño timeout para permitir que Angular detecte cambios antes de reactivar la sincronización
+        setTimeout(() => this.isApplyingSync = false, 50);
+      } else if (action.type === 'CURSOR_MOVE') {
+        const { x, y, name, color } = action.payload;
+        this.cursors.update(c => ({
+          ...c,
+          [action.senderId]: { x, y, name, color }
+        }));
+        
+        if (this.cursorTimeouts[action.senderId]) {
+          clearTimeout(this.cursorTimeouts[action.senderId]);
+        }
+        this.cursorTimeouts[action.senderId] = setTimeout(() => {
+          this.cursors.update(c => {
+            const newC = { ...c };
+            delete newC[action.senderId];
+            return newC;
+          });
+        }, 5000); // El cursor desaparece tras 5 segundos de inactividad
+      } else if (action.type === 'ROOM_CLOSED') {
+        this.alertaService.mostrarExito('El creador de la sesión ha cerrado el canvas.');
+        this.collabService.leaveRoom();
+        this.router.navigate(['/app/canvas']);
+      } else if (action.type === 'GUEST_JOINED') {
+        if (this.collabService.isInitiator()) {
+          const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+          this.collabService.sendAction({
+            type: 'SYNC_STATE',
+            payload: { flowName: this.flowName, politica }
+          });
+        }
+      }
+    });
+
     this.route.paramMap.subscribe((params) => {
       const policyId = params.get('id');
       const templateId = this.route.snapshot.queryParamMap.get('template');
       const currentPath = this.route.snapshot.routeConfig?.path ?? '';
       this.isReadOnlyMode = currentPath.includes('publicadas');
+
+      const roomCodeParam = this.route.snapshot.queryParamMap.get('roomCode');
+      if (roomCodeParam) {
+        this.joinRoom(roomCodeParam);
+        // Do not return here, let it initialize a blank canvas which will be overwritten by SYNC_STATE
+      }
 
       if (!policyId && !templateId) {
         this.estado.limpiarDiagrama();
@@ -114,12 +216,53 @@ export class DiagramadorPageComponent {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.collabSub) {
+      this.collabSub.unsubscribe();
+    }
+    this.collabService.leaveRoom();
+  }
+
+  createRoom(): void {
+    this.collabService.createRoom();
+    this.alertaService.mostrarExito('Código de invitación generado. Compártelo con otros administradores.');
+    
+    // Enviar estado inicial
+    setTimeout(() => {
+      this.isApplyingSync = false;
+      const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+      this.collabService.sendAction({
+        type: 'SYNC_STATE',
+        payload: { flowName: this.flowName, politica }
+      });
+    }, 1000);
+  }
+
+  joinRoom(code: string): void {
+    this.collabService.joinRoom(code);
+    this.alertaService.mostrarExito(`Uniéndose al canvas ${code}...`);
+  }
+
+  leaveRoom(): void {
+    this.collabService.leaveRoom();
+    if (!this.isInitiator()) {
+      this.router.navigate(['/app/canvas']);
+    }
+  }
+
   onFlowNameChange(value: string): void {
     if (this.isReadOnlyMode) {
       return;
     }
 
     this.flowName = value;
+    if (this.collabService.isConnected() && !this.isApplyingSync) {
+      const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+      this.collabService.sendAction({
+        type: 'SYNC_STATE',
+        payload: { flowName: this.flowName, politica }
+      });
+    }
   }
 
   agregarCarril(): void {

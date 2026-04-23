@@ -22,6 +22,8 @@ export class HeaderToolbarComponent {
   @Input() hasActivePolicy = false;
   @Input() zoomNivel = 1;
   @Input() isReadOnly = false;
+  @Input() roomCode: string | null = null;
+  @Input() isInitiator = false;
 
   @Output() readonly flowNameChange = new EventEmitter<string>();
   @Output() readonly addCarril = new EventEmitter<void>();
@@ -30,6 +32,8 @@ export class HeaderToolbarComponent {
   @Output() readonly deleteDiagram = new EventEmitter<void>();
   @Output() readonly zoomIn = new EventEmitter<void>();
   @Output() readonly zoomOut = new EventEmitter<void>();
+  @Output() readonly createRoom = new EventEmitter<void>();
+  @Output() readonly leaveRoom = new EventEmitter<void>();
 
   readonly dragMimeType = 'application/x-diagramador-node';
 

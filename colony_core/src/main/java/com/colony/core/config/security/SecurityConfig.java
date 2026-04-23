@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws-collab/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

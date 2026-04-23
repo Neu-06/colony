@@ -7,6 +7,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { PoliticaService } from '../../core/services/politica.service';
 import { WorkflowTemplateService } from './services/workflow-template.service';
 import { WorkflowTemplate } from './templates/workflow-templates.data';
+import { Router } from '@angular/router';
+import Swal from 'sweetalert2';
 
 
 @Component({
@@ -20,6 +22,7 @@ export class CanvasComponent implements OnInit {
   private readonly alertaService = inject(AlertaService);
   private readonly authService = inject(AuthService);
   private readonly workflowTemplateService = inject(WorkflowTemplateService);
+  private readonly router = inject(Router);
 
   borradores: PoliticaNegocio[] = [];
   plantillas: WorkflowTemplate[] = [];
@@ -89,5 +92,27 @@ export class CanvasComponent implements OnInit {
         this.alertaService.mostrarError(this.errorMessage);
       }
     });
+  }
+
+  async onJoinRoom(): Promise<void> {
+    const { value: code } = await Swal.fire({
+      title: 'Unirse a Canvas',
+      input: 'text',
+      inputLabel: 'Introduce el código de invitación',
+      inputPlaceholder: 'Ej: AB123C',
+      showCancelButton: true,
+      confirmButtonText: 'Unirse',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return '¡Necesitas escribir un código!';
+        }
+        return null;
+      }
+    });
+
+    if (code) {
+      void this.router.navigate(['/app/canvas'], { queryParams: { roomCode: code.trim().toUpperCase() } });
+    }
   }
 }

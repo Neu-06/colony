@@ -1,4 +1,20 @@
 <main class="h-dvh w-screen overflow-hidden bg-[var(--color-canvas-bg)] text-ink">
+  <!-- Cursors Colaborativos -->
+  @for (cursor of cursorsArray(); track cursor.id) {
+    <div 
+      class="pointer-events-none fixed z-[9999] flex flex-col items-start transition-all duration-75 ease-linear"
+      [style.left.px]="cursor.x"
+      [style.top.px]="cursor.y"
+    >
+      <svg [attr.fill]="cursor.color" width="24" height="24" viewBox="0 0 24 24" class="drop-shadow-md">
+        <path d="M4 2l6 17 2-6 6-2-14-9z" stroke="white" stroke-width="2"/>
+      </svg>
+      <span [style.background-color]="cursor.color" class="ml-4 mt-1 whitespace-nowrap rounded px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+        {{ cursor.name }}
+      </span>
+    </div>
+  }
+
   <section class="flex h-full min-w-0 flex-col">
     <app-header-toolbar
       [flowName]="flowName"
@@ -7,6 +23,8 @@
       [hasActivePolicy]="!!politicaActivaId()"
       [zoomNivel]="zoomNivel()"
       [isReadOnly]="isReadOnlyMode"
+      [roomCode]="roomCode()"
+      [isInitiator]="isInitiator()"
       (flowNameChange)="onFlowNameChange($event)"
       (addCarril)="agregarCarril()"
       (saveDraft)="guardarBorrador()"
@@ -14,6 +32,8 @@
       (deleteDiagram)="eliminarDiagramaActual()"
       (zoomIn)="zoomIn()"
       (zoomOut)="zoomOut()"
+      (createRoom)="createRoom()"
+      (leaveRoom)="leaveRoom()"
     ></app-header-toolbar>
 
     @if (saveMessage || isLoadingPolicy) {
