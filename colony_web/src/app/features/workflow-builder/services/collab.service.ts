@@ -45,7 +45,11 @@ export class CollabService {
     }
     
     if (this.client) {
-      this.client.deactivate();
+      const activeClient = this.client;
+      // Pequeño retraso para que el socket transmita el ROOM_CLOSED antes de cerrarse
+      setTimeout(() => {
+        activeClient.deactivate();
+      }, 150);
       this.client = null;
     }
     this._roomCode.set(null);

@@ -39,6 +39,8 @@ export class DiagramadorPageComponent {
 
   private collabSub?: Subscription;
   private isApplyingSync = false;
+  private syncInterval: any;
+  private lastSyncStr = '';
 
   flowName = 'Nuevo Flujo';
   isSaving = false;
@@ -79,29 +81,14 @@ export class DiagramadorPageComponent {
   private lastMouseMove = 0;
 
   constructor() {
-    effect(() => {
-      // Dependencias del effect (se llamará cuando cambien)
-      const carriles = this.estado.carriles();
-      const nodos = this.estado.nodos();
-      const aristas = this.estado.aristas();
-      const zoom = this.estado.zoomNivel();
-
-      if (this.collabService.isConnected() && !this.isApplyingSync) {
-        const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
-        this.collabService.sendAction({
-          type: 'SYNC_STATE',
-          payload: { flowName: this.flowName, politica }
-        });
-      }
-    });
-
     this.collabSub = this.collabService.actionReceived$.subscribe(action => {
       if (action.type === 'SYNC_STATE') {
         this.isApplyingSync = true;
         this.flowName = action.payload.flowName;
         this.estado.hidratarDesdePolitica(action.payload.politica);
-        // Pequeño timeout para permitir que Angular detecte cambios antes de reactivar la sincronización
-        setTimeout(() => this.isApplyingSync = false, 50);
+        this.lastSyncStr = JSON.stringify(action.payload.politica);
+        // Timeout para evitar que la hidratación envíe la política de vuelta inmediatamente
+        setTimeout(() => this.isApplyingSync = false, 500);
       } else if (action.type === 'CURSOR_MOVE') {
         const { x, y, name, color } = action.payload;
         this.cursors.update(c => ({
@@ -122,10 +109,12 @@ export class DiagramadorPageComponent {
       } else if (action.type === 'ROOM_CLOSED') {
         this.alertaService.mostrarExito('El creador de la sesión ha cerrado el canvas.');
         this.collabService.leaveRoom();
-        this.router.navigate(['/app/canvas']);
+        this.router.navigate(['/app']);
       } else if (action.type === 'GUEST_JOINED') {
         if (this.collabService.isInitiator()) {
+          this.sincronizarPosicionesYCarrilesDesdeDOM();
           const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+          this.lastSyncStr = JSON.stringify(politica);
           this.collabService.sendAction({
             type: 'SYNC_STATE',
             payload: { flowName: this.flowName, politica }
@@ -133,6 +122,23 @@ export class DiagramadorPageComponent {
         }
       }
     });
+
+    // Bucle de sincronización en tiempo real (1 vez por segundo)
+    this.syncInterval = setInterval(() => {
+      if (this.collabService.isConnected() && !this.isApplyingSync) {
+        this.sincronizarPosicionesYCarrilesDesdeDOM();
+        const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+        const currentStateStr = JSON.stringify(politica);
+        
+        if (this.lastSyncStr !== currentStateStr) {
+          this.lastSyncStr = currentStateStr;
+          this.collabService.sendAction({
+            type: 'SYNC_STATE',
+            payload: { flowName: this.flowName, politica }
+          });
+        }
+      }
+    }, 1000);
 
     this.route.paramMap.subscribe((params) => {
       const policyId = params.get('id');
@@ -217,6 +223,9 @@ export class DiagramadorPageComponent {
   }
 
   ngOnDestroy(): void {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+    }
     if (this.collabSub) {
       this.collabSub.unsubscribe();
     }
@@ -246,7 +255,7 @@ export class DiagramadorPageComponent {
   leaveRoom(): void {
     this.collabService.leaveRoom();
     if (!this.isInitiator()) {
-      this.router.navigate(['/app/canvas']);
+      this.router.navigate(['/app']);
     }
   }
 
