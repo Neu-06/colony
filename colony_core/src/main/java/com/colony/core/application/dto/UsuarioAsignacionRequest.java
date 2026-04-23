@@ -4,6 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 
 public record UsuarioAsignacionRequest(
         @NotBlank String rol,
-        @NotBlank String departamento
+        @NotBlank String departamentoId
 ) {
 }

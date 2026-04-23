@@ -28,6 +28,7 @@ export class PanelPropiedadesComponent {
 
   nodoSeleccionadoActual: NodoCanvas | null = null;
   nodoActividadSeleccionado: NodoActividad | null = null;
+  nodoEstadoSeleccionado: NodoActividad | null = null;
   nodoCompuertaSeleccionado: NodoCompuerta | null = null;
   aristaSeleccionadaActual: Arista | null = null;
   camposFormulario: CampoFormulario[] = [];
@@ -51,7 +52,8 @@ export class PanelPropiedadesComponent {
 
       this.nodoSeleccionadoActual = nodo;
       this.aristaSeleccionadaActual = arista;
-      this.nodoActividadSeleccionado = this.esNodoActividad(nodo) ? nodo : null;
+      this.nodoActividadSeleccionado = this.esNodoActividadEditable(nodo) ? nodo : null;
+      this.nodoEstadoSeleccionado = this.esNodoEstado(nodo) ? nodo : null;
       this.nodoCompuertaSeleccionado = this.esNodoCompuerta(nodo) ? nodo : null;
       this.camposFormulario = this.nodoActividadSeleccionado?.esquemaFormulario ?? [];
 
@@ -82,7 +84,7 @@ export class PanelPropiedadesComponent {
 
     this.actividadForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       const nodo = this.nodoSeleccionadoSignal();
-      if (!nodo || !this.esNodoActividad(nodo)) {
+      if (!nodo || !this.esNodoActividadEditable(nodo)) {
         return;
       }
 
@@ -163,12 +165,21 @@ export class PanelPropiedadesComponent {
     this.estado.limpiarSeleccionArista();
   }
 
-  private esNodoActividad(nodo: NodoCanvas | null): nodo is NodoActividad {
+  private esNodoActividadEditable(nodo: NodoCanvas | null): nodo is NodoActividad {
     if (!nodo) {
       return false;
     }
 
-    return nodo.tipo !== 'compuerta' && nodo.tipo !== 'gateway' && nodo.tipo !== 'salida_condicional';
+    return this.normalizarTipo(nodo.tipo) === 'tarea';
+  }
+
+  private esNodoEstado(nodo: NodoCanvas | null): nodo is NodoActividad {
+    if (!nodo) {
+      return false;
+    }
+
+    const tipo = this.normalizarTipo(nodo.tipo);
+    return tipo === 'inicio' || tipo === 'fin';
   }
 
   private esNodoCompuerta(nodo: NodoCanvas | null): nodo is NodoCompuerta {
@@ -177,6 +188,24 @@ export class PanelPropiedadesComponent {
     }
 
     return nodo.tipo === 'compuerta' || nodo.tipo === 'gateway' || nodo.tipo === 'salida_condicional';
+  }
+
+  private normalizarTipo(tipo: string): 'inicio' | 'fin' | 'compuerta' | 'tarea' {
+    const valor = (tipo ?? '').toLowerCase();
+
+    if (valor === 'inicio' || valor === 'start') {
+      return 'inicio';
+    }
+
+    if (valor === 'fin' || valor === 'end') {
+      return 'fin';
+    }
+
+    if (valor === 'compuerta' || valor === 'gateway' || valor === 'salida_condicional') {
+      return 'compuerta';
+    }
+
+    return 'tarea';
   }
 
   private persistirEsquemaFormulario(campos: CampoFormulario[]): void {

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DepartamentoDto, DepartamentoService } from '../../../core/services/departamento.service';
 import { AlertaService } from '../../../core/services/alerta.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -11,14 +12,15 @@ interface UserRow {
   apellidos: string;
   email: string;
   rol: string;
-  departamento: string;
+  departamentoId: string;
+  departamentoNombre?: string;
   telefono?: string;
   activo?: boolean;
 }
 
 interface UpdateUserPayload {
   rol: string;
-  departamento: string;
+  departamentoId: string;
 }
 
 @Component({
@@ -31,19 +33,24 @@ export class UserManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
   private readonly alertaService = inject(AlertaService);
+  private readonly departamentoService = inject(DepartamentoService);
   private readonly apiUrl = 'http://localhost:8080/api/usuarios';
   private readonly rootSuperAdminEmail = 'super@colony.com';
+  private readonly sinAsignar = 'SIN_ASIGNAR';
 
   readonly roles = ['SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO'];
-  readonly departamentos = ['SIN_ASIGNAR', 'RRHH', 'LEGAL', 'FINANZAS', 'SISTEMAS'];
 
   users: UserRow[] = [];
+  departamentos: DepartamentoDto[] = [];
+
   isLoading = false;
+  isLoadingDepartamentos = false;
   isSavingMap: Record<string, boolean> = {};
   statusMessage = '';
   statusType: 'success' | 'error' | '' = '';
 
   ngOnInit(): void {
+    this.loadDepartamentos();
     this.loadUsers();
   }
 
@@ -64,6 +71,21 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
+  loadDepartamentos(): void {
+    this.isLoadingDepartamentos = true;
+
+    this.departamentoService.listar().subscribe({
+      next: (departamentos) => {
+        this.departamentos = departamentos;
+        this.isLoadingDepartamentos = false;
+      },
+      error: () => {
+        this.isLoadingDepartamentos = false;
+        this.alertaService.mostrarError('No se pudieron cargar los departamentos.');
+      }
+    });
+  }
+
   saveUser(user: UserRow): void {
     if (this.isProtectedUser(user)) {
       this.statusType = 'error';
@@ -74,7 +96,7 @@ export class UserManagementComponent implements OnInit {
 
     const payload: UpdateUserPayload = {
       rol: user.rol,
-      departamento: user.departamento
+      departamentoId: user.departamentoId || this.sinAsignar
     };
 
     this.isSavingMap[user.id] = true;
@@ -107,5 +129,9 @@ export class UserManagementComponent implements OnInit {
   isProtectedUser(user: UserRow): boolean {
     const email = user.email.toLowerCase();
     return email === this.rootSuperAdminEmail || email === this.authService.getCurrentEmail().toLowerCase();
+  }
+
+  etiquetaDepartamento(departamento: DepartamentoDto): string {
+    return departamento.nombre;
   }
 }

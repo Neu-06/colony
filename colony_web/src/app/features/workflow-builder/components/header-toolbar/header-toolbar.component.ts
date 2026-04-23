@@ -21,6 +21,7 @@ export class HeaderToolbarComponent {
   @Input() isDeleting = false;
   @Input() hasActivePolicy = false;
   @Input() zoomNivel = 1;
+  @Input() isReadOnly = false;
 
   @Output() readonly flowNameChange = new EventEmitter<string>();
   @Output() readonly addCarril = new EventEmitter<void>();

@@ -3,6 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PoliticaNegocio } from '../models/canvas.models';
 
+export interface PoliticaPublicadaResumen {
+  id: string;
+  nombre: string;
+  version: number;
+  fechaCreacion?: string;
+  publicadoPorNombre: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -20,6 +28,14 @@ export class PoliticaService {
 
   obtenerPoliticaPorId(id: string): Observable<PoliticaNegocio> {
     return this.http.get<PoliticaNegocio>(`${this.apiUrl}/${id}`);
+  }
+
+  obtenerPoliticasPublicadas(): Observable<PoliticaPublicadaResumen[]> {
+    return this.http.get<PoliticaPublicadaResumen[]>(`${this.apiUrl}/publicadas`);
+  }
+
+  obtenerPoliticaPublicadaPorId(id: string): Observable<PoliticaNegocio> {
+    return this.http.get<PoliticaNegocio>(`${this.apiUrl}/publicadas/${id}`);
   }
 
   eliminarPolitica(id: string): Observable<void> {

@@ -34,10 +34,11 @@ export class DashboardLayoutComponent {
   }
 
   canAccessCanvas(): boolean {
-    return this.currentRole === 'SUPER_ADMIN' || this.currentRole === 'ADMIN';
+    return this.currentRole === 'ADMIN';
   }
 
   isPendingAssignment(): boolean {
-    return this.currentRole === 'FUNCIONARIO' && this.currentDepartment === 'SIN_ASIGNAR';
+    return this.currentRole === 'FUNCIONARIO'
+      && (!this.currentDepartment || this.currentDepartment === 'SIN_ASIGNAR');
   }
 }

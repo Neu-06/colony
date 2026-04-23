@@ -22,13 +22,14 @@ export function fromPoliticaToSnapshot(politica: PoliticaNegocio): SnapshotWorkf
     .map((carril, index) => ({
       id: carril.id || `carril-${index + 1}`,
       nombre: carril.nombre?.trim() || `Departamento ${index + 1}`,
+      departamentoId: carril.departamentoId,
       orden: Number(carril.orden ?? index + 1)
     }))
     .sort((a, b) => a.orden - b.orden);
 
   const carrilesNormalizados = carriles.length
     ? carriles
-    : [{ id: 'carril-1', nombre: 'Departamento 1', orden: 1 }];
+    : [{ id: 'carril-1', nombre: 'Departamento 1', departamentoId: undefined, orden: 1 }];
 
   return {
     carriles: carrilesNormalizados,
@@ -47,6 +48,7 @@ export function toPoliticaFromSnapshot(snapshot: SnapshotWorkflow, meta: MetaPol
   const carriles = snapshot.carriles.map((carril, index) => ({
     id: carril.id,
     nombre: carril.nombre?.trim() || `Departamento ${index + 1}`,
+    departamentoId: carril.departamentoId,
     orden: Number(carril.orden ?? index + 1)
   }));
 

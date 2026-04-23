@@ -12,6 +12,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DepartamentoDto, DepartamentoService } from '../../../../core/services/departamento.service';
 import { NodoCanvas, TipoNodoHerramienta } from '../../models/canvas.models';
 import { NodoVisualComponent } from '../nodo-visual/nodo-visual.component';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
@@ -35,6 +36,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
 
   private readonly estado = inject(DiagramadorEstadoService);
   private readonly jsplumb = inject(JsplumbWrapperService);
+  private readonly departamentoService = inject(DepartamentoService);
   private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('boardSurface', { static: true })
@@ -58,6 +60,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   private vistaLista = false;
   private redrawHandle: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  departamentos: DepartamentoDto[] = [];
   carrilEditandoId: string | null = null;
 
   constructor() {
@@ -77,6 +80,8 @@ export class LienzoCarrilesComponent implements AfterViewInit {
         this.redrawHandle = null;
       }
     });
+
+    this.cargarDepartamentos();
   }
 
   ngAfterViewInit(): void {
@@ -163,19 +168,32 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     this.estado.actualizarNombreCarril(carrilId, nombre);
   }
 
+  actualizarCarrilConDepartamento(carrilId: string, departamentoId: string): void {
+    const departamento = this.departamentos.find((item) => item.id === departamentoId);
+    if (!departamento) {
+      return;
+    }
+
+    this.estado.actualizarDepartamentoEnCarril(carrilId, departamento.id, departamento.nombre);
+    this.finalizarEdicionCarril();
+  }
+
   iniciarEdicionCarril(carrilId: string): void {
     this.carrilEditandoId = carrilId;
 
     requestAnimationFrame(() => {
-      const selector = `input[data-lane-input-for="${carrilId}"]`;
-      const input = this.boardSurfaceRef.nativeElement.querySelector<HTMLInputElement>(selector);
-      input?.focus();
-      input?.select();
+      const selector = `[data-lane-input-for="${carrilId}"]`;
+      const control = this.boardSurfaceRef.nativeElement.querySelector<HTMLElement>(selector);
+      control?.focus();
     });
   }
 
   finalizarEdicionCarril(): void {
     this.carrilEditandoId = null;
+  }
+
+  trackByDepartamentoId(_index: number, departamento: DepartamentoDto): string {
+    return departamento.id;
   }
 
   @HostListener('window:resize')
@@ -354,5 +372,16 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     }
 
     this.jsplumb.destruir();
+  }
+
+  private cargarDepartamentos(): void {
+    this.departamentoService.listar().subscribe({
+      next: (departamentos) => {
+        this.departamentos = departamentos;
+      },
+      error: () => {
+        this.departamentos = [];
+      }
+    });
   }
 }

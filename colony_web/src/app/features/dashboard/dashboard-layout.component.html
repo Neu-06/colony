@@ -28,7 +28,7 @@
       </div>
 
       <nav class="space-y-2">
-        @if (!isPendingAssignment()) {
+        @if (canAccessCanvas() && !isPendingAssignment()) {
           <a
             routerLink="/app/workflow-builder"
             routerLinkActive="bg-primary text-white"
@@ -37,6 +37,18 @@
           >
             <p class="font-semibold">Workspaces</p>
             <p class="mt-1 text-xs opacity-80">Gestion de flujos y archivos</p>
+          </a>
+        }
+
+        @if (!isPendingAssignment()) {
+          <a
+            routerLink="/app/flujos-publicados"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Flujos Publicados</p>
+            <p class="mt-1 text-xs opacity-80">Ver diagramas ya publicados (solo lectura)</p>
           </a>
         }
 
@@ -61,6 +73,16 @@
           >
             <p class="font-semibold">Gestion de Usuarios</p>
             <p class="mt-1 text-xs opacity-80">Roles y departamentos del sistema</p>
+          </a>
+
+          <a
+            routerLink="/app/admin/departments"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Gestion de Departamentos</p>
+            <p class="mt-1 text-xs opacity-80">Alta, edicion y baja de departamentos</p>
           </a>
         }
       </nav>

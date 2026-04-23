@@ -25,7 +25,7 @@ public class Usuario implements UserDetails {
     private String email;
     private String password;
     private String rol;
-    private String departamento;
+    private String departamentoId;
     private Date fechaCreacion;
     private Boolean activo;
 

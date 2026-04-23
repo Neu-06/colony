@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AlertaService } from '../../../../core/services/alerta.service';
 import { PoliticaService } from '../../../../core/services/politica.service';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
+import { WorkflowTemplateService } from '../../services/workflow-template.service';
 import { HeaderToolbarComponent } from '../header-toolbar/header-toolbar.component';
 import { LienzoCarrilesComponent } from '../lienzo-carriles/lienzo-carriles.component';
 import { PanelPropiedadesComponent } from '../panel-propiedades/panel-propiedades.component';
@@ -23,6 +24,7 @@ export class DiagramadorPageComponent {
   private readonly politicaService = inject(PoliticaService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly workflowTemplateService = inject(WorkflowTemplateService);
 
   flowName = 'Nuevo Flujo';
   isSaving = false;
@@ -30,6 +32,7 @@ export class DiagramadorPageComponent {
   isLoadingPolicy = false;
   isSidebarOpen = false;
   saveMessage = '';
+  isReadOnlyMode = false;
 
   readonly politicaActivaId = this.estado.politicaActivaId;
   readonly zoomNivel = this.estado.zoomNivel;
@@ -37,6 +40,55 @@ export class DiagramadorPageComponent {
   constructor() {
     this.route.paramMap.subscribe((params) => {
       const policyId = params.get('id');
+      const templateId = this.route.snapshot.queryParamMap.get('template');
+      const currentPath = this.route.snapshot.routeConfig?.path ?? '';
+      this.isReadOnlyMode = currentPath.includes('publicadas');
+
+      if (!policyId && !templateId) {
+        this.estado.limpiarDiagrama();
+        this.flowName = 'Nuevo Flujo';
+        return;
+      }
+
+      if (this.isReadOnlyMode) {
+        if (!policyId) {
+          this.estado.limpiarDiagrama();
+          this.flowName = 'Nuevo Flujo';
+          return;
+        }
+
+        this.isLoadingPolicy = true;
+        this.saveMessage = '';
+
+        this.politicaService.obtenerPoliticaPublicadaPorId(policyId).subscribe({
+          next: (politica) => {
+            this.estado.hidratarDesdePolitica(politica);
+            this.flowName = politica.nombre || 'Flujo publicado';
+            this.isLoadingPolicy = false;
+          },
+          error: () => {
+            this.isLoadingPolicy = false;
+            this.saveMessage = 'No se pudo cargar el flujo publicado solicitado.';
+            this.alertaService.mostrarError(this.saveMessage);
+          }
+        });
+        return;
+      }
+
+      if (!policyId && templateId) {
+        const plantilla = this.workflowTemplateService.obtenerPlantillaParaEdicion(templateId);
+        if (!plantilla) {
+          this.estado.limpiarDiagrama();
+          this.flowName = 'Nuevo Flujo';
+          this.saveMessage = 'La plantilla seleccionada no existe.';
+          this.alertaService.mostrarError(this.saveMessage);
+          return;
+        }
+
+        this.estado.hidratarDesdePolitica(plantilla);
+        this.flowName = plantilla.nombre || 'Nuevo Flujo';
+        return;
+      }
 
       if (!policyId) {
         this.estado.limpiarDiagrama();
@@ -63,24 +115,44 @@ export class DiagramadorPageComponent {
   }
 
   onFlowNameChange(value: string): void {
+    if (this.isReadOnlyMode) {
+      return;
+    }
+
     this.flowName = value;
   }
 
   agregarCarril(): void {
+    if (this.isReadOnlyMode) {
+      return;
+    }
+
     this.estado.agregarCarril();
   }
 
   guardarBorrador(): void {
+    if (this.isReadOnlyMode) {
+      return;
+    }
+
     this.sincronizarPosicionesYCarrilesDesdeDOM();
     this.persistPolicy('BORRADOR', true);
   }
 
   publicarFlujo(): void {
+    if (this.isReadOnlyMode) {
+      return;
+    }
+
     this.estado.sincronizarCarrilIdSegunPosicionY(DiagramadorPageComponent.ALTO_CARRIL_PX);
     this.persistPolicy('PUBLICADA');
   }
 
   async eliminarDiagramaActual(): Promise<void> {
+    if (this.isReadOnlyMode) {
+      return;
+    }
+
     const policyId = this.politicaActivaId();
     if (!policyId) {
       this.saveMessage = 'Primero guarda el flujo para poder eliminarlo.';

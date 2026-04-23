@@ -14,7 +14,7 @@
         (click)="eliminarNodoSeleccionado()"
         class="w-full rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
       >
-        Eliminar Nodo Seleccionado
+        Eliminar
       </button>
     </div>
   }
@@ -87,6 +87,13 @@
         </div>
       </section>
     </form>
+  }
+
+  @if (nodoEstadoSeleccionado) {
+    <section class="mt-4 rounded-xl border border-border bg-background p-3 text-sm text-ink-light">
+      <p class="font-semibold text-ink">Nodo de estado</p>
+      <p class="mt-1">Los nodos Inicio y Fin son de solo estado y no permiten editar nombre ni formulario.</p>
+    </section>
   }
 
   @if (nodoCompuertaSeleccionado) {

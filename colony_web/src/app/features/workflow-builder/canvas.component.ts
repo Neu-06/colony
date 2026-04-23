@@ -3,7 +3,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { PoliticaNegocio } from '../../core/models/canvas.models';
 import { AlertaService } from '../../core/services/alerta.service';
+import { AuthService } from '../../core/services/auth.service';
 import { PoliticaService } from '../../core/services/politica.service';
+import { WorkflowTemplateService } from './services/workflow-template.service';
+import { WorkflowTemplate } from './templates/workflow-templates.data';
 
 
 @Component({
@@ -15,14 +18,31 @@ import { PoliticaService } from '../../core/services/politica.service';
 export class CanvasComponent implements OnInit {
   private readonly politicaService = inject(PoliticaService);
   private readonly alertaService = inject(AlertaService);
+  private readonly authService = inject(AuthService);
+  private readonly workflowTemplateService = inject(WorkflowTemplateService);
 
   borradores: PoliticaNegocio[] = [];
+  plantillas: WorkflowTemplate[] = [];
   isLoading = false;
   deletingId: string | null = null;
   errorMessage = '';
+  currentRole = this.authService.getCurrentRole();
+
+  get canCreateFlow(): boolean {
+    return this.currentRole === 'ADMIN';
+  }
 
   ngOnInit(): void {
-    this.loadDrafts();
+    this.currentRole = this.authService.getCurrentRole();
+    this.plantillas = this.workflowTemplateService.listarPlantillas();
+
+    if (this.canCreateFlow) {
+      this.loadDrafts();
+      return;
+    }
+
+    this.borradores = [];
+    this.isLoading = false;
   }
 
   loadDrafts(): void {

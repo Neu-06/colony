@@ -37,7 +37,13 @@
             </tr>
           }
 
-          @if (!isLoading && users.length === 0) {
+          @if (isLoadingDepartamentos) {
+            <tr>
+              <td colspan="5" class="px-4 py-5 text-center text-ink-light">Cargando departamentos...</td>
+            </tr>
+          }
+
+          @if (!isLoading && !isLoadingDepartamentos && users.length === 0) {
             <tr>
               <td colspan="5" class="px-4 py-5 text-center text-ink-light">No hay usuarios disponibles.</td>
             </tr>
@@ -66,12 +72,13 @@
 
               <td class="px-4 py-3">
                 <select
-                  [(ngModel)]="user.departamento"
+                  [(ngModel)]="user.departamentoId"
                   [disabled]="isProtectedUser(user)"
                   class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 >
-                  @for (departamento of departamentos; track departamento) {
-                    <option [value]="departamento">{{ departamento }}</option>
+                  <option value="SIN_ASIGNAR">SIN_ASIGNAR</option>
+                  @for (departamento of departamentos; track departamento.id) {
+                    <option [value]="departamento.id">{{ etiquetaDepartamento(departamento) }}</option>
                   }
                 </select>
               </td>

@@ -2,6 +2,8 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\AuthRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\AuthResponse.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\AuthUsuarioDto.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\DepartamentoRequest.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\PoliticaPublicadaResumenDto.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\RegisterRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\UsuarioAsignacionRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\UsuarioResumenDto.java
@@ -16,6 +18,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Arista.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\CampoForm.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Carril.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Departamento.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Historial.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Instancia.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\NodoActividad.java
@@ -25,7 +28,9 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\PoliticaNegocio.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\domain\Usuario.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\AuthController.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\DepartamentoController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\PoliticaController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\UsuarioController.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\repository\DepartamentoRepository.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\repository\PoliticaNegocioRepository.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\repository\UsuarioRepository.java

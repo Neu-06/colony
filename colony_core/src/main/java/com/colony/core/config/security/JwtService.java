@@ -33,11 +33,12 @@ public class JwtService {
 
         if (userDetails instanceof Usuario usuario) {
             String rol = (usuario.getRol() == null || usuario.getRol().isBlank()) ? "FUNCIONARIO" : usuario.getRol();
-            String departamento = (usuario.getDepartamento() == null || usuario.getDepartamento().isBlank())
+            String departamentoId = (usuario.getDepartamentoId() == null || usuario.getDepartamentoId().isBlank())
                     ? "SIN_ASIGNAR"
-                    : usuario.getDepartamento();
+                : usuario.getDepartamentoId();
             claims.put("rol", rol);
-            claims.put("departamento", departamento);
+            claims.put("departamentoId", departamentoId);
+            claims.put("departamento", departamentoId);
         }
 
         return generateToken(claims, userDetails);

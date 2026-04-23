@@ -38,7 +38,7 @@ public class AuthService {
         usuario.setEmail(email);
         usuario.setPassword(passwordEncoder.encode(request.password()));
         usuario.setRol("FUNCIONARIO");
-        usuario.setDepartamento("SIN_ASIGNAR");
+        usuario.setDepartamentoId("SIN_ASIGNAR");
 
         Usuario saved = usuarioRepository.save(usuario);
         String token = jwtService.generateToken(saved);
@@ -69,14 +69,14 @@ public class AuthService {
 
     private AuthUsuarioDto mapAuthUser(Usuario usuario) {
         String rol = (usuario.getRol() == null || usuario.getRol().isBlank()) ? "FUNCIONARIO" : usuario.getRol();
-        String departamento = (usuario.getDepartamento() == null || usuario.getDepartamento().isBlank())
+        String departamentoId = (usuario.getDepartamentoId() == null || usuario.getDepartamentoId().isBlank())
             ? "SIN_ASIGNAR"
-            : usuario.getDepartamento();
+            : usuario.getDepartamentoId();
 
         return new AuthUsuarioDto(
                 usuario.getEmail(),
-            rol,
-            departamento
+                rol,
+                departamentoId
         );
     }
 }

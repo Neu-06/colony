@@ -1,0 +1,76 @@
+<section class="space-y-5">
+  <header class="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+    <p class="text-xs font-semibold uppercase tracking-wide text-primary">Super Admin</p>
+    <h2 class="mt-1 text-2xl font-bold">Gestion de Departamentos</h2>
+    <p class="mt-2 text-sm text-ink-light">Administra el catalogo de departamentos usado por usuarios y carriles.</p>
+  </header>
+
+  @if (statusMessage) {
+    <p
+      class="rounded-xl border px-4 py-3 text-sm font-medium"
+      [class.border-success]="statusType === 'success'"
+      [class.text-success]="statusType === 'success'"
+      [class.border-danger]="statusType === 'error'"
+      [class.text-danger]="statusType === 'error'"
+    >
+      {{ statusMessage }}
+    </p>
+  }
+
+  <section class="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <input
+        [(ngModel)]="nuevoDepartamentoNombre"
+        type="text"
+        placeholder="Nuevo departamento"
+        class="min-w-[220px] flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+      />
+      <button
+        type="button"
+        (click)="crearDepartamento()"
+        [disabled]="isCreating"
+        class="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-70"
+      >
+        {{ isCreating ? 'Creando...' : 'Agregar Departamento' }}
+      </button>
+    </div>
+
+    <div class="space-y-2">
+      @if (isLoading) {
+        <p class="text-sm text-ink-light">Cargando departamentos...</p>
+      }
+
+      @if (!isLoading && departamentos.length === 0) {
+        <p class="text-sm text-ink-light">Aun no hay departamentos creados.</p>
+      }
+
+      @for (departamento of departamentos; track departamento.id) {
+        <div class="grid gap-2 rounded-xl border border-border bg-background p-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+          <input
+            [(ngModel)]="departamento.nombre"
+            type="text"
+            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+
+          <button
+            type="button"
+            (click)="guardarDepartamento(departamento)"
+            [disabled]="isSavingMap[departamento.id]"
+            class="rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-ink hover:bg-secondary disabled:opacity-70"
+          >
+            {{ isSavingMap[departamento.id] ? 'Guardando...' : 'Guardar' }}
+          </button>
+
+          <button
+            type="button"
+            (click)="eliminarDepartamento(departamento)"
+            [disabled]="isDeletingMap[departamento.id]"
+            class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-70"
+          >
+            {{ isDeletingMap[departamento.id] ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+</section>

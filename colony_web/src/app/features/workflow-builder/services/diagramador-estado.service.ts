@@ -30,7 +30,7 @@ export class DiagramadorEstadoService {
   private readonly _politicaActivaId = signal<string | null>(null);
 
   private readonly _carriles = signal<Carril[]>([
-    { id: 'carril-1', nombre: 'Departamento 1', orden: 1 }
+    { id: 'carril-1', nombre: 'Departamento 1', departamentoId: undefined, orden: 1 }
   ]);
   private readonly _nodos = signal<NodoCanvas[]>([]);
   private readonly _aristas = signal<Arista[]>([]);
@@ -69,9 +69,16 @@ export class DiagramadorEstadoService {
       {
         id: nuevoId,
         nombre: `Departamento ${siguienteOrden}`,
+        departamentoId: undefined,
         orden: siguienteOrden
       }
     ]);
+  }
+
+  actualizarCarril(carrilId: string, patch: Partial<Carril>): void {
+    this._carriles.update((actual) =>
+      actual.map((carril) => (carril.id === carrilId ? { ...carril, ...patch } : carril))
+    );
   }
 
   eliminarCarril(carrilId: string): void {
@@ -106,16 +113,14 @@ export class DiagramadorEstadoService {
   }
 
   actualizarNombreCarril(carrilId: string, nombre: string): void {
-    this._carriles.update((actual) =>
-      actual.map((carril) =>
-        carril.id === carrilId
-          ? {
-              ...carril,
-              nombre: nombre.trim() || carril.nombre
-            }
-          : carril
-      )
-    );
+    this.actualizarCarril(carrilId, { nombre: nombre.trim() || 'Departamento' });
+  }
+
+  actualizarDepartamentoEnCarril(carrilId: string, departamentoId: string, nombreDepartamento: string): void {
+    this.actualizarCarril(carrilId, {
+      departamentoId,
+      nombre: nombreDepartamento
+    });
   }
 
   agregarNodo(tipo: TipoNodoHerramienta, carrilId: string, posicion: { x: number; y: number }): NodoCanvas {
@@ -250,7 +255,7 @@ export class DiagramadorEstadoService {
 
   limpiarDiagrama(): void {
     this._politicaActivaId.set(null);
-    this._carriles.set([{ id: 'carril-1', nombre: 'Departamento 1', orden: 1 }]);
+    this._carriles.set([{ id: 'carril-1', nombre: 'Departamento 1', departamentoId: undefined, orden: 1 }]);
     this._nodos.set([]);
     this._aristas.set([]);
     this._nodoSeleccionadoId.set(null);
@@ -333,6 +338,8 @@ export class DiagramadorEstadoService {
       : yOriginal;
 
     if (this.esActividad(nodo)) {
+      const nombreCanonico = this.normalizarTipoNodoEstado(nodo.tipo);
+
       return {
         idNodo: nodo.idNodo,
         tipo: nodo.tipo,
@@ -341,7 +348,7 @@ export class DiagramadorEstadoService {
           y: yGlobal
         },
         carrilId: carrilIdNormalizado,
-        nombre: nodo.nombre || 'Nueva Tarea',
+        nombre: nombreCanonico || nodo.nombre || 'Nueva Tarea',
         dptoResponsable: nodo.dptoResponsable ?? '',
         esquemaFormulario: (nodo.esquemaFormulario ?? []).map((campo) => ({
           id: campo.id || crypto.randomUUID(),
@@ -366,6 +373,20 @@ export class DiagramadorEstadoService {
 
   private esActividad(nodo: NodoCanvas): nodo is NodoActividad {
     return nodo.tipo !== 'compuerta' && nodo.tipo !== 'salida_condicional' && nodo.tipo !== 'gateway';
+  }
+
+  private normalizarTipoNodoEstado(tipo: string): string | null {
+    const valor = (tipo ?? '').toLowerCase();
+
+    if (valor === 'inicio' || valor === 'start') {
+      return 'Inicio';
+    }
+
+    if (valor === 'fin' || valor === 'end') {
+      return 'Fin';
+    }
+
+    return null;
   }
 
   private normalizarTipoCampo(tipo: string | undefined): string {

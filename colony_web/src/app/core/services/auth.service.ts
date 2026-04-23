@@ -6,12 +6,14 @@ import { map, Observable, tap } from 'rxjs';
 interface AuthUser {
   email: string;
   rol: string;
-  departamento: string;
+  departamentoId?: string;
+  departamento?: string;
 }
 
 interface JwtClaims {
   sub?: string;
   rol?: string;
+  departamentoId?: string;
   departamento?: string;
 }
 
@@ -41,7 +43,7 @@ export class AuthService {
 
   private readonly tokenKey = 'token';
   private readonly roleKey = 'rol';
-  private readonly departmentKey = 'departamento';
+  private readonly departmentKey = 'departamentoId';
 
   login(payload: LoginPayload): Observable<void> {
     return this.http.post<AuthResponse>(`${this.apiBaseUrl}/login`, payload).pipe(
@@ -83,7 +85,8 @@ export class AuthService {
       return department;
     }
 
-    return this.decodeTokenClaims()?.departamento ?? '';
+    const claims = this.decodeTokenClaims();
+    return claims?.departamentoId ?? claims?.departamento ?? '';
   }
 
   getCurrentEmail(): string {
@@ -94,7 +97,8 @@ export class AuthService {
     localStorage.setItem(this.tokenKey, response.token);
 
     const roleFromResponse = response.usuario?.rol || this.decodeTokenClaims(response.token)?.rol || '';
-    const departmentFromResponse = response.usuario?.departamento || this.decodeTokenClaims(response.token)?.departamento || '';
+    const claims = this.decodeTokenClaims(response.token);
+    const departmentFromResponse = response.usuario?.departamentoId || response.usuario?.departamento || claims?.departamentoId || claims?.departamento || '';
 
     localStorage.setItem(this.roleKey, roleFromResponse);
     localStorage.setItem(this.departmentKey, departmentFromResponse);

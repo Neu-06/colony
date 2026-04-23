@@ -1,5 +1,6 @@
 package com.colony.core.infrastructure.controller;
 
+import com.colony.core.application.dto.PoliticaPublicadaResumenDto;
 import com.colony.core.application.PoliticaService;
 import com.colony.core.domain.PoliticaNegocio;
 import jakarta.validation.Valid;
@@ -34,6 +35,18 @@ public class PoliticaController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
     public ResponseEntity<List<PoliticaNegocio>> misBorradores() {
         return ResponseEntity.ok(politicaService.listarMisBorradores());
+    }
+
+    @GetMapping("/publicadas")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
+    public ResponseEntity<List<PoliticaPublicadaResumenDto>> listarPublicadas() {
+        return ResponseEntity.ok(politicaService.listarPublicadas());
+    }
+
+    @GetMapping("/publicadas/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
+    public ResponseEntity<PoliticaNegocio> obtenerPoliticaPublicada(@PathVariable String id) {
+        return ResponseEntity.ok(politicaService.obtenerPoliticaPublicada(id));
     }
 
     @GetMapping("/{id}")

@@ -6,7 +6,8 @@ public record UsuarioResumenDto(
         String apellidos,
         String email,
         String rol,
-        String departamento,
+        String departamentoId,
+        String departamentoNombre,
         String telefono,
         Boolean activo
 ) {

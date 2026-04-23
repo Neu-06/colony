@@ -45,21 +45,25 @@
           <section class="relative border-b border-gray-300" [style.height.px]="altoCarrilPx">
             <div class="pointer-events-auto absolute inset-y-0 left-0 flex w-20 items-center justify-center border-r border-gray-300 bg-[var(--color-lane-header)] px-2">
               @if (carrilEditandoId === carril.id) {
-                <input
-                  type="text"
+                <select
                   [attr.data-lane-input-for]="carril.id"
-                  [(ngModel)]="carril.nombre"
-                  (ngModelChange)="actualizarNombreCarril(carril.id, $event)"
+                  [ngModel]="carril.departamentoId || ''"
+                  (ngModelChange)="actualizarCarrilConDepartamento(carril.id, $event)"
                   (blur)="finalizarEdicionCarril()"
                   (keydown.enter)="finalizarEdicionCarril()"
                   class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none focus:ring-1 focus:ring-blue-400 [text-orientation:mixed] [writing-mode:vertical-rl]"
-                />
+                >
+                  <option value="" disabled>SELECCIONA</option>
+                  @for (departamento of departamentos; track departamento.id) {
+                    <option [value]="departamento.id">{{ departamento.nombre }}</option>
+                  }
+                </select>
               } @else {
                 <button
                   type="button"
                   (click)="iniciarEdicionCarril(carril.id)"
                   class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none [text-orientation:mixed] [writing-mode:vertical-rl]"
-                  title="Haz clic para renombrar carril"
+                  title="Haz clic para asignar departamento"
                 >
                   {{ carril.nombre || 'CARRIL' }}
                 </button>

@@ -15,6 +15,7 @@ export interface Arista {
 export interface Carril {
   id: string;
   nombre: string;
+  departamentoId?: string;
   orden: number;
 }
 
