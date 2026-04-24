@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { map, Observable, tap } from 'rxjs';
 
 interface AuthUser {
+  id?: string;
   email: string;
   rol: string;
   departamentoId?: string;
@@ -12,6 +13,7 @@ interface AuthUser {
 
 interface JwtClaims {
   sub?: string;
+  userId?: string;
   rol?: string;
   departamentoId?: string;
   departamento?: string;
@@ -42,6 +44,7 @@ export class AuthService {
   private readonly apiBaseUrl = 'http://localhost:8080/api/auth';
 
   private readonly tokenKey = 'token';
+  private readonly userIdKey = 'userId';
   private readonly roleKey = 'rol';
   private readonly departmentKey = 'departamentoId';
 
@@ -61,6 +64,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userIdKey);
     localStorage.removeItem(this.roleKey);
     localStorage.removeItem(this.departmentKey);
     void this.router.navigateByUrl('/');
@@ -77,6 +81,15 @@ export class AuthService {
     }
 
     return this.decodeTokenClaims()?.rol ?? '';
+  }
+
+  getCurrentUserId(): string {
+    const userId = localStorage.getItem(this.userIdKey);
+    if (userId) {
+      return userId;
+    }
+
+    return this.decodeTokenClaims()?.userId ?? this.getCurrentEmail();
   }
 
   getCurrentDepartment(): string {
@@ -98,8 +111,10 @@ export class AuthService {
 
     const roleFromResponse = response.usuario?.rol || this.decodeTokenClaims(response.token)?.rol || '';
     const claims = this.decodeTokenClaims(response.token);
+    const userIdFromResponse = response.usuario?.id || claims?.userId || '';
     const departmentFromResponse = response.usuario?.departamentoId || response.usuario?.departamento || claims?.departamentoId || claims?.departamento || '';
 
+    localStorage.setItem(this.userIdKey, userIdFromResponse);
     localStorage.setItem(this.roleKey, roleFromResponse);
     localStorage.setItem(this.departmentKey, departmentFromResponse);
   }

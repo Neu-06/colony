@@ -1,0 +1,67 @@
+<section class="space-y-4">
+  <header class="rounded-2xl border border-border bg-surface px-4 py-4">
+    <p class="text-xs font-semibold uppercase tracking-wide text-primary">CU7</p>
+    <h2 class="mt-1 text-xl font-bold">Bandeja de Tareas</h2>
+  </header>
+
+  @if (errorMessage) {
+    <p class="rounded-xl border border-danger bg-surface px-4 py-3 text-sm font-medium text-danger">{{ errorMessage }}</p>
+  }
+
+  <section class="overflow-hidden rounded-2xl border border-border bg-surface">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-border text-sm">
+        <thead class="bg-background text-ink-light">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold">Codigo de Tramite</th>
+            <th class="px-4 py-3 text-left font-semibold">Fecha</th>
+            <th class="px-4 py-3 text-left font-semibold">Semaforo</th>
+            <th class="px-4 py-3 text-left font-semibold">Accion</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-border">
+          @if (isLoading) {
+            <tr>
+              <td colspan="4" class="px-4 py-5 text-center text-ink-light">Cargando tareas...</td>
+            </tr>
+          }
+
+          @if (!isLoading && tareas.length === 0) {
+            <tr>
+              <td colspan="4" class="px-4 py-5 text-center text-ink-light">No hay tramites pendientes en tu departamento.</td>
+            </tr>
+          }
+
+          @for (tarea of tareas; track tarea.instanciaId) {
+            <tr>
+              <td class="px-4 py-3 font-semibold text-ink">{{ tarea.codigoTramite }}</td>
+              <td class="px-4 py-3 text-ink-light">{{ tarea.fecha ? (tarea.fecha | date:'short') : 'Sin fecha' }}</td>
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                  [class.bg-red-100]="tarea.semaforo === 'ROJO'"
+                  [class.text-red-700]="tarea.semaforo === 'ROJO'"
+                  [class.bg-amber-100]="tarea.semaforo === 'AMARILLO'"
+                  [class.text-amber-700]="tarea.semaforo === 'AMARILLO'"
+                >
+                  {{ tarea.semaforo === 'ROJO' ? 'Nuevo' : 'En Proceso' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <button
+                  type="button"
+                  (click)="abrirTramite(tarea)"
+                  [disabled]="openingId === tarea.instanciaId"
+                  class="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-70"
+                >
+                  {{ openingId === tarea.instanciaId ? 'Abriendo...' : 'Abrir Tramite' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

@@ -52,6 +52,30 @@
           </a>
         }
 
+        @if (!isPendingAssignment()) {
+          <a
+            routerLink="/app/bandeja"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Bandeja de Tareas</p>
+            <p class="mt-1 text-xs opacity-80"> Atencion por semaforo</p>
+          </a>
+        }
+
+        @if (isFuncionario() && !isPendingAssignment()) {
+          <a
+            routerLink="/app/directorio-tramites"
+            routerLinkActive="bg-primary text-white"
+            (click)="closeSidebar()"
+            class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary"
+          >
+            <p class="font-semibold">Nuevo Tramite</p>
+            <p class="mt-1 text-xs opacity-80">Iniciar instancia desde un flujo publicado</p>
+          </a>
+        }
+
         <!-- @if (canAccessCanvas() && !isPendingAssignment()) {
           <a
             routerLink="/app/canvas"

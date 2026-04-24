@@ -5,6 +5,9 @@ import { superAdminGuard } from './core/guards/super-admin.guard';
 import { DepartmentManagementComponent } from './features/admin/department-management/department-management.component';
 import { UserManagementComponent } from './features/admin/user-management/user-management.component';
 import { DashboardLayoutComponent } from './features/dashboard/dashboard-layout.component';
+import { AtencionTramiteComponent } from './features/tramites/atencion-tramite.component';
+import { BandejaTareasComponent } from './features/tramites/bandeja-tareas.component';
+import { DirectorioTramitesComponent } from './features/tramites/directorio-tramites.component';
 import { CanvasComponent } from './features/workflow-builder/canvas.component';
 import { CanvasPageComponent } from './features/workflow-builder/canvas-page.component';
 import { PublishedFlowsComponent } from './features/workflow-builder/published-flows.component';
@@ -33,7 +36,7 @@ export const routes: Routes = [
 	{
 		path: 'app/canvas/publicadas/:id',
 		component: CanvasPageComponent,
-		canActivate: [authGuard]
+		canActivate: [authGuard,adminGuard]
 	},
 	{
 		path: 'app',
@@ -52,6 +55,18 @@ export const routes: Routes = [
 			{
 				path: 'flujos-publicados',
 				component: PublishedFlowsComponent
+			},
+			{
+				path: 'directorio-tramites',
+				component: DirectorioTramitesComponent
+			},
+			{
+				path: 'bandeja',
+				component: BandejaTareasComponent
+			},
+			{
+				path: 'tramites/atencion/:instanciaId',
+				component: AtencionTramiteComponent
 			},
 			{
 				path: 'admin/users',

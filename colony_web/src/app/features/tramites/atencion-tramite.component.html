@@ -1,0 +1,81 @@
+<section class="space-y-4">
+  <header class="rounded-2xl border border-border bg-surface px-4 py-4">
+    <p class="text-xs font-semibold uppercase tracking-wide text-primary">CU8</p>
+    <h2 class="mt-1 text-xl font-bold">Atencion de Tramite</h2>
+    <p class="mt-1 text-sm text-ink-light">{{ tramite?.codigoTramite || 'Cargando...' }}</p>
+  </header>
+
+  @if (errorMessage) {
+    <p class="rounded-xl border border-danger bg-surface px-4 py-3 text-sm font-medium text-danger">{{ errorMessage }}</p>
+  }
+
+  @if (isLoading) {
+    <article class="rounded-2xl border border-border bg-surface p-4">
+      <p class="text-sm text-ink-light">Cargando informacion del tramite...</p>
+    </article>
+  }
+
+  @if (!isLoading && tramite) {
+    <div class="grid gap-4 lg:grid-cols-2">
+      <section class="rounded-2xl border border-border bg-surface p-4">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-ink-light">Contexto Historico</h3>
+
+        <div class="mt-3 space-y-2">
+          @if (historialEntries.length === 0) {
+            <p class="text-sm text-ink-light">Sin datos previos registrados.</p>
+          }
+
+          @for (item of historialEntries; track item.key) {
+            <div class="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+              <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">{{ item.key }}</p>
+              <p class="mt-1 font-medium text-ink">{{ formatValor(item.value) }}</p>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-border bg-surface p-4">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-ink-light">Accion Dinamica</h3>
+
+        <form [formGroup]="form" class="mt-3 space-y-3">
+          @if (tramite.esquemaFormulario.length === 0) {
+            <p class="text-sm text-ink-light">Este nodo no requiere captura de nuevos campos.</p>
+          }
+
+          @for (campo of tramite.esquemaFormulario; track campo.nombre) {
+            <label class="block text-sm">
+              <span class="mb-1 block font-semibold text-ink">{{ campo.nombre }}</span>
+
+              @if (campo.tipo === 'textarea') {
+                <textarea
+                  [formControlName]="campo.nombre"
+                  rows="3"
+                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                ></textarea>
+              } @else {
+                <input
+                  [type]="campo.tipo || 'text'"
+                  [formControlName]="campo.nombre"
+                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                />
+              }
+
+              @if (form.get(campo.nombre)?.invalid && form.get(campo.nombre)?.touched) {
+                <span class="mt-1 block text-xs font-medium text-danger">Campo requerido.</span>
+              }
+            </label>
+          }
+        </form>
+
+        <button
+          type="button"
+          (click)="completarYEnviar()"
+          [disabled]="isSubmitting"
+          class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-70"
+        >
+          {{ isSubmitting ? 'Enviando...' : 'Completar y Enviar' }}
+        </button>
+      </section>
+    </div>
+  }
+</section>

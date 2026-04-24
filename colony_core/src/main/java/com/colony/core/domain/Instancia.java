@@ -22,6 +22,10 @@ public class Instancia {
     private String politicaId;
     private String iniciadoPor;
     private String estadoGeneral;
+    private String nodoActualId;
+    private String atendidoPor;
+
+    // Campo legado para compatibilidad con datos antiguos.
     private String nodoActual;
     private String semaforo;
     private Map<String, Object> datosDinamicos;

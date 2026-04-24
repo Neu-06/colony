@@ -36,9 +36,11 @@ public class JwtService {
             String departamentoId = (usuario.getDepartamentoId() == null || usuario.getDepartamentoId().isBlank())
                     ? "SIN_ASIGNAR"
                 : usuario.getDepartamentoId();
+            String userId = usuario.getId();
             claims.put("rol", rol);
             claims.put("departamentoId", departamentoId);
             claims.put("departamento", departamentoId);
+            claims.put("userId", userId);
         }
 
         return generateToken(claims, userDetails);

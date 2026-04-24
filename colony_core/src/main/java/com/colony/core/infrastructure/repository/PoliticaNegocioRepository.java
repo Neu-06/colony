@@ -9,4 +9,6 @@ public interface PoliticaNegocioRepository extends MongoRepository<PoliticaNegoc
 	List<PoliticaNegocio> findByCreadoPorAndEstadoOrderByFechaCreacionDesc(String creadoPor, String estado);
 
 	List<PoliticaNegocio> findByEstadoOrderByFechaCreacionDesc(String estado);
+
+	List<PoliticaNegocio> findByEstadoInOrderByFechaCreacionDesc(List<String> estados);
 }

@@ -37,6 +37,10 @@ export class DashboardLayoutComponent {
     return this.currentRole === 'ADMIN';
   }
 
+  isFuncionario(): boolean {
+    return this.currentRole === 'FUNCIONARIO';
+  }
+
   isPendingAssignment(): boolean {
     return this.currentRole === 'FUNCIONARIO'
       && (!this.currentDepartment || this.currentDepartment === 'SIN_ASIGNAR');

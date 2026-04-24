@@ -74,6 +74,7 @@ public class AuthService {
             : usuario.getDepartamentoId();
 
         return new AuthUsuarioDto(
+            usuario.getId(),
                 usuario.getEmail(),
                 rol,
                 departamentoId
