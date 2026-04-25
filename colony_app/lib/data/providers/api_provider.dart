@@ -41,7 +41,7 @@ class ApiProvider {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      body: deviceToken, // Enviamos el token directamente como string body
+      body: jsonEncode({'token': deviceToken}),
     );
 
     if (response.statusCode != 200) {

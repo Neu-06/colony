@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:permission_handler/permission_handler.dart';
+//import 'package:permission_handler/permission_handler.dart';
+import '../../data/providers/notification_provider.dart';
 
 import '../../data/providers/api_provider.dart';
 import '../../data/repositories_impl/rastreo_repository_impl.dart';
@@ -70,39 +71,29 @@ class _RastreoScreenState extends State<RastreoScreen> {
   Future<void> _solicitarNotificaciones() async {
     if (_tracking == null) return;
 
-    final status = await Permission.notification.request();
+    setState(() => _loading = true);
+    try {
+      const notificationProvider = NotificationProvider(ApiProvider());
+      await notificationProvider.registerDevice(_tracking!.codigo);
 
-    if (!mounted) return;
-
-    if (status.isGranted) {
-      setState(() => _loading = true);
-      try {
-        // PREPARADO PARA FIREBASE:
-        // En el futuro, reemplaza este mockToken con:
-        // String? token = await FirebaseMessaging.instance.getToken();
-        const String mockToken = "DEVICE_MOCK_TOKEN_12345";
-
-        await _repository.suscribirDispositivo(_tracking!.codigo, mockToken);
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Excelente! Te avisaremos cuando tu trámite avance.'),
-            backgroundColor: Color(0xFF1D4ED8),
-          ),
-        );
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al activar notificaciones: $e')),
-        );
-      } finally {
-        if (mounted) setState(() => _loading = false);
-      }
-    } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Necesitamos permiso para enviarte notificaciones')),
+        const SnackBar(
+          content: Text('¡Excelente! Te avisaremos cuando tu trámite avance.'),
+          backgroundColor: Color(0xFF1D4ED8),
+        ),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error al activar notificaciones: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -256,7 +247,10 @@ class _RastreoScreenState extends State<RastreoScreen> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          const Icon(Icons.notifications_active_outlined, color: Color(0xFF1D4ED8)),
+          const Icon(
+            Icons.notifications_active_outlined,
+            color: Color(0xFF1D4ED8),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -328,7 +322,11 @@ class _RastreoScreenState extends State<RastreoScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.location_on, color: Color(0xFF1D4ED8), size: 20),
+                  const Icon(
+                    Icons.location_on,
+                    color: Color(0xFF1D4ED8),
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Ubicación Actual',

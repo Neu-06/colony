@@ -24,7 +24,8 @@ public class RastreoController {
     }
 
     @PostMapping("/{codigo}/suscribir")
-    public ResponseEntity<Void> suscribir(@PathVariable String codigo, @RequestBody String deviceToken) {
+    public ResponseEntity<Void> suscribir(@PathVariable String codigo, @RequestBody java.util.Map<String, String> request) {
+        String deviceToken = request.get("token");
         rastreoService.suscribirDispositivo(codigo, deviceToken);
         return ResponseEntity.ok().build();
     }

@@ -36,6 +36,7 @@ public class MotorInstanciaService {
     private final PoliticaNegocioRepository politicaNegocioRepository;
     private final HistorialRepository historialRepository;
     private final TramiteService tramiteService;
+    private final PushNotificationService pushNotificationService;
 
     public IniciarInstanciaResponse iniciar(IniciarInstanciaRequest request) {
         PoliticaNegocio politica = politicaNegocioRepository.findById(request.politicaId())
@@ -160,7 +161,20 @@ public class MotorInstanciaService {
             instancia.setEstadoGeneral(EN_PROCESO);
         }
 
-        return instanciaRepository.save(instancia);
+        Instancia guardada = instanciaRepository.save(instancia);
+
+        // Disparar Notificación Push
+        if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
+            String cuerpo = String.format("Colony: Tu trámite ha sido actualizado. Estado actual: %s",
+                    FINALIZADO.equals(guardada.getEstadoGeneral()) ? "FINALIZADO" : guardada.getNodoActualId());
+            pushNotificationService.enviarNotificacion(
+                    guardada.getDispositivosSuscritos(),
+                    "Actualización de Trámite",
+                    cuerpo
+            );
+        }
+
+        return guardada;
     }
 
     private NodoBase resolverNodoActual(Instancia instancia, PoliticaNegocio politica) {
