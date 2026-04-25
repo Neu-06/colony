@@ -54,7 +54,8 @@ export class AtencionTramiteComponent implements OnInit {
 
         for (const campo of tramite.esquemaFormulario ?? []) {
           const validators = campo.requerido ? [Validators.required] : [];
-          this.form.addControl(campo.nombre, this.fb.control('', validators));
+          const esBooleano = campo.tipo === 'boolean' || campo.tipo === 'bool';
+          this.form.addControl(campo.nombre, this.fb.control(esBooleano ? false : '', validators));
         }
 
         this.isLoading = false;

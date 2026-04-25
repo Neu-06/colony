@@ -17,6 +17,7 @@ import { NodoCanvas, TipoNodoHerramienta } from '../../models/canvas.models';
 import { NodoVisualComponent } from '../nodo-visual/nodo-visual.component';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
 import { JsplumbWrapperService } from '../../services/jsplumb-wrapper.service';
+import Swal from 'sweetalert2';
 
 interface NodeSize {
   width: number;
@@ -87,12 +88,48 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.jsplumb.inicializar(this.jsplumbContainerRef.nativeElement, {
       onConnection: (origenNodoId, destinoNodoId) => {
-        const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
-        if (!creada) {
-          this.scheduleBoardSync();
+        const nodoOrigen = this.nodos().find((n) => n.idNodo === origenNodoId);
+        const esCompuerta = nodoOrigen && (nodoOrigen.tipo === 'compuerta' || nodoOrigen.tipo === 'gateway' || nodoOrigen.tipo === 'salida_condicional');
+
+        if (esCompuerta) {
+          void Swal.fire({
+            title: 'Condición de la Decisión',
+            text: 'Esta arista sale de una compuerta. Define su condición exacta:',
+            icon: 'question',
+            input: 'select',
+            inputOptions: {
+              'Aceptado': 'Aceptado',
+              'Rechazado': 'Rechazado'
+            },
+            inputPlaceholder: 'Selecciona una opción',
+            showCancelButton: true,
+            confirmButtonText: 'Guardar Conexión',
+            cancelButtonText: 'Cancelar',
+            allowOutsideClick: false,
+            inputValidator: (value) => {
+              if (!value) {
+                return '¡Debes seleccionar una opción estricta!';
+              }
+              return null;
+            }
+          }).then((result) => {
+            if (result.isConfirmed && result.value) {
+              const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
+              if (creada) {
+                this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, result.value);
+                this.estado.actualizarEtiquetaArista(origenNodoId, destinoNodoId, `[${result.value}]`);
+              }
+            }
+            // Siempre sincronizamos para limpiar la flecha temporal si canceló, o para mostrarla con la etiqueta si aceptó.
+            this.scheduleBoardSync();
+          });
           return;
         }
 
+        const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
+        if (creada) {
+          this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, '');
+        }
         this.scheduleBoardSync();
       },
       onConnectionClick: (origenNodoId, destinoNodoId) => {

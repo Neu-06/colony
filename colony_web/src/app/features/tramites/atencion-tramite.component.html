@@ -43,27 +43,57 @@
           }
 
           @for (campo of tramite.esquemaFormulario; track campo.nombre) {
-            <label class="block text-sm">
-              <span class="mb-1 block font-semibold text-ink">{{ campo.nombre }}</span>
-
-              @if (campo.tipo === 'textarea') {
-                <textarea
-                  [formControlName]="campo.nombre"
-                  rows="3"
-                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                ></textarea>
+            <div class="rounded-xl border p-4 transition-colors" [ngClass]="form.get(campo.nombre)?.invalid && form.get(campo.nombre)?.touched ? 'border-danger bg-danger/5' : 'border-border bg-surface'">
+              @if (campo.tipo === 'boolean' || campo.tipo === 'bool') {
+                <label class="flex cursor-pointer items-center gap-4">
+                  <div class="relative inline-flex items-center">
+                    <input type="checkbox" [formControlName]="campo.nombre" class="peer sr-only">
+                    <div class="peer h-6 w-11 rounded-full bg-border after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50"></div>
+                  </div>
+                  <span class="font-semibold text-ink">
+                    {{ campo.nombre }}
+                    @if (campo.requerido) { <span class="text-danger">*</span> }
+                  </span>
+                </label>
               } @else {
-                <input
-                  [type]="campo.tipo || 'text'"
-                  [formControlName]="campo.nombre"
-                  class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                />
+                <label class="block text-sm">
+                  <span class="mb-2 block font-semibold text-ink">
+                    {{ campo.nombre }}
+                    @if (campo.requerido) { <span class="text-danger">*</span> }
+                  </span>
+
+                  @if (campo.tipo === 'textarea') {
+                    <textarea
+                      [formControlName]="campo.nombre"
+                      rows="3"
+                      class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    ></textarea>
+                  } @else if (campo.tipo === 'number') {
+                    <input
+                      type="number"
+                      [formControlName]="campo.nombre"
+                      class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  } @else if (campo.tipo === 'date') {
+                    <input
+                      type="date"
+                      [formControlName]="campo.nombre"
+                      class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  } @else {
+                    <input
+                      type="text"
+                      [formControlName]="campo.nombre"
+                      class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  }
+                </label>
               }
 
               @if (form.get(campo.nombre)?.invalid && form.get(campo.nombre)?.touched) {
-                <span class="mt-1 block text-xs font-medium text-danger">Campo requerido.</span>
+                <span class="mt-2 block text-xs font-medium text-danger">Este campo es obligatorio.</span>
               }
-            </label>
+            </div>
           }
         </form>
 
