@@ -91,7 +91,8 @@ export class JsplumbWrapperService {
 
         const overlay = connection.getOverlay('label');
         if (overlay) {
-          overlay.setLabel(arista.etiqueta || '');
+          const texto = [arista.etiqueta, arista.condicion ? `[${arista.condicion}]` : null].filter(Boolean).join(' ');
+          overlay.setLabel(texto || '');
         }
 
         const activa =

@@ -4,6 +4,7 @@ public record AuthUsuarioDto(
         String id,
         String email,
         String rol,
-        String departamentoId
+        String departamentoId,
+        String departamento
 ) {
 }

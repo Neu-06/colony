@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { superAdminGuard } from './core/guards/super-admin.guard';
+import { funcionarioGuard } from './core/guards/funcionario.guard';
 import { DepartmentManagementComponent } from './features/admin/department-management/department-management.component';
 import { UserManagementComponent } from './features/admin/user-management/user-management.component';
 import { DashboardLayoutComponent } from './features/dashboard/dashboard-layout.component';
@@ -46,27 +47,32 @@ export const routes: Routes = [
 			{
 				path: '',
 				pathMatch: 'full',
-				redirectTo: 'workflow-builder'
+				component: CanvasComponent // Placeholder or just remove redirectTo
 			},
 			{
 				path: 'workflow-builder',
-				component: CanvasComponent
+				component: CanvasComponent,
+				canActivate: [adminGuard]
 			},
 			{
 				path: 'flujos-publicados',
-				component: PublishedFlowsComponent
+				component: PublishedFlowsComponent,
+				canActivate: [adminGuard]
 			},
 			{
 				path: 'directorio-tramites',
-				component: DirectorioTramitesComponent
+				component: DirectorioTramitesComponent,
+				canActivate: [funcionarioGuard]
 			},
 			{
 				path: 'bandeja',
-				component: BandejaTareasComponent
+				component: BandejaTareasComponent,
+				canActivate: [funcionarioGuard]
 			},
 			{
 				path: 'tramites/atencion/:instanciaId',
-				component: AtencionTramiteComponent
+				component: AtencionTramiteComponent,
+				canActivate: [funcionarioGuard]
 			},
 			{
 				path: 'admin/users',

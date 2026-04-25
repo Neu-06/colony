@@ -14,4 +14,5 @@ public class Arista {
     private String salidaOrigenId;
     private String entradaDestinoId;
     private String etiqueta;
+    private String condicion;
 }

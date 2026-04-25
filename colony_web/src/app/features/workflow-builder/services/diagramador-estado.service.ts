@@ -227,6 +227,21 @@ export class DiagramadorEstadoService {
     );
   }
 
+  actualizarCondicionArista(origenNodoId: string, destinoNodoId: string, condicion: string): void {
+    const limpia = condicion.trim();
+
+    this._aristas.update((actual) =>
+      actual.map((arista) =>
+        arista.origenNodoId === origenNodoId && arista.destinoNodoId === destinoNodoId
+          ? {
+              ...arista,
+              condicion: limpia || undefined
+            }
+          : arista
+      )
+    );
+  }
+
   setZoom(nivel: number): void {
     const acotado = Math.min(DiagramadorEstadoService.MAX_ZOOM, Math.max(DiagramadorEstadoService.MIN_ZOOM, nivel));
     this._zoomNivel.set(Number(acotado.toFixed(2)));

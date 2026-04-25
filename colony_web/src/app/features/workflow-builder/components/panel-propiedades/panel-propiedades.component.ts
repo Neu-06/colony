@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta } from '../../models/canvas.models';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-panel-propiedades',
@@ -42,7 +43,8 @@ export class PanelPropiedadesComponent {
   });
 
   readonly aristaForm = this.fb.nonNullable.group({
-    etiqueta: ''
+    etiqueta: '',
+    condicion: ''
   });
 
   constructor() {
@@ -62,15 +64,8 @@ export class PanelPropiedadesComponent {
         this.actividadForm.reset({ nombre: '' }, { emitEvent: false });
         this.compuertaForm.reset({ condicionLogica: '' }, { emitEvent: false });
       }
-
       if (this.nodoActividadSeleccionado) {
         const normalizado = this.normalizarEsquemaFormulario(this.nodoActividadSeleccionado.esquemaFormulario ?? []);
-        if (!this.sonCamposIguales(this.nodoActividadSeleccionado.esquemaFormulario ?? [], normalizado)) {
-          this.estado.actualizarNodo(this.nodoActividadSeleccionado.idNodo, {
-            esquemaFormulario: normalizado
-          });
-        }
-
         this.camposFormulario = normalizado;
         this.actividadForm.controls.nombre.setValue(this.nodoActividadSeleccionado.nombre, { emitEvent: false });
       }
@@ -80,6 +75,7 @@ export class PanelPropiedadesComponent {
       }
 
       this.aristaForm.controls.etiqueta.setValue(arista?.etiqueta ?? '', { emitEvent: false });
+      this.aristaForm.controls.condicion.setValue(arista?.condicion ?? '', { emitEvent: false });
     });
 
     this.actividadForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
@@ -111,6 +107,7 @@ export class PanelPropiedadesComponent {
       }
 
       this.estado.actualizarEtiquetaArista(arista.origenNodoId, arista.destinoNodoId, value.etiqueta ?? '');
+      this.estado.actualizarCondicionArista(arista.origenNodoId, arista.destinoNodoId, value.condicion ?? '');
     });
   }
 
@@ -120,32 +117,34 @@ export class PanelPropiedadesComponent {
       return;
     }
 
-    if (!nodo.esquemaFormulario) {
-      nodo.esquemaFormulario = [];
-    }
-
-    nodo.esquemaFormulario.push({
+    // Usar los campos actuales del componente en lugar de los del nodo para no perder cambios sin guardar
+    const nuevosCampos = [...this.camposFormulario, {
       id: crypto.randomUUID(),
       nombre: '',
       tipo: 'text',
       requerido: false
-    });
+    }];
 
-    this.persistirEsquemaFormulario(nodo.esquemaFormulario);
+    this.camposFormulario = nuevosCampos;
+    // No persistimos automáticamente para seguir la lógica de guardado explícito
   }
 
   eliminarCampo(campoId?: string): void {
-    const nodo = this.nodoActividadSeleccionado;
-    if (!nodo || !campoId) {
-      return;
-    }
-
-    const actualizado = (nodo.esquemaFormulario ?? []).filter((campo) => campo.id !== campoId);
-    this.persistirEsquemaFormulario(actualizado);
+    if (!campoId) return;
+    this.camposFormulario = this.camposFormulario.filter(c => c.id !== campoId);
   }
 
-  actualizarCampoFormulario(): void {
+  guardarFormularioExplicitamente(): void {
     this.persistirEsquemaFormulario(this.camposFormulario);
+    Swal.fire({
+      title: '¡Guardado!',
+      text: 'Formulario guardado exitosamente.',
+      icon: 'success',
+      confirmButtonText: 'Aceptar',
+      timer: 2000,
+      timerProgressBar: true,
+      heightAuto: false
+    });
   }
 
   trackByCampoId(_index: number, campo: CampoFormulario): string {

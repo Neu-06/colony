@@ -7,4 +7,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 public interface HistorialRepository extends MongoRepository<Historial, String> {
 
 	List<Historial> findByInstanciaIDOrderByFechaTransicionAsc(String instanciaID);
+	Historial findFirstByInstanciaIDAndNodoDestinoAndFechaFinAtencionIsNullOrderByFechaIngresoDesc(String instanciaID, String nodoDestino);
 }

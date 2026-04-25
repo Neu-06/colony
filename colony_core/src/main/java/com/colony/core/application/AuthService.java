@@ -5,7 +5,9 @@ import com.colony.core.application.dto.AuthResponse;
 import com.colony.core.application.dto.AuthUsuarioDto;
 import com.colony.core.application.dto.RegisterRequest;
 import com.colony.core.config.security.JwtService;
+import com.colony.core.domain.Departamento;
 import com.colony.core.domain.Usuario;
+import com.colony.core.infrastructure.repository.DepartamentoRepository;
 import com.colony.core.infrastructure.repository.UsuarioRepository;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
+    private final DepartamentoRepository departamentoRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
@@ -73,11 +76,19 @@ public class AuthService {
             ? "SIN_ASIGNAR"
             : usuario.getDepartamentoId();
 
+        String departamento = "SIN_ASIGNAR";
+        if (!"SIN_ASIGNAR".equals(departamentoId)) {
+            departamento = departamentoRepository.findById(departamentoId)
+                .map(Departamento::getNombre)
+                .orElse("SIN_ASIGNAR");
+        }
+
         return new AuthUsuarioDto(
             usuario.getId(),
-                usuario.getEmail(),
-                rol,
-                departamentoId
+            usuario.getEmail(),
+            rol,
+            departamentoId,
+            departamento
         );
     }
 }

@@ -5,6 +5,8 @@ import java.util.Map;
 
 public record AvanzarInstanciaRequest(
         @NotBlank String instanciaId,
+        @NotBlank String nodoAvanzarId,
+        @NotBlank String usuarioId,
         Map<String, Object> datos
 ) {
 }

@@ -69,13 +69,13 @@ public class RastreoService {
             return "Sin departamento asignado";
         }
 
-        String nodoActualId = (instancia.getNodoActualId() != null && !instancia.getNodoActualId().isBlank())
-                ? instancia.getNodoActualId()
-                : instancia.getNodoActual();
+        List<String> nodosActualesIds = instancia.getNodosActualesIds();
 
-        if (nodoActualId == null || nodoActualId.isBlank()) {
+        if (nodosActualesIds == null || nodosActualesIds.isEmpty()) {
             return "Sin departamento asignado";
         }
+
+        String nodoActualId = nodosActualesIds.get(0);
 
         NodoBase nodo = politica.getNodos().stream()
                 .filter((item) -> nodoActualId.equals(item.getIdNodo()))

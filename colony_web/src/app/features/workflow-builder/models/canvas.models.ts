@@ -11,6 +11,7 @@ export interface Arista {
   salidaOrigenId?: string;
   entradaDestinoId?: string;
   etiqueta?: string;
+  condicion?: string;
 }
 
 export interface Carril {

@@ -26,7 +26,30 @@ public class BandejaService {
     private final PoliticaNegocioRepository politicaNegocioRepository;
 
     public List<BandejaItemDto> listarBandejaPorDepartamento(String departamentoId) {
-        List<Instancia> instancias = instanciaRepository.findByEstadoGeneral(EN_PROCESO);
+        List<PoliticaNegocio> politicas = politicaNegocioRepository.findAll();
+        List<String> nodosCandidatos = new ArrayList<>();
+
+        for (PoliticaNegocio politica : politicas) {
+            if (politica.getCarriles() == null || politica.getNodos() == null) continue;
+
+            List<String> carrilesDelDepto = politica.getCarriles().stream()
+                    .filter(c -> departamentoId.equals(c.getDepartamentoId()))
+                    .map(Carril::getId)
+                    .toList();
+
+            if (carrilesDelDepto.isEmpty()) continue;
+
+            politica.getNodos().stream()
+                    .filter(n -> carrilesDelDepto.contains(n.getCarrilId()))
+                    .map(NodoBase::getIdNodo)
+                    .forEach(nodosCandidatos::add);
+        }
+
+        if (nodosCandidatos.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Instancia> instancias = instanciaRepository.findByEstadoGeneralAndNodosActualesIdsIn(EN_PROCESO, nodosCandidatos);
         Map<String, PoliticaNegocio> politicaCache = new HashMap<>();
         List<BandejaItemDto> resultado = new ArrayList<>();
 
@@ -64,9 +87,9 @@ public class BandejaService {
             Map<String, PoliticaNegocio> politicaCache
     ) {
         String politicaId = instancia.getPoliticaId();
-        String nodoActualId = resolverNodoActualId(instancia);
+        List<String> nodosActualesIds = instancia.getNodosActualesIds();
 
-        if (politicaId == null || politicaId.isBlank() || nodoActualId == null || nodoActualId.isBlank()) {
+        if (politicaId == null || politicaId.isBlank() || nodosActualesIds == null || nodosActualesIds.isEmpty()) {
             return false;
         }
 
@@ -79,28 +102,12 @@ public class BandejaService {
             return false;
         }
 
-        NodoBase nodoActual = politica.getNodos().stream()
-                .filter((nodo) -> nodoActualId.equals(nodo.getIdNodo()))
-                .findFirst()
-                .orElse(null);
+        List<String> carrilesDelDepto = politica.getCarriles().stream()
+                .filter(c -> departamentoId.equals(c.getDepartamentoId()))
+                .map(Carril::getId)
+                .toList();
 
-        if (nodoActual == null || nodoActual.getCarrilId() == null) {
-            return false;
-        }
-
-        Carril carril = politica.getCarriles().stream()
-                .filter((item) -> nodoActual.getCarrilId().equals(item.getId()))
-                .findFirst()
-                .orElse(null);
-
-        return carril != null && departamentoId.equals(carril.getDepartamentoId());
-    }
-
-    private String resolverNodoActualId(Instancia instancia) {
-        if (instancia.getNodoActualId() != null && !instancia.getNodoActualId().isBlank()) {
-            return instancia.getNodoActualId();
-        }
-
-        return instancia.getNodoActual();
+        return politica.getNodos().stream()
+                .anyMatch(n -> nodosActualesIds.contains(n.getIdNodo()) && carrilesDelDepto.contains(n.getCarrilId()));
     }
 }

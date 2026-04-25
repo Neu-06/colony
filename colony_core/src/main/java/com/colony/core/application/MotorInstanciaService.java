@@ -59,8 +59,7 @@ public class MotorInstanciaService {
         instancia.setIniciadoPor(request.usuarioIniciadorId());
         instancia.setEstadoGeneral(EN_PROCESO);
         instancia.setAtendidoPor(null);
-        instancia.setNodoActualId(segundoNodoId);
-        instancia.setNodoActual(segundoNodoId);
+        instancia.getNodosActualesIds().add(segundoNodoId);
         instancia.setSemaforo("ROJO");
         instancia.setFechaInicio(new Date());
 
@@ -78,6 +77,7 @@ public class MotorInstanciaService {
         historial.setEjecutadoPor(request.usuarioIniciadorId());
         historial.setAccionTomada("INICIO_TRAMITE");
         historial.setFechaTransicion(new Date());
+        historial.setFechaIngreso(new Date());
         historialRepository.save(historial);
 
         return new IniciarInstanciaResponse(guardada.getCodigo());
@@ -90,10 +90,15 @@ public class MotorInstanciaService {
         PoliticaNegocio politica = politicaNegocioRepository.findById(instancia.getPoliticaId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Politica no encontrada"));
 
-        NodoBase nodoActual = resolverNodoActual(instancia, politica);
+        // Retornamos el esquema del primer nodo actual como compatibilidad
+        String nodoActualId = instancia.getNodosActualesIds().isEmpty() ? null : instancia.getNodosActualesIds().get(0);
+        
         List<com.colony.core.domain.CampoForm> esquema = new ArrayList<>();
-        if (nodoActual instanceof NodoActividad actividad && actividad.getEsquemaFormulario() != null) {
-            esquema = actividad.getEsquemaFormulario();
+        if (nodoActualId != null) {
+            NodoBase nodoActual = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(nodoActualId)).findFirst().orElse(null);
+            if (nodoActual instanceof NodoActividad actividad && actividad.getEsquemaFormulario() != null) {
+                esquema = actividad.getEsquemaFormulario();
+            }
         }
 
         Map<String, Object> datos = instancia.getDatosDinamicos() == null
@@ -103,7 +108,7 @@ public class MotorInstanciaService {
         return new AtencionTramiteDto(
                 instancia.getId(),
                 instancia.getCodigo(),
-                resolverNodoActualId(instancia),
+                nodoActualId,
                 datos,
                 esquema
         );
@@ -126,35 +131,77 @@ public class MotorInstanciaService {
 
         instancia.setDatosDinamicos(acumulado);
 
-        String nodoActualId = resolverNodoActualId(instancia);
-        Arista aristaSalida = politica.getAristas() == null
-                ? null
-                : politica.getAristas().stream()
-                        .filter((arista) -> nodoActualId.equals(arista.getOrigenNodoId()))
-                        .findFirst()
-                        .orElse(null);
-
-        if (aristaSalida == null || aristaSalida.getDestinoNodoId() == null || aristaSalida.getDestinoNodoId().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No existe transicion valida desde el nodo actual");
+        String nodoActualId = request.nodoAvanzarId();
+        if (!instancia.getNodosActualesIds().contains(nodoActualId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nodo no está activo en esta instancia");
         }
 
-        String siguienteNodoId = aristaSalida.getDestinoNodoId();
-        NodoBase siguienteNodo = politica.getNodos() == null
-                ? null
-                : politica.getNodos().stream()
-                        .filter((nodo) -> siguienteNodoId.equals(nodo.getIdNodo()))
-                        .findFirst()
-                        .orElse(null);
+        NodoBase nodoActual = politica.getNodos().stream()
+                .filter(n -> n.getIdNodo().equals(nodoActualId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nodo actual invalido"));
 
-        if (siguienteNodo == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nodo destino no existe en la politica");
+        // Métricas: Cierre de Historial
+        Historial historialAbierto = historialRepository.findFirstByInstanciaIDAndNodoDestinoAndFechaFinAtencionIsNullOrderByFechaIngresoDesc(request.instanciaId(), nodoActualId);
+        if (historialAbierto != null) {
+            historialAbierto.setFechaFinAtencion(new Date());
+            historialAbierto.setEjecutadoPor(request.usuarioId());
+            historialAbierto.setAccionTomada("AVANZAR");
+            if (historialAbierto.getFechaInicioAtencion() != null) {
+                long diffInMillies = Math.abs(historialAbierto.getFechaFinAtencion().getTime() - historialAbierto.getFechaInicioAtencion().getTime());
+                historialAbierto.setTiempoResolucionSegundos(diffInMillies / 1000);
+            }
+            historialRepository.save(historialAbierto);
         }
 
-        instancia.setNodoActualId(siguienteNodoId);
-        instancia.setNodoActual(siguienteNodoId);
+        List<Arista> aristasSalida = politica.getAristas().stream()
+                .filter(a -> a.getOrigenNodoId().equals(nodoActualId)).toList();
+
+        instancia.getNodosActualesIds().remove(nodoActualId);
         instancia.setAtendidoPor(null);
 
-        if (esNodoFin(siguienteNodo)) {
+        List<String> siguientesNodosIds = new ArrayList<>();
+
+        if (nodoActual instanceof com.colony.core.domain.NodoCompuerta compuerta) {
+            String decisionKey = compuerta.getCondicionLogica();
+            if (decisionKey != null && !decisionKey.isBlank()) {
+                // CONDICIONAL (XOR)
+                Object valorObj = acumulado.get(decisionKey);
+                String valorStr = valorObj != null ? String.valueOf(valorObj) : "";
+
+                Arista aristaCoincidente = aristasSalida.stream()
+                        .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
+                        .findFirst()
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró arista para la condición: " + valorStr));
+                
+                siguientesNodosIds.add(aristaCoincidente.getDestinoNodoId());
+            } else {
+                // PARALELO (AND)
+                aristasSalida.forEach(a -> siguientesNodosIds.add(a.getDestinoNodoId()));
+            }
+        } else {
+            // LINEAL / BUCLE
+            if (!aristasSalida.isEmpty()) {
+                siguientesNodosIds.add(aristasSalida.get(0).getDestinoNodoId());
+            }
+        }
+
+        for (String sigId : siguientesNodosIds) {
+            NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst().orElse(null);
+            if (sigNodo == null) continue;
+
+            if (!esNodoFin(sigNodo)) {
+                instancia.getNodosActualesIds().add(sigId);
+
+                Historial nuevoHist = new Historial();
+                nuevoHist.setInstanciaID(instancia.getId());
+                nuevoHist.setNodoOrigen(nodoActualId);
+                nuevoHist.setNodoDestino(sigId);
+                nuevoHist.setFechaIngreso(new Date());
+                historialRepository.save(nuevoHist);
+            }
+        }
+
+        if (instancia.getNodosActualesIds().isEmpty()) {
             instancia.setEstadoGeneral(FINALIZADO);
             instancia.setFechaFin(new Date());
         } else {
@@ -166,7 +213,7 @@ public class MotorInstanciaService {
         // Disparar Notificación Push
         if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
             String cuerpo = String.format("Colony: Tu trámite ha sido actualizado. Estado actual: %s",
-                    FINALIZADO.equals(guardada.getEstadoGeneral()) ? "FINALIZADO" : guardada.getNodoActualId());
+                    FINALIZADO.equals(guardada.getEstadoGeneral()) ? "FINALIZADO" : "EN PROCESO");
             pushNotificationService.enviarNotificacion(
                     guardada.getDispositivosSuscritos(),
                     "Actualización de Trámite",
@@ -175,31 +222,6 @@ public class MotorInstanciaService {
         }
 
         return guardada;
-    }
-
-    private NodoBase resolverNodoActual(Instancia instancia, PoliticaNegocio politica) {
-        String nodoActualId = resolverNodoActualId(instancia);
-
-        if (politica.getNodos() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La politica no contiene nodos");
-        }
-
-        return politica.getNodos().stream()
-                .filter((nodo) -> nodoActualId.equals(nodo.getIdNodo()))
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nodo actual invalido para la instancia"));
-    }
-
-    private String resolverNodoActualId(Instancia instancia) {
-        if (instancia.getNodoActualId() != null && !instancia.getNodoActualId().isBlank()) {
-            return instancia.getNodoActualId();
-        }
-
-        if (instancia.getNodoActual() != null && !instancia.getNodoActual().isBlank()) {
-            return instancia.getNodoActual();
-        }
-
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La instancia no tiene nodo actual");
     }
 
     private boolean esNodoFin(NodoBase nodo) {

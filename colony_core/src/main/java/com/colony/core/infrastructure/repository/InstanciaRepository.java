@@ -9,5 +9,7 @@ public interface InstanciaRepository extends MongoRepository<Instancia, String> 
 
     List<Instancia> findByEstadoGeneral(String estadoGeneral);
 
+    List<Instancia> findByEstadoGeneralAndNodosActualesIdsIn(String estadoGeneral, List<String> nodosIds);
+
     Optional<Instancia> findByCodigo(String codigo);
 }

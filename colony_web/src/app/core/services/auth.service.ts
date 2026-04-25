@@ -47,6 +47,7 @@ export class AuthService {
   private readonly userIdKey = 'userId';
   private readonly roleKey = 'rol';
   private readonly departmentKey = 'departamentoId';
+  private readonly departmentNameKey = 'departamentoNombre';
 
   login(payload: LoginPayload): Observable<void> {
     return this.http.post<AuthResponse>(`${this.apiBaseUrl}/login`, payload).pipe(
@@ -99,7 +100,17 @@ export class AuthService {
     }
 
     const claims = this.decodeTokenClaims();
-    return claims?.departamentoId ?? claims?.departamento ?? '';
+    return claims?.departamentoId ?? '';
+  }
+
+  getCurrentDepartmentName(): string {
+    const name = localStorage.getItem(this.departmentNameKey);
+    if (name) {
+      return name;
+    }
+
+    const claims = this.decodeTokenClaims();
+    return claims?.departamento ?? '';
   }
 
   getCurrentEmail(): string {
@@ -112,11 +123,13 @@ export class AuthService {
     const roleFromResponse = response.usuario?.rol || this.decodeTokenClaims(response.token)?.rol || '';
     const claims = this.decodeTokenClaims(response.token);
     const userIdFromResponse = response.usuario?.id || claims?.userId || '';
-    const departmentFromResponse = response.usuario?.departamentoId || response.usuario?.departamento || claims?.departamentoId || claims?.departamento || '';
+    const departmentIdFromResponse = response.usuario?.departamentoId || claims?.departamentoId || '';
+    const departmentNameFromResponse = response.usuario?.departamento || claims?.departamento || '';
 
     localStorage.setItem(this.userIdKey, userIdFromResponse);
     localStorage.setItem(this.roleKey, roleFromResponse);
-    localStorage.setItem(this.departmentKey, departmentFromResponse);
+    localStorage.setItem(this.departmentKey, departmentIdFromResponse);
+    localStorage.setItem(this.departmentNameKey, departmentNameFromResponse);
   }
 
   private decodeTokenClaims(tokenArg?: string): JwtClaims | null {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, inject, OnInit } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -9,13 +9,28 @@ import { AuthService } from '../../core/services/auth.service';
   imports: [CommonModule, RouterModule],
   templateUrl: './dashboard-layout.component.html'
 })
-export class DashboardLayoutComponent {
+export class DashboardLayoutComponent implements OnInit {
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   readonly currentRole = this.authService.getCurrentRole();
-  readonly currentDepartment = this.authService.getCurrentDepartment();
+  readonly currentDepartment = this.authService.getCurrentDepartmentName();
+  readonly currentDepartmentId = this.authService.getCurrentDepartment();
 
   isSidebarOpen = false;
+
+  ngOnInit(): void {
+    // Redireccion inicial inteligente segun el rol si estamos en la raiz del app
+    if (this.router.url === '/app') {
+      if (this.isSuperAdmin()) {
+        this.router.navigate(['/app/admin/users']);
+      } else if (this.canAccessCanvas()) {
+        this.router.navigate(['/app/workflow-builder']);
+      } else if (this.isFuncionario()) {
+        this.router.navigate(['/app/bandeja']);
+      }
+    }
+  }
 
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
@@ -43,6 +58,6 @@ export class DashboardLayoutComponent {
 
   isPendingAssignment(): boolean {
     return this.currentRole === 'FUNCIONARIO'
-      && (!this.currentDepartment || this.currentDepartment === 'SIN_ASIGNAR');
+      && (!this.currentDepartmentId || this.currentDepartmentId === 'SIN_ASIGNAR');
   }
 }

@@ -20,4 +20,10 @@ public class Historial {
     private String accionTomada;
     private Date fechaTransicion;
     private Double tiempoEnNodo;
+    
+    // Métricas de rendimiento
+    private Date fechaIngreso;
+    private Date fechaInicioAtencion;
+    private Date fechaFinAtencion;
+    private Long tiempoResolucionSegundos;
 }
