@@ -82,6 +82,14 @@
           <p class="mt-1 text-xs opacity-80">Alta, edicion y baja de departamentos</p>
         </a>
         }
+
+        @if (canAccessCanvas() && !isPendingAssignment()) {
+        <a routerLink="/app/metricas" routerLinkActive="bg-primary text-white" (click)="closeSidebar()"
+          class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary">
+          <p class="font-semibold">Métricas de Rendimiento</p>
+          <p class="mt-1 text-xs opacity-80">KPIs y tiempos de resolución</p>
+        </a>
+        }
       </nav>
 
       <div class="mt-6 rounded-xl border border-border bg-background p-4">

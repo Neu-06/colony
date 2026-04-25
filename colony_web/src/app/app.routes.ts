@@ -83,6 +83,11 @@ export const routes: Routes = [
 				path: 'admin/departments',
 				component: DepartmentManagementComponent,
 				canActivate: [superAdminGuard]
+			},
+			{
+				path: 'metricas',
+				loadComponent: () => import('./features/metricas/dashboard-metricas.component').then(m => m.DashboardMetricasComponent),
+				canActivate: [adminGuard]
 			}
 		]
 	},

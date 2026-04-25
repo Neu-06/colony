@@ -9,6 +9,8 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\DepartamentoRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\IniciarInstanciaRequest.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\IniciarInstanciaResponse.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\KpiGeneralDTO.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\MetricaRendimientoDTO.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\PoliticaPublicadaResumenDto.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\PrimerFormularioDto.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\application\dto\RastreoResponseDto.java
@@ -46,6 +48,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\BandejaController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\CollaborativeWorkflowController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\DepartamentoController.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\MetricasController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\MotorController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\PoliticaController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\RastreoController.java
