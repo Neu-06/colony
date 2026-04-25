@@ -33,8 +33,8 @@ export class TramiteService {
   private readonly tramitesApi = 'http://localhost:8080/api/tramites';
   private readonly motorApi = 'http://localhost:8080/api/motor';
 
-  listarPublicados(): Observable<TramiteCatalogoDto[]> {
-    return this.http.get<TramiteCatalogoDto[]>(`${this.tramitesApi}/publicados`);
+  listarPublicados(departamentoId: string): Observable<TramiteCatalogoDto[]> {
+    return this.http.get<TramiteCatalogoDto[]>(`${this.tramitesApi}/publicados/${departamentoId}`);
   }
 
   obtenerPrimerFormulario(politicaId: string): Observable<PrimerFormularioDto> {

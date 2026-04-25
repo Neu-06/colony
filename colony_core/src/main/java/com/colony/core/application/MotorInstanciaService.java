@@ -21,10 +21,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MotorInstanciaService {
@@ -115,113 +117,145 @@ public class MotorInstanciaService {
     }
 
     public Instancia avanzar(AvanzarInstanciaRequest request) {
-        Instancia instancia = instanciaRepository.findById(request.instanciaId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instancia no encontrada"));
+        log.info("Iniciando avance de instanciaId: {}", request.instanciaId());
+        try {
+            Instancia instancia = instanciaRepository.findById(request.instanciaId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instancia no encontrada"));
 
-        PoliticaNegocio politica = politicaNegocioRepository.findById(instancia.getPoliticaId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Politica no encontrada"));
+            PoliticaNegocio politica = politicaNegocioRepository.findById(instancia.getPoliticaId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Politica no encontrada"));
 
-        Map<String, Object> acumulado = instancia.getDatosDinamicos() == null
-                ? new HashMap<>()
-                : new HashMap<>(instancia.getDatosDinamicos());
+            Map<String, Object> acumulado = instancia.getDatosDinamicos() == null
+                    ? new HashMap<>()
+                    : new HashMap<>(instancia.getDatosDinamicos());
 
-        if (request.datos() != null) {
-            acumulado.putAll(request.datos());
-        }
-
-        instancia.setDatosDinamicos(acumulado);
-
-        String nodoActualId = request.nodoAvanzarId();
-        if (!instancia.getNodosActualesIds().contains(nodoActualId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nodo no está activo en esta instancia");
-        }
-
-        NodoBase nodoActual = politica.getNodos().stream()
-                .filter(n -> n.getIdNodo().equals(nodoActualId)).findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nodo actual invalido"));
-
-        // Métricas: Cierre de Historial
-        Historial historialAbierto = historialRepository.findFirstByInstanciaIDAndNodoDestinoAndFechaFinAtencionIsNullOrderByFechaIngresoDesc(request.instanciaId(), nodoActualId);
-        if (historialAbierto != null) {
-            historialAbierto.setFechaFinAtencion(new Date());
-            historialAbierto.setEjecutadoPor(request.usuarioId());
-            historialAbierto.setAccionTomada("AVANZAR");
-            if (historialAbierto.getFechaInicioAtencion() != null) {
-                long diffInMillies = Math.abs(historialAbierto.getFechaFinAtencion().getTime() - historialAbierto.getFechaInicioAtencion().getTime());
-                historialAbierto.setTiempoResolucionSegundos(diffInMillies / 1000);
+            if (request.datosNuevos() != null) {
+                acumulado.putAll(request.datosNuevos());
             }
-            historialRepository.save(historialAbierto);
-        }
 
-        List<Arista> aristasSalida = politica.getAristas().stream()
-                .filter(a -> a.getOrigenNodoId().equals(nodoActualId)).toList();
+            instancia.setDatosDinamicos(acumulado);
 
-        instancia.getNodosActualesIds().remove(nodoActualId);
-        instancia.setAtendidoPor(null);
+            if (instancia.getNodosActualesIds() == null || instancia.getNodosActualesIds().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La instancia no tiene nodos activos");
+            }
 
-        List<String> siguientesNodosIds = new ArrayList<>();
+            String nodoActualId = instancia.getNodosActualesIds().get(0);
+            log.info("Nodo actual evaluado: {}", nodoActualId);
 
-        if (nodoActual instanceof com.colony.core.domain.NodoCompuerta compuerta) {
-            String decisionKey = compuerta.getCondicionLogica();
-            if (decisionKey != null && !decisionKey.isBlank()) {
-                // CONDICIONAL (XOR)
+            NodoBase nodoActual = politica.getNodos().stream()
+                    .filter(n -> n.getIdNodo().equals(nodoActualId)).findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nodo actual invalido"));
+
+            Historial historialAbierto = historialRepository.findFirstByInstanciaIDAndNodoDestinoAndFechaFinAtencionIsNullOrderByFechaIngresoDesc(request.instanciaId(), nodoActualId);
+            if (historialAbierto != null) {
+                historialAbierto.setFechaFinAtencion(new Date());
+                historialAbierto.setEjecutadoPor(request.usuarioId());
+                historialAbierto.setAccionTomada("AVANZAR");
+                if (historialAbierto.getFechaInicioAtencion() != null) {
+                    long diffInMillies = Math.abs(historialAbierto.getFechaFinAtencion().getTime() - historialAbierto.getFechaInicioAtencion().getTime());
+                    historialAbierto.setTiempoResolucionSegundos(diffInMillies / 1000);
+                }
+                historialRepository.save(historialAbierto);
+                log.info("Historial cerrado para nodo: {}", nodoActualId);
+            }
+
+            List<Arista> aristasSalida = politica.getAristas().stream()
+                    .filter(a -> a.getOrigenNodoId().equals(nodoActualId)).toList();
+
+            if (aristasSalida.isEmpty() && !esNodoFin(nodoActual)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar");
+            }
+
+            instancia.getNodosActualesIds().remove(nodoActualId);
+            instancia.setAtendidoPor(null);
+            log.info("Regla de limpieza aplicada: atendidoPor = null");
+
+            List<String> siguientesNodosIds = new ArrayList<>();
+
+            if (nodoActual instanceof com.colony.core.domain.NodoCompuerta compuerta) {
+                String decisionKey = compuerta.getCondicionLogica();
+                log.info("Evaluando compuerta con decisionKey: {}", decisionKey);
+                
+                if (decisionKey == null || decisionKey.isBlank()) {
+                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar");
+                }
+
                 Object valorObj = acumulado.get(decisionKey);
                 String valorStr = valorObj != null ? String.valueOf(valorObj) : "";
+                log.info("Valor evaluado para la compuerta: {}", valorStr);
 
                 Arista aristaCoincidente = aristasSalida.stream()
                         .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
                         .findFirst()
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró arista para la condición: " + valorStr));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar"));
                 
                 siguientesNodosIds.add(aristaCoincidente.getDestinoNodoId());
+                log.info("Camino elegido (XOR): {}", aristaCoincidente.getDestinoNodoId());
             } else {
-                // PARALELO (AND)
-                aristasSalida.forEach(a -> siguientesNodosIds.add(a.getDestinoNodoId()));
+                if (!aristasSalida.isEmpty()) {
+                    siguientesNodosIds.add(aristasSalida.get(0).getDestinoNodoId());
+                    log.info("Camino elegido (Lineal): {}", aristasSalida.get(0).getDestinoNodoId());
+                }
             }
-        } else {
-            // LINEAL / BUCLE
-            if (!aristasSalida.isEmpty()) {
-                siguientesNodosIds.add(aristasSalida.get(0).getDestinoNodoId());
+
+            for (String sigId : siguientesNodosIds) {
+                NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst().orElse(null);
+                if (sigNodo == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar");
+                }
+
+                if (!esNodoFin(sigNodo)) {
+                    instancia.getNodosActualesIds().add(sigId);
+
+                    Historial nuevoHist = new Historial();
+                    nuevoHist.setInstanciaID(instancia.getId());
+                    nuevoHist.setNodoOrigen(nodoActualId);
+                    nuevoHist.setNodoDestino(sigId);
+                    nuevoHist.setFechaIngreso(new Date());
+                    historialRepository.save(nuevoHist);
+                    log.info("Historial creado para el nuevo nodo: {}", sigId);
+                } else {
+                    log.info("Se alcanzó el nodo FIN: {}", sigId);
+                }
             }
-        }
 
-        for (String sigId : siguientesNodosIds) {
-            NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst().orElse(null);
-            if (sigNodo == null) continue;
-
-            if (!esNodoFin(sigNodo)) {
-                instancia.getNodosActualesIds().add(sigId);
-
-                Historial nuevoHist = new Historial();
-                nuevoHist.setInstanciaID(instancia.getId());
-                nuevoHist.setNodoOrigen(nodoActualId);
-                nuevoHist.setNodoDestino(sigId);
-                nuevoHist.setFechaIngreso(new Date());
-                historialRepository.save(nuevoHist);
+            if (instancia.getNodosActualesIds().isEmpty()) {
+                instancia.setEstadoGeneral(FINALIZADO);
+                instancia.setFechaFin(new Date());
+                log.info("Regla de Cierre aplicada: estadoGeneral = FINALIZADO");
+            } else {
+                instancia.setEstadoGeneral(EN_PROCESO);
             }
+
+            Instancia guardada = instanciaRepository.save(instancia);
+            log.info("Avance de instancia guardado con éxito. Estado: {}", guardada.getEstadoGeneral());
+
+            try {
+                if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
+                    String cuerpo = String.format("Colony: Tu trámite ha sido actualizado. Estado actual: %s",
+                            FINALIZADO.equals(guardada.getEstadoGeneral()) ? "FINALIZADO" : "EN PROCESO");
+                    pushNotificationService.enviarNotificacion(
+                            guardada.getDispositivosSuscritos(),
+                            "Actualización de Trámite",
+                            cuerpo
+                    );
+                }
+            } catch (Exception e) {
+                log.warn("El motor avanzó correctamente, pero falló el envío de la notificación: {}", e.getMessage());
+            }
+
+            return guardada;
+
+        } catch (NullPointerException e) {
+            log.error("NullPointerException al avanzar la instancia", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar");
+        } catch (ResponseStatusException e) {
+            log.error("ResponseStatusException al avanzar instancia: {}", e.getReason());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al avanzar instancia", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del motor");
         }
-
-        if (instancia.getNodosActualesIds().isEmpty()) {
-            instancia.setEstadoGeneral(FINALIZADO);
-            instancia.setFechaFin(new Date());
-        } else {
-            instancia.setEstadoGeneral(EN_PROCESO);
-        }
-
-        Instancia guardada = instanciaRepository.save(instancia);
-
-        // Disparar Notificación Push
-        if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
-            String cuerpo = String.format("Colony: Tu trámite ha sido actualizado. Estado actual: %s",
-                    FINALIZADO.equals(guardada.getEstadoGeneral()) ? "FINALIZADO" : "EN PROCESO");
-            pushNotificationService.enviarNotificacion(
-                    guardada.getDispositivosSuscritos(),
-                    "Actualización de Trámite",
-                    cuerpo
-            );
-        }
-
-        return guardada;
     }
 
     private boolean esNodoFin(NodoBase nodo) {

@@ -19,10 +19,10 @@ public class TramiteController {
 
     private final TramiteService tramiteService;
 
-    @GetMapping("/publicados")
+    @GetMapping("/publicados/{usuarioDepartamentoId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
-    public ResponseEntity<List<TramiteCatalogoDto>> listarPublicados() {
-        return ResponseEntity.ok(tramiteService.listarPublicados());
+    public ResponseEntity<List<TramiteCatalogoDto>> listarPublicados(@PathVariable String usuarioDepartamentoId) {
+        return ResponseEntity.ok(tramiteService.listarPublicados(usuarioDepartamentoId));
     }
 
     @GetMapping("/{politicaId}/primer-formulario")

@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertaService } from '../../core/services/alerta.service';
 import { AtencionTramiteDto, BandejaService } from '../../core/services/bandeja.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-atencion-tramite',
@@ -17,6 +18,7 @@ export class AtencionTramiteComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly bandejaService = inject(BandejaService);
   private readonly alertaService = inject(AlertaService);
+  private readonly authService = inject(AuthService);
 
   tramite: AtencionTramiteDto | null = null;
   isLoading = false;
@@ -80,8 +82,9 @@ export class AtencionTramiteComponent implements OnInit {
     }
 
     this.isSubmitting = true;
+    const usuarioId = this.authService.getCurrentUserId() || '';
 
-    this.bandejaService.avanzarTramite(this.tramite.instanciaId, this.form.value as Record<string, unknown>).subscribe({
+    this.bandejaService.avanzarTramite(this.tramite.instanciaId, usuarioId, this.form.value as Record<string, unknown>).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.alertaService.mostrarExito('Tramite enviado al siguiente estado.');

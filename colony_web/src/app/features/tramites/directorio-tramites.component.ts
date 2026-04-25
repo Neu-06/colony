@@ -35,10 +35,17 @@ export class DirectorioTramitesComponent implements OnInit {
   }
 
   cargarCatalogo(): void {
+    const dptoId = this.authService.getCurrentDepartment();
+    if (!dptoId) {
+      this.errorMessage = 'No tienes departamento asignado';
+      this.alertaService.mostrarError(this.errorMessage);
+      return;
+    }
+
     this.isLoadingCatalogo = true;
     this.errorMessage = '';
 
-    this.tramiteService.listarPublicados().subscribe({
+    this.tramiteService.listarPublicados(dptoId).subscribe({
       next: (catalogo) => {
         this.catalogo = catalogo;
         this.isLoadingCatalogo = false;

@@ -21,18 +21,39 @@ public class TramiteService {
 
     private final PoliticaNegocioRepository politicaNegocioRepository;
 
-    public List<TramiteCatalogoDto> listarPublicados() {
+    public List<TramiteCatalogoDto> listarPublicados(String usuarioDepartamentoId) {
         List<PoliticaNegocio> politicas = politicaNegocioRepository.findByEstadoInOrderByFechaCreacionDesc(
                 List.of("PUBLICADO", "PUBLICADA")
         );
 
         List<TramiteCatalogoDto> resultado = new ArrayList<>();
         for (PoliticaNegocio politica : politicas) {
-            resultado.add(new TramiteCatalogoDto(
-                    politica.getId(),
-                    politica.getNombre(),
-                    descripcionPolitica(politica)
-            ));
+            NodoBase nodoInicio = null;
+            try {
+                nodoInicio = buscarNodoInicio(politica);
+            } catch (Exception e) {
+                continue;
+            }
+            if (nodoInicio == null || nodoInicio.getCarrilId() == null) continue;
+
+            String carrilId = nodoInicio.getCarrilId();
+            String departamentoIdCarril = null;
+            if (politica.getCarriles() != null) {
+                for (var carril : politica.getCarriles()) {
+                    if (carrilId.equals(carril.getId())) {
+                        departamentoIdCarril = carril.getDepartamentoId();
+                        break;
+                    }
+                }
+            }
+
+            if (usuarioDepartamentoId.equals(departamentoIdCarril)) {
+                resultado.add(new TramiteCatalogoDto(
+                        politica.getId(),
+                        politica.getNombre(),
+                        descripcionPolitica(politica)
+                ));
+            }
         }
 
         return resultado;
