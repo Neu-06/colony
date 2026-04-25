@@ -32,6 +32,7 @@ export class HeaderToolbarComponent {
   @Output() readonly deleteDiagram = new EventEmitter<void>();
   @Output() readonly zoomIn = new EventEmitter<void>();
   @Output() readonly zoomOut = new EventEmitter<void>();
+  @Output() zoomFit = new EventEmitter<void>();
   @Output() readonly createRoom = new EventEmitter<void>();
   @Output() readonly leaveRoom = new EventEmitter<void>();
 

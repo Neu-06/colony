@@ -14,12 +14,18 @@ interface CallbacksEventos {
 export class JsplumbWrapperService {
   private instancia: any = null;
   private sincronizandoDesdeEstado = false;
+  private isReadOnly = false;
   private callbacks: CallbacksEventos | null = null;
   private readonly endpointInicializado = new Map<string, string>();
 
-  inicializar(container: HTMLElement, callbacks: CallbacksEventos): void {
+  inicializar(container: HTMLElement, callbacks: CallbacksEventos, isReadOnly = false): void {
     this.callbacks = callbacks;
+    this.isReadOnly = isReadOnly;
     this.instancia = jsPlumb.getInstance({ Container: container });
+    
+    if (isReadOnly) {
+        this.instancia.setDraggable = () => {}; // Desactivar drag globalmente de forma bruta si es necesario
+    }
 
     this.instancia.importDefaults({
       Connector: ['Flowchart', { stub: 24, gap: 10, cornerRadius: 6 }],
@@ -210,6 +216,11 @@ export class JsplumbWrapperService {
 
     this.instancia.unmakeSource(elementId);
     this.instancia.unmakeTarget(elementId);
+
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.instancia.draggable(elementId, {
       containment: 'parent'
     });

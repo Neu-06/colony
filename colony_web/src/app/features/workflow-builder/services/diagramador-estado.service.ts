@@ -255,6 +255,33 @@ export class DiagramadorEstadoService {
     this.setZoom(this._zoomNivel() - paso);
   }
 
+  zoomFit(): void {
+    const nodos = this._nodos();
+    if (nodos.length === 0) {
+      this.setZoom(1);
+      return;
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    nodos.forEach(n => {
+      const x = n.posicion?.x ?? 0;
+      const y = n.posicion?.y ?? 0;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + 160); // Ancho aprox nodo
+      maxY = Math.max(maxY, y + 100); // Alto aprox nodo
+    });
+
+    const padding = 60;
+    const availableW = window.innerWidth - 350; // Descontar sidebar
+    const availableH = window.innerHeight - 150; // Descontar header
+
+    const zoomX = availableW / (maxX - minX + padding);
+    const zoomY = availableH / (maxY - minY + padding);
+    
+    this.setZoom(Math.min(zoomX, zoomY, 1));
+  }
+
   hidratarDesdePolitica(politica: PoliticaNegocio): void {
     const snapshot = fromPoliticaToSnapshot(politica);
 

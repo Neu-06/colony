@@ -32,6 +32,7 @@
       (deleteDiagram)="eliminarDiagramaActual()"
       (zoomIn)="zoomIn()"
       (zoomOut)="zoomOut()"
+      (zoomFit)="zoomFit()"
       (createRoom)="createRoom()"
       (leaveRoom)="leaveRoom()"
     ></app-header-toolbar>
@@ -54,18 +55,16 @@
     }
 
     <section class="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(0,1fr)_320px]">
-      <div class="min-h-0 p-2 sm:p-4" [class.pointer-events-none]="isReadOnlyMode">
-        <app-lienzo-carriles class="block h-full"></app-lienzo-carriles>
+      <div class="min-h-0 p-2 sm:p-4">
+        <app-lienzo-carriles [isReadOnly]="isReadOnlyMode" class="block h-full"></app-lienzo-carriles>
       </div>
 
-      @if (!isReadOnlyMode) {
-        <div
-          class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 md:relative md:inset-auto md:z-auto md:w-auto md:bg-transparent md:translate-x-0 md:shadow-none"
-          [ngClass]="isSidebarOpen ? 'translate-x-0' : 'translate-x-full'"
-        >
-          <app-panel-propiedades class="block min-h-full"></app-panel-propiedades>
-        </div>
-      }
+      <div
+        class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 md:relative md:inset-auto md:z-auto md:w-auto md:bg-transparent md:translate-x-0 md:shadow-none h-full overflow-hidden"
+        [ngClass]="isSidebarOpen || (isReadOnlyMode && (estado.nodoSeleccionado() || estado.aristaSeleccionada())) ? 'translate-x-0' : 'translate-x-full'"
+      >
+        <app-panel-propiedades [isReadOnly]="isReadOnlyMode" class="block h-full"></app-panel-propiedades>
+      </div>
     </section>
 
     @if (!isReadOnlyMode) {

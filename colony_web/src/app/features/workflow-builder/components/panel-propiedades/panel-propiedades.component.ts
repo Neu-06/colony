@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, effect, inject } from '@angular/core';
+import { Component, DestroyRef, effect, inject, Input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta } from '../../models/canvas.models';
@@ -13,6 +13,7 @@ import Swal from 'sweetalert2';
   templateUrl: './panel-propiedades.component.html'
 })
 export class PanelPropiedadesComponent {
+  @Input() isReadOnly = false;
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly estado = inject(DiagramadorEstadoService);
@@ -79,6 +80,7 @@ export class PanelPropiedadesComponent {
     });
 
     this.actividadForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (this.isReadOnly) return;
       const nodo = this.nodoSeleccionadoSignal();
       if (!nodo || !this.esNodoActividadEditable(nodo)) {
         return;
@@ -90,6 +92,7 @@ export class PanelPropiedadesComponent {
     });
 
     this.compuertaForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (this.isReadOnly) return;
       const nodo = this.nodoSeleccionadoSignal();
       if (!nodo || !this.esNodoCompuerta(nodo)) {
         return;
@@ -101,6 +104,7 @@ export class PanelPropiedadesComponent {
     });
 
     this.aristaForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (this.isReadOnly) return;
       const arista = this.aristaSeleccionadaSignal();
       if (!arista) {
         return;
@@ -161,6 +165,11 @@ export class PanelPropiedadesComponent {
   }
 
   limpiarAristaSeleccionada(): void {
+    this.estado.limpiarSeleccionArista();
+  }
+
+  limpiarSeleccion(): void {
+    this.estado.seleccionarNodo(null);
     this.estado.limpiarSeleccionArista();
   }
 

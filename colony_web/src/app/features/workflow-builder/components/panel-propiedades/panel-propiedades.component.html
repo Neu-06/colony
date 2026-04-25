@@ -1,159 +1,155 @@
-<aside class="h-full border-l border-border bg-surface p-4">
-  <h2 class="text-sm font-bold uppercase tracking-wide text-primary">Propiedades</h2>
+<aside class="flex h-full flex-col border-l border-border bg-surface overflow-hidden">
+  <!-- Cabecera Fija -->
+  <div class="p-4 border-b border-border bg-surface z-10 flex items-center justify-between">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-primary">Propiedades</h2>
+    @if (nodoSeleccionadoActual || aristaSeleccionadaActual) {
+      <button (click)="limpiarSeleccion()" class="text-xs text-ink-light hover:text-primary">Cerrar</button>
+    }
+  </div>
 
-  @if (!nodoSeleccionadoActual && !aristaSeleccionadaActual) {
-    <p class="mt-3 rounded-xl border border-border bg-background px-3 py-4 text-sm text-ink-light">
-      Selecciona un nodo o una conexion para configurar.
-    </p>
-  }
-
-  @if (nodoSeleccionadoActual) {
-    <div class="mt-3">
-      <button
-        type="button"
-        (click)="eliminarNodoSeleccionado()"
-        class="w-full rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
-      >
-        Eliminar
-      </button>
-    </div>
-  }
-
-  @if (nodoActividadSeleccionado) {
-    <form [formGroup]="actividadForm" class="mt-4 space-y-4">
-      <div>
-        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-light">Nombre de tarea</label>
-        <input
-          formControlName="nombre"
-          type="text"
-          class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-        />
+  <!-- Cuerpo con Scroll -->
+  <div class="flex-1 overflow-y-auto p-4 custom-scrollbar min-h-0">
+    @if (!nodoSeleccionadoActual && !aristaSeleccionadaActual) {
+      <div class="flex h-full flex-col items-center justify-center text-center opacity-60">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 mb-2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M18.757 14.743l-1.591-1.591m-7.413 7.413 1.591-1.591M6 18c.396-.396.396-1.039 0-1.435l-1.591-1.591M3.75 10.5H6m.666-5.834 1.591 1.591" />
+        </svg>
+        <p class="text-sm px-4">Selecciona un elemento en el lienzo para configurar sus propiedades.</p>
       </div>
+    }
 
-      <section>
-        <div class="mb-2 flex items-center justify-between">
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Constructor de formularios</p>
-          <button
-            type="button"
-            (click)="agregarCampoFormulario()"
-            class="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-white hover:bg-primary-hover"
-          >
-            Anadir Campo
-          </button>
-        </div>
-
-        <div class="space-y-2">
-          <div *ngFor="let campo of camposFormulario; trackBy: trackByCampoId" class="rounded-xl border border-border bg-background p-3">
-            <div class="grid gap-2">
-              <input
-                [(ngModel)]="campo.nombre"
-                [ngModelOptions]="{ standalone: true }"
-                type="text"
-                placeholder="Nombre del campo"
-                class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm outline-none focus:border-primary"
-              />
-
-              <select
-                [(ngModel)]="campo.tipo"
-                [ngModelOptions]="{ standalone: true }"
-                class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm outline-none focus:border-primary"
-              >
-                <option *ngFor="let tipoCampo of tiposCampo" [value]="tipoCampo.value">{{ tipoCampo.label }}</option>
-              </select>
-
-              <label class="flex items-center gap-2 text-xs font-semibold text-ink-light">
-                <input
-                  type="checkbox"
-                  [(ngModel)]="campo.requerido"
-                  [ngModelOptions]="{ standalone: true }"
-                />
-                Obligatorio
-              </label>
-            </div>
-
-            <button
-              type="button"
-              (click)="eliminarCampo(campo.id)"
-              class="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:border-red-400"
-              title="Eliminar campo"
-              aria-label="Eliminar campo"
-            >
-              X
-            </button>
-          </div>
-        </div>
-        
-        <div class="mt-4">
-          <button
-            type="button"
-            (click)="guardarFormularioExplicitamente()"
-            class="w-full rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white transition"
-          >
-            Confirmar y Guardar Formulario
-          </button>
-        </div>
-      </section>
-    </form>
-  }
-
-  @if (nodoEstadoSeleccionado) {
-    <section class="mt-4 rounded-xl border border-border bg-background p-3 text-sm text-ink-light">
-      <p class="font-semibold text-ink">Nodo de estado</p>
-      <p class="mt-1">Los nodos Inicio y Fin son de solo estado y no permiten editar nombre ni formulario.</p>
-    </section>
-  }
-
-  @if (nodoCompuertaSeleccionado) {
-    <form [formGroup]="compuertaForm" class="mt-4 space-y-3">
-      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-light">Condicion Logica</label>
-      <input
-        formControlName="condicionLogica"
-        type="text"
-        placeholder="monto > 1000"
-        class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-      />
-    </form>
-  }
-
-  @if (aristaSeleccionadaActual) {
-    <section class="mt-4 space-y-3 rounded-xl border border-border bg-background p-3">
-      <div class="flex items-center justify-between gap-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Etiqueta de Conexion</p>
-        <button
-          type="button"
-          (click)="limpiarAristaSeleccionada()"
-          class="rounded-md border border-border px-2 py-1 text-xs font-semibold text-ink-light hover:border-danger hover:text-danger"
-        >
-          Limpiar Seleccion
+    @if (nodoSeleccionadoActual && !isReadOnly) {
+      <div class="mb-6">
+        <button type="button" (click)="eliminarNodoSeleccionado()"
+          class="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 hover:border-red-300 transition">
+          Eliminar Nodo
         </button>
       </div>
+    }
 
-      <form [formGroup]="aristaForm" class="space-y-3">
+    <!-- Configuración de Actividad -->
+    @if (nodoActividadSeleccionado) {
+      <form [formGroup]="actividadForm" class="space-y-6">
         <div>
-          <label class="mb-1 block text-xs text-ink-light">Etiqueta Visual</label>
-          <input
-            formControlName="etiqueta"
-            type="text"
-            (keydown.space)="$event.stopPropagation()"
-            placeholder="Si, No, Aprobado..."
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-light">Nombre de la Tarea</label>
+          <input formControlName="nombre" type="text" [readonly]="isReadOnly"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition" />
         </div>
+
         <div>
-          <label class="mb-1 block text-xs font-semibold text-primary">Condicion (Valor esperado)</label>
-          <input
-            formControlName="condicion"
-            type="text"
-            (keydown.space)="$event.stopPropagation()"
-            placeholder="SI, NO, RECHAZADO"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Esquema del Formulario</p>
+            @if (!isReadOnly) {
+              <button type="button" (click)="agregarCampoFormulario()"
+                class="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary hover:bg-primary hover:text-white transition">
+                + Añadir Campo
+              </button>
+            }
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let campo of camposFormulario; trackBy: trackByCampoId"
+              class="group relative rounded-xl border border-border bg-background p-4 shadow-sm hover:border-primary/30 transition">
+              <div class="grid gap-3">
+                <div>
+                  <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Etiqueta</label>
+                  <input [(ngModel)]="campo.nombre" [ngModelOptions]="{ standalone: true }" type="text"
+                    [readonly]="isReadOnly" placeholder="Ej: Motivo de viaje"
+                    class="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Tipo</label>
+                    <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }"
+                      class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
+                      <option *ngFor="let tipoCampo of tiposCampo" [value]="tipoCampo.value">{{ tipoCampo.label }}</option>
+                    </select>
+                  </div>
+                  <div class="flex items-end pb-1.5">
+                    <label class="flex items-center gap-2 text-xs font-medium text-ink-light cursor-pointer">
+                      <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="campo.requerido"
+                        [ngModelOptions]="{ standalone: true }" class="rounded text-primary focus:ring-primary" />
+                      Requerido
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              @if (!isReadOnly) {
+                <button type="button" (click)="eliminarCampo(campo.id)"
+                  class="absolute -top-2 -right-2 hidden group-hover:flex h-6 w-6 items-center justify-center rounded-full border border-red-200 bg-white text-red-500 shadow-sm hover:bg-red-50 transition"
+                  title="Eliminar campo">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+          <div class="h-4"></div> <!-- Espaciador final -->
         </div>
       </form>
+    }
 
-      <p class="text-[11px] text-ink-light">
-        {{ aristaSeleccionadaActual.origenNodoId }} -> {{ aristaSeleccionadaActual.destinoNodoId }}
-      </p>
-    </section>
+    <!-- Otros Nodos -->
+    @if (nodoEstadoSeleccionado) {
+      <section class="rounded-xl border border-border bg-blue-50/50 p-4 text-sm">
+        <p class="font-bold text-blue-900 mb-1">Nodo de Control</p>
+        <p class="text-blue-700 leading-relaxed">Este nodo define el estado del proceso (Inicio/Fin). No requiere configuración de datos adicional.</p>
+      </section>
+    }
+
+    @if (nodoCompuertaSeleccionado) {
+      <form [formGroup]="compuertaForm" class="space-y-4">
+        <div>
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-light">Lógica de Decisión</label>
+          <input formControlName="condicionLogica" type="text" [readonly]="isReadOnly" placeholder="Ej: monto > 5000"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+          <p class="mt-2 text-[11px] text-ink-light">Define la expresión que determinará el flujo de salida.</p>
+        </div>
+      </form>
+    }
+
+    @if (aristaSeleccionadaActual) {
+      <section class="space-y-5">
+        <div class="rounded-xl border border-border bg-background p-4 shadow-sm">
+          <p class="text-[10px] font-bold text-ink-light uppercase mb-3 border-b border-border pb-1">Metadatos de Conexión</p>
+          <div class="flex items-center gap-2 text-xs text-ink">
+            <span class="rounded bg-slate-100 px-2 py-1 font-mono">{{ aristaSeleccionadaActual.origenNodoId }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3 text-ink-light">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+            <span class="rounded bg-slate-100 px-2 py-1 font-mono">{{ aristaSeleccionadaActual.destinoNodoId }}</span>
+          </div>
+        </div>
+
+        <form [formGroup]="aristaForm" class="space-y-4">
+          <div>
+            <label class="mb-1.5 block text-xs font-semibold text-ink-light uppercase">Etiqueta Visual</label>
+            <input formControlName="etiqueta" type="text" [readonly]="isReadOnly"
+              (keydown.space)="$event.stopPropagation()" placeholder="Ej: Si / No"
+              class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-xs font-semibold text-primary uppercase">Valor de Condición</label>
+            <input formControlName="condicion" type="text" [readonly]="isReadOnly"
+              (keydown.space)="$event.stopPropagation()" placeholder="ACEPTADO"
+              class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary ring-1 ring-primary/10" />
+          </div>
+        </form>
+      </section>
+    }
+  </div>
+
+  <!-- Pie de Página Fijo (Solo si hay algo que guardar) -->
+  @if (nodoActividadSeleccionado && !isReadOnly) {
+    <div class="p-4 pb-8 border-t border-border bg-surface shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-20">
+      <button type="button" (click)="guardarFormularioExplicitamente()"
+        class="w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-hover transition shadow-md active:scale-[0.98]">
+        Confirmar y Guardar Formulario
+      </button>
+      <p class="text-[10px] text-center text-ink-light mt-2">Los cambios se aplicarán al nodo seleccionado actualmente.</p>
+    </div>
   }
 </aside>

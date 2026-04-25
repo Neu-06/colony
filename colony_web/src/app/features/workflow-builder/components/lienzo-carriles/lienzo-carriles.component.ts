@@ -6,6 +6,7 @@ import {
   DestroyRef,
   ElementRef,
   HostListener,
+  Input,
   ViewChild,
   computed,
   effect,
@@ -32,6 +33,7 @@ interface NodeSize {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LienzoCarrilesComponent implements AfterViewInit {
+  @Input() isReadOnly = false;
   private static readonly ALTO_CARRIL_PX = 250;
   private static readonly ANCHO_CABECERA_CARRIL_PX = 80;
 
@@ -139,7 +141,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
       onNodeDragStop: (nodeId, posicion) => {
         this.actualizarNodoTrasDrag(nodeId, posicion);
       }
-    });
+    }, this.isReadOnly);
 
     this.initializeResizeObserver();
     this.vistaLista = true;

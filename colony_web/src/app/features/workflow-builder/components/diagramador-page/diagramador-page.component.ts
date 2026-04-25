@@ -29,7 +29,7 @@ export interface CursorInfo {
 export class DiagramadorPageComponent {
   private static readonly ALTO_CARRIL_PX = 250;
 
-  private readonly estado = inject(DiagramadorEstadoService);
+  public readonly estado = inject(DiagramadorEstadoService);
   private readonly alertaService = inject(AlertaService);
   private readonly politicaService = inject(PoliticaService);
   private readonly route = inject(ActivatedRoute);
@@ -346,6 +346,10 @@ export class DiagramadorPageComponent {
 
   zoomOut(): void {
     this.estado.zoomOut();
+  }
+
+  zoomFit(): void {
+    this.estado.zoomFit();
   }
 
   toggleSidebar(): void {
