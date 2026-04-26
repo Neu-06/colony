@@ -12,7 +12,7 @@ import { NodoCanvas } from '../../models/canvas.models';
 export class NodoVisualComponent {
   @Input({ required: true }) datos!: NodoCanvas;
 
-  tipoNodo(): 'inicio' | 'fin' | 'compuerta' | 'tarea' {
+  tipoNodo(): 'inicio' | 'fin' | 'compuerta' | 'fork' | 'join' | 'tarea' {
     if (this.datos.tipo === 'compuerta' || this.datos.tipo === 'gateway' || this.datos.tipo === 'salida_condicional') {
       return 'compuerta';
     }
@@ -23,6 +23,14 @@ export class NodoVisualComponent {
 
     if (this.datos.tipo === 'fin' || this.datos.tipo === 'end') {
       return 'fin';
+    }
+
+    if (this.datos.tipo === 'fork') {
+      return 'fork';
+    }
+
+    if (this.datos.tipo === 'join') {
+      return 'join';
     }
 
     return 'tarea';

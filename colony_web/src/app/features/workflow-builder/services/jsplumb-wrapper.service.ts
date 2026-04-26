@@ -28,7 +28,7 @@ export class JsplumbWrapperService {
     }
 
     this.instancia.importDefaults({
-      Connector: ['Flowchart', { stub: 24, gap: 10, cornerRadius: 6 }],
+      Connector: ['Flowchart', { stub: 30, gap: 0, cornerRadius: 5 }],
       PaintStyle: { stroke: '#475569', strokeWidth: 2 },
       Endpoint: 'Blank',
       ConnectionOverlays: [
@@ -95,9 +95,15 @@ export class JsplumbWrapperService {
           continue;
         }
 
+        // Persistir la condición directamente en el objeto de conexión
+        if (arista.condicion) {
+          connection.setParameter('condicion', arista.condicion);
+        }
+
         const overlay = connection.getOverlay('label');
         if (overlay) {
-          const texto = [arista.etiqueta, arista.condicion ? `[${arista.condicion}]` : null].filter(Boolean).join(' ');
+          const condicion = connection.getParameter('condicion') || arista.condicion;
+          const texto = [arista.etiqueta, condicion ? `[${condicion}]` : null].filter(Boolean).join(' ');
           overlay.setLabel(texto || '');
         }
 
@@ -146,6 +152,18 @@ export class JsplumbWrapperService {
     if (!this.instancia) {
       return;
     }
+
+    // Validador previo a la conexión (UML interceptor)
+    this.instancia.bind('beforeDrop', (info: any) => {
+      const sourceId = info?.sourceId as string | undefined;
+      const targetId = info?.targetId as string | undefined;
+
+      if (sourceId && targetId && sourceId === targetId) {
+        this.mostrarToastUML('UML: Un nodo no puede conectarse a sí mismo.');
+        return false;
+      }
+      return true;
+    });
 
     this.instancia.bind('connection', (info: any) => {
       if (this.sincronizandoDesdeEstado || !this.callbacks) {
@@ -200,9 +218,17 @@ export class JsplumbWrapperService {
     });
   }
 
+  private mostrarToastUML(mensaje: string): void {
+    const toast = document.createElement('div');
+    toast.textContent = mensaje;
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);pointer-events:none;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
   private inicializarEndpointNodo(
     nodoId: string,
-    tipoEndpoint: 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA',
+    tipoEndpoint: 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA' | 'FORK' | 'JOIN',
     resolverIdElemento: (idNodo: string) => string
   ): void {
     if (!this.instancia) {
@@ -228,13 +254,15 @@ export class JsplumbWrapperService {
     const policy = this.getEndpointPolicy(tipoEndpoint);
 
     if (policy.sourceMax !== null) {
+      const sourceAnchor = tipoEndpoint === 'FORK' ? 'ContinuousRight' :
+                           tipoEndpoint === 'JOIN' ? 'Right' : 'Right';
       this.instancia.makeSource(elementId, {
-        anchor: 'Right',
+        anchor: sourceAnchor,
         filter: '.conector-handle',
         endpoint: 'Blank',
         maxConnections: policy.sourceMax,
         allowLoopback: false,
-        connector: ['Flowchart', { stub: 24, gap: 10, cornerRadius: 6 }],
+        connector: ['Flowchart', { stub: 30, gap: 0, cornerRadius: 5 }],
         connectorStyle: { stroke: '#475569', strokeWidth: 2 },
         connectorOverlays: [
           ['Arrow', { location: 1, width: 10, length: 10 }],
@@ -244,8 +272,10 @@ export class JsplumbWrapperService {
     }
 
     if (policy.targetMax !== null) {
+      const targetAnchor = tipoEndpoint === 'JOIN' ? 'ContinuousLeft' :
+                           tipoEndpoint === 'FORK' ? 'Left' : 'Left';
       this.instancia.makeTarget(elementId, {
-        anchor: 'Left',
+        anchor: targetAnchor,
         endpoint: 'Blank',
         maxConnections: policy.targetMax,
         allowLoopback: false,
@@ -257,24 +287,28 @@ export class JsplumbWrapperService {
     }
   }
 
-  private getEndpointPolicy(tipoEndpoint: 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA'): {
+  private getEndpointPolicy(tipoEndpoint: 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA' | 'FORK' | 'JOIN'): {
     sourceMax: number | null;
     targetMax: number | null;
   } {
     switch (tipoEndpoint) {
       case 'INICIO':
-        return { sourceMax: -1, targetMax: null };
+        return { sourceMax: 1, targetMax: null };
       case 'FIN':
         return { sourceMax: null, targetMax: -1 };
       case 'COMPUERTA':
-        return { sourceMax: -1, targetMax: -1 };
+        return { sourceMax: -1, targetMax: 1 };
+      case 'FORK':
+        return { sourceMax: -1, targetMax: 1 };
+      case 'JOIN':
+        return { sourceMax: 1, targetMax: -1 };
       case 'TAREA':
       default:
-        return { sourceMax: -1, targetMax: -1 };
+        return { sourceMax: 1, targetMax: -1 };
     }
   }
 
-  private resolverTipoEndpoint(nodo: NodoCanvas): 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA' {
+  private resolverTipoEndpoint(nodo: NodoCanvas): 'INICIO' | 'FIN' | 'TAREA' | 'COMPUERTA' | 'FORK' | 'JOIN' {
     if (nodo.tipo === 'inicio' || nodo.tipo === 'start') {
       return 'INICIO';
     }
@@ -285,6 +319,14 @@ export class JsplumbWrapperService {
 
     if (nodo.tipo === 'compuerta' || nodo.tipo === 'gateway' || nodo.tipo === 'salida_condicional') {
       return 'COMPUERTA';
+    }
+
+    if (nodo.tipo === 'fork') {
+      return 'FORK';
+    }
+
+    if (nodo.tipo === 'join') {
+      return 'JOIN';
     }
 
     return 'TAREA';

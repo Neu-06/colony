@@ -350,10 +350,10 @@ export class DiagramadorEstadoService {
   private construirNodo(tipo: TipoNodoHerramienta, idNodo: string, carrilId: string, posicion: { x: number; y: number }): NodoCanvas {
     const segura = { x: Math.max(posicion.x, 0), y: Math.max(posicion.y, 0) };
 
-    if (tipo === 'compuerta') {
+    if (tipo === 'compuerta' || tipo === 'fork' || tipo === 'join') {
       return {
         idNodo,
-        tipo: 'compuerta',
+        tipo,
         posicion: segura,
         carrilId,
         condicionLogica: ''
@@ -414,7 +414,7 @@ export class DiagramadorEstadoService {
   }
 
   private esActividad(nodo: NodoCanvas): nodo is NodoActividad {
-    return nodo.tipo !== 'compuerta' && nodo.tipo !== 'salida_condicional' && nodo.tipo !== 'gateway';
+    return nodo.tipo !== 'compuerta' && nodo.tipo !== 'salida_condicional' && nodo.tipo !== 'gateway' && nodo.tipo !== 'fork' && nodo.tipo !== 'join';
   }
 
   private normalizarTipoNodoEstado(tipo: string): string | null {
@@ -455,6 +455,10 @@ export class DiagramadorEstadoService {
         return 'Inicio';
       case 'fin':
         return 'Fin';
+      case 'fork':
+        return 'Bifurcación (Fork)';
+      case 'join':
+        return 'Unión (Join)';
       case 'tarea':
       default:
         return 'Nueva Tarea';

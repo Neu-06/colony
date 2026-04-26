@@ -55,7 +55,10 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   readonly aristaSeleccionada = this.estado.aristaSeleccionada;
   readonly zoomNivel = this.estado.zoomNivel;
   readonly altoCarrilPx = LienzoCarrilesComponent.ALTO_CARRIL_PX;
-  readonly altoTotalCanvasPx = computed(() => Math.max(this.carriles().length * this.altoCarrilPx, this.altoCarrilPx));
+  readonly altoTotalCanvasPx = computed(() => {
+    const total = this.carriles().reduce((sum, c) => sum + (c.altoPx || this.altoCarrilPx), 0);
+    return Math.max(total, this.altoCarrilPx);
+  });
 
   private readonly dragMimeType = 'application/x-diagramador-node';
   private readonly legacyDragMimeType = 'application/x-canvas-node';
@@ -91,9 +94,9 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     this.jsplumb.inicializar(this.jsplumbContainerRef.nativeElement, {
       onConnection: (origenNodoId, destinoNodoId) => {
         const nodoOrigen = this.nodos().find((n) => n.idNodo === origenNodoId);
-        const esCompuerta = nodoOrigen && (nodoOrigen.tipo === 'compuerta' || nodoOrigen.tipo === 'gateway' || nodoOrigen.tipo === 'salida_condicional');
+        const esCompuertaCondicional = nodoOrigen && (nodoOrigen.tipo === 'compuerta' || nodoOrigen.tipo === 'gateway' || nodoOrigen.tipo === 'salida_condicional');
 
-        if (esCompuerta) {
+        if (esCompuertaCondicional) {
           void Swal.fire({
             title: 'Condición de la Decisión',
             text: 'Esta arista sale de una compuerta. Define su condición exacta:',
@@ -231,6 +234,30 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     this.carrilEditandoId = null;
   }
 
+  iniciarRedimensionadoCarril(event: MouseEvent, carrilId: string): void {
+    event.preventDefault();
+    const carrilActual = this.carriles().find(c => c.id === carrilId);
+    const altoInicial = carrilActual?.altoPx || this.altoCarrilPx;
+    const yInicial = event.clientY;
+    const MIN_ALTO = 120;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const delta = e.clientY - yInicial;
+      const nuevoAlto = Math.max(MIN_ALTO, altoInicial + delta);
+      this.estado.actualizarCarril(carrilId, { altoPx: nuevoAlto });
+      this.scheduleBoardSync();
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      this.scheduleBoardSync();
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
   trackByDepartamentoId(_index: number, departamento: DepartamentoDto): string {
     return departamento.id;
   }
@@ -275,6 +302,10 @@ export class LienzoCarrilesComponent implements AfterViewInit {
         return 'tarea';
       case 'COMPUERTA':
         return 'compuerta';
+      case 'FORK':
+        return 'fork';
+      case 'JOIN':
+        return 'join';
       case 'FIN':
         return 'fin';
       default:
@@ -283,7 +314,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   }
 
   private resolveNodeSize(type: TipoNodoHerramienta): NodeSize {
-    if (type === 'compuerta') {
+    if (type === 'compuerta' || type === 'fork' || type === 'join') {
       return { width: 80, height: 80 };
     }
 

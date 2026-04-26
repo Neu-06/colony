@@ -104,6 +104,12 @@
             @if (item.key === 'compuerta') {
               <span class="h-5 w-5 rotate-45 rounded-sm bg-[var(--color-node-gateway)]"></span>
             }
+            @if (item.key === 'fork') {
+              <span class="h-7 w-2 rounded-sm bg-gray-900" title="Fork"></span>
+            }
+            @if (item.key === 'join') {
+              <span class="h-7 w-2 rounded-sm bg-gray-900 opacity-60" title="Join"></span>
+            }
             @if (item.key === 'fin') {
               <span class="h-5 w-5 rounded-full bg-rose-500"></span>
             }

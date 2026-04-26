@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { RouterModule } from '@angular/router';
 
 interface HerramientaNodo {
-  key: 'inicio' | 'tarea' | 'compuerta' | 'fin';
-  dragType: 'INICIO' | 'TAREA' | 'COMPUERTA' | 'FIN';
+  key: 'inicio' | 'tarea' | 'compuerta' | 'fork' | 'join' | 'fin';
+  dragType: 'INICIO' | 'TAREA' | 'COMPUERTA' | 'FORK' | 'JOIN' | 'FIN';
   title: string;
 }
 
@@ -41,7 +41,9 @@ export class HeaderToolbarComponent {
   readonly herramientas: HerramientaNodo[] = [
     { key: 'inicio', dragType: 'INICIO', title: 'Inicio' },
     { key: 'tarea', dragType: 'TAREA', title: 'Tarea' },
-    { key: 'compuerta', dragType: 'COMPUERTA', title: 'Compuerta' },
+    { key: 'compuerta', dragType: 'COMPUERTA', title: 'Compuerta de Decisión' },
+    { key: 'fork', dragType: 'FORK', title: 'Bifurcación Paralela (Fork)' },
+    { key: 'join', dragType: 'JOIN', title: 'Unión Paralela (Join)' },
     { key: 'fin', dragType: 'FIN', title: 'Fin' }
   ];
 

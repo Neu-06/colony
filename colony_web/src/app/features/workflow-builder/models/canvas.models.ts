@@ -19,6 +19,7 @@ export interface Carril {
   nombre: string;
   departamentoId?: string;
   orden: number;
+  altoPx?: number;
 }
 
 export interface NodoBase {
@@ -57,4 +58,4 @@ export interface PoliticaNegocio {
   aristas: Arista[];
 }
 
-export type TipoNodoHerramienta = 'inicio' | 'tarea' | 'compuerta' | 'fin';
+export type TipoNodoHerramienta = 'inicio' | 'tarea' | 'compuerta' | 'fork' | 'join' | 'fin';
