@@ -1,93 +1,80 @@
 <section class="space-y-4">
   <header class="rounded-2xl border border-border bg-surface px-4 py-4">
-    <p class="text-xs font-semibold uppercase tracking-wide text-primary">CU6</p>
+    <p class="text-xs font-semibold uppercase tracking-wide text-primary"></p>
     <h2 class="mt-1 text-xl font-bold">Directorio de Tramites</h2>
     <p class="mt-1 text-sm text-ink-light">Inicia una instancia desde cualquier flujo publicado.</p>
   </header>
 
   @if (errorMessage) {
-    <p class="rounded-xl border border-danger bg-surface px-4 py-3 text-sm font-medium text-danger">{{ errorMessage }}</p>
+  <p class="rounded-xl border border-danger bg-surface px-4 py-3 text-sm font-medium text-danger">{{ errorMessage }}</p>
   }
 
   <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
     @if (isLoadingCatalogo) {
-      <article class="rounded-2xl border border-border bg-surface p-4">
-        <p class="text-sm text-ink-light">Cargando tramites...</p>
-      </article>
+    <article class="rounded-2xl border border-border bg-surface p-4">
+      <p class="text-sm text-ink-light">Cargando tramites...</p>
+    </article>
     }
 
     @if (!isLoadingCatalogo && catalogo.length === 0) {
-      <article class="rounded-2xl border border-border bg-surface p-4 md:col-span-2 xl:col-span-3">
-        <p class="text-sm text-ink-light">No hay tramites publicados disponibles.</p>
-      </article>
+    <article class="rounded-2xl border border-border bg-surface p-4 md:col-span-2 xl:col-span-3">
+      <p class="text-sm text-ink-light">No hay tramites publicados disponibles.</p>
+    </article>
     }
 
     @for (tramite of catalogo; track tramite.id) {
-      <article class="rounded-2xl border border-border bg-surface p-4 shadow-sm">
-        <h3 class="text-base font-bold">{{ tramite.nombre || 'Tramite sin nombre' }}</h3>
-        <p class="mt-2 text-sm text-ink-light">{{ tramite.descripcion }}</p>
+    <article class="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+      <h3 class="text-base font-bold">{{ tramite.nombre || 'Tramite sin nombre' }}</h3>
+      <p class="mt-2 text-sm text-ink-light">{{ tramite.descripcion }}</p>
 
-        <button
-          type="button"
-          (click)="iniciarTramite(tramite)"
-          class="mt-4 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover"
-        >
-          Iniciar Tramite
-        </button>
-      </article>
+      <button type="button" (click)="iniciarTramite(tramite)"
+        class="mt-4 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover">
+        Iniciar Tramite
+      </button>
+    </article>
     }
   </section>
 
   @if (politicaSeleccionada) {
-    <section class="rounded-2xl border border-border bg-surface p-4">
-      <div class="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-primary">Inicio Rapido</p>
-          <h3 class="mt-1 text-lg font-bold">{{ politicaSeleccionada.nombre }}</h3>
-        </div>
-        <button
-          type="button"
-          (click)="cerrarInicio()"
-          class="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-ink hover:bg-secondary"
-        >
-          Cerrar
-        </button>
+  <section class="rounded-2xl border border-border bg-surface p-4">
+    <div class="mb-3 flex items-start justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-primary">Inicio Rapido</p>
+        <h3 class="mt-1 text-lg font-bold">{{ politicaSeleccionada.nombre }}</h3>
       </div>
+      <button type="button" (click)="cerrarInicio()"
+        class="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-ink hover:bg-secondary">
+        Cerrar
+      </button>
+    </div>
 
-      @if (isLoadingFormulario) {
-        <p class="text-sm text-ink-light">Cargando primer formulario...</p>
+    @if (isLoadingFormulario) {
+    <p class="text-sm text-ink-light">Cargando primer formulario...</p>
+    }
+
+    @if (!isLoadingFormulario && primerFormulario) {
+    <form [formGroup]="form" class="space-y-3">
+      @if (primerFormulario.esquemaFormulario.length === 0) {
+      <p class="text-sm text-ink-light">El formulario inicial no tiene campos definidos.</p>
       }
 
-      @if (!isLoadingFormulario && primerFormulario) {
-        <form [formGroup]="form" class="space-y-3">
-          @if (primerFormulario.esquemaFormulario.length === 0) {
-            <p class="text-sm text-ink-light">El formulario inicial no tiene campos definidos.</p>
-          }
-
-          @for (campo of primerFormulario.esquemaFormulario; track campo.nombre) {
-            <label class="block text-sm">
-              <span class="mb-1 block font-semibold text-ink">{{ campo.nombre }}</span>
-              <input
-                [type]="campo.tipo || 'text'"
-                [formControlName]="campo.nombre"
-                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              />
-              @if (form.get(campo.nombre)?.invalid && form.get(campo.nombre)?.touched) {
-                <span class="mt-1 block text-xs font-medium text-danger">Campo requerido.</span>
-              }
-            </label>
-          }
-        </form>
-
-        <button
-          type="button"
-          (click)="crearYDerivar()"
-          [disabled]="isSubmitting"
-          class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-70"
-        >
-          {{ isSubmitting ? 'Creando...' : 'Crear y Derivar' }}
-        </button>
+      @for (campo of primerFormulario.esquemaFormulario; track campo.nombre) {
+      <label class="block text-sm">
+        <span class="mb-1 block font-semibold text-ink">{{ campo.nombre }}</span>
+        <input [type]="campo.tipo || 'text'" [formControlName]="campo.nombre"
+          class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+        @if (form.get(campo.nombre)?.invalid && form.get(campo.nombre)?.touched) {
+        <span class="mt-1 block text-xs font-medium text-danger">Campo requerido.</span>
+        }
+      </label>
       }
-    </section>
+    </form>
+
+    <button type="button" (click)="crearYDerivar()" [disabled]="isSubmitting"
+      class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-70">
+      {{ isSubmitting ? 'Creando...' : 'Crear y Derivar' }}
+    </button>
+    }
+  </section>
   }
 </section>

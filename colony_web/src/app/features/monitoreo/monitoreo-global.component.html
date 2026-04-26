@@ -1,0 +1,197 @@
+<section class="space-y-8">
+
+  <!-- ───────────── KPI HEADER ───────────── -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="rounded-2xl border border-border bg-surface p-5 shadow-sm text-center">
+      <p class="text-3xl font-extrabold text-ink">{{ totalInstancias() }}</p>
+      <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-light">Total Instancias</p>
+    </div>
+    <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm text-center">
+      <p class="text-3xl font-extrabold text-blue-700">{{ enProceso() }}</p>
+      <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-blue-500">En Proceso</p>
+    </div>
+    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm text-center">
+      <p class="text-3xl font-extrabold text-emerald-700">{{ finalizados() }}</p>
+      <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-emerald-500">Finalizados</p>
+    </div>
+  </div>
+
+  <!-- ───────────── SECCIÓN A: MINI RASTREADOR ───────────── -->
+  <div class="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+          stroke="currentColor" class="w-5 h-5 text-primary">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-ink">Rastreador de Trámite</h2>
+        <p class="text-xs text-ink-light">Busca por código de instancia (ej. TRM-XXXXXXXX)</p>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <input type="text" [(ngModel)]="codigoBusqueda" (keydown.enter)="rastrear()"
+        placeholder="Ej: TRM-4A8B12CD"
+        class="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono uppercase outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition" />
+      <button type="button" (click)="rastrear()" [disabled]="buscando || !codigoBusqueda.trim()"
+        class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary/90 disabled:opacity-50 transition">
+        @if (buscando) {
+        <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+        } @else {
+        Rastrear
+        }
+      </button>
+    </div>
+
+    <!-- Resultado del rastreo -->
+    @if (rastreoError) {
+    <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {{ rastreoError }}
+    </div>
+    }
+
+    @if (rastreoResultado) {
+    <div class="mt-4 rounded-xl border border-border bg-background p-4 grid grid-cols-3 gap-4">
+      <div>
+        <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Código</p>
+        <p class="font-mono text-sm font-bold text-ink">{{ rastreoResultado.codigo }}</p>
+      </div>
+      <div>
+        <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Estado</p>
+        <span class="inline-block rounded-full border px-3 py-0.5 text-xs font-semibold"
+          [ngClass]="estadoBadgeClass(rastreoResultado.estadoGeneral)">
+          {{ rastreoResultado.estadoGeneral }}
+        </span>
+      </div>
+      <div>
+        <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Nodo / Dpto Actual</p>
+        <p class="text-sm text-ink truncate">{{ rastreoResultado.nodoActual || '—' }}</p>
+      </div>
+      @if (rastreoResultado.historial && rastreoResultado.historial.length > 0) {
+      <div class="col-span-3 border-t border-border pt-3">
+        <p class="text-[10px] font-bold uppercase text-ink-light mb-2">Historial de pasos</p>
+        <div class="flex flex-wrap gap-2">
+          @for (paso of rastreoResultado.historial; track paso; let i = $index) {
+          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 border border-slate-200">
+            {{ i + 1 }}. {{ paso }}
+          </span>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- ───────────── SECCIÓN B: TABLERO TIEMPO REAL ───────────── -->
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-5 h-5 text-indigo-600">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-ink">Tablero en Tiempo Real</h2>
+          <p class="text-xs text-ink-light">Agrupado por Política · Actualización automática vía WebSocket</p>
+        </div>
+      </div>
+      <button type="button" (click)="cargarInstancias()"
+        class="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-ink-light hover:text-ink hover:border-primary transition">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" class="w-3.5 h-3.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+        Recargar
+      </button>
+    </div>
+
+    <!-- Estado de carga -->
+    @if (cargando) {
+    <div class="space-y-3">
+      @for (i of [1,2,3]; track i) {
+      <div class="h-20 animate-pulse rounded-2xl bg-border"></div>
+      }
+    </div>
+    } @else if (errorCarga) {
+    <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+      {{ errorCarga }}
+    </div>
+    } @else if (grupos.length === 0) {
+    <div class="rounded-2xl border border-border bg-surface py-16 text-center opacity-50">
+      <p class="text-sm">No hay instancias registradas en el sistema.</p>
+    </div>
+    } @else {
+
+    <!-- ACORDEÓN por Política -->
+    <div class="space-y-3">
+      @for (grupo of grupos; track grupo.politicaId) {
+      <div class="rounded-2xl border border-border bg-surface shadow-sm overflow-hidden">
+
+        <!-- Header del acordeón -->
+        <button type="button" (click)="toggleGrupo(grupo)"
+          class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-background/60 transition">
+          <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-4 h-4 text-primary">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-ink">{{ grupo.politicaNombre }}</p>
+              <p class="text-xs text-ink-light">{{ grupo.instancias.length }} instancia(s)</p>
+            </div>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" class="w-4 h-4 text-ink-light transition-transform duration-200"
+            [class.rotate-180]="grupo.abierto">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+
+        <!-- Contenido del acordeón -->
+        @if (grupo.abierto) {
+        <div class="border-t border-border px-5 py-4">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            @for (inst of grupo.instancias; track inst.instanciaId) {
+            <div class="rounded-xl border border-border bg-background p-4 hover:border-primary/30 transition">
+              <!-- Código -->
+              <p class="font-mono text-xs font-bold text-primary mb-2 tracking-wider">
+                {{ inst.codigo }}
+              </p>
+              <!-- Nodo actual -->
+              <p class="text-[11px] text-ink-light mb-3 truncate" title="{{ inst.nodoActualId }}">
+                📍 {{ inst.nodoActualId || 'Sin nodo asignado' }}
+              </p>
+              <!-- Badges -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                  [ngClass]="semaforoBadgeClass(inst.semaforo)">
+                  {{ semaforoIcon(inst.semaforo) }} {{ inst.semaforo || 'N/A' }}
+                </span>
+                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                  [ngClass]="estadoBadgeClass(inst.estadoGeneral)">
+                  {{ inst.estadoGeneral === 'EN_PROCESO' ? 'En Proceso' : (inst.estadoGeneral || '—') }}
+                </span>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+</section>

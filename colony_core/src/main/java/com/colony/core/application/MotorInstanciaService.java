@@ -23,6 +23,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -39,6 +40,7 @@ public class MotorInstanciaService {
     private final HistorialRepository historialRepository;
     private final TramiteService tramiteService;
     private final PushNotificationService pushNotificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public IniciarInstanciaResponse iniciar(IniciarInstanciaRequest request) {
         PoliticaNegocio politica = politicaNegocioRepository.findById(request.politicaId())
@@ -242,6 +244,23 @@ public class MotorInstanciaService {
 
             Instancia guardada = instanciaRepository.save(instancia);
             log.info("Avance de instancia guardado con éxito. Estado: {}", guardada.getEstadoGeneral());
+
+            // BROADCAST WebSocket al dashboard de monitoreo
+            try {
+                String nodoActualBroadcast = (guardada.getNodosActualesIds() == null || guardada.getNodosActualesIds().isEmpty())
+                        ? "—" : guardada.getNodosActualesIds().get(0);
+                Map<String, Object> broadcast = new HashMap<>();
+                broadcast.put("instanciaId", guardada.getId());
+                broadcast.put("codigo", guardada.getCodigo());
+                broadcast.put("politicaId", guardada.getPoliticaId());
+                broadcast.put("estadoGeneral", guardada.getEstadoGeneral());
+                broadcast.put("semaforo", guardada.getSemaforo() != null ? guardada.getSemaforo() : "ROJO");
+                broadcast.put("nodoActualId", nodoActualBroadcast);
+                messagingTemplate.convertAndSend("/topic/monitoreo", broadcast);
+                log.info("Broadcast de monitoreo enviado para instancia: {}", guardada.getCodigo());
+            } catch (Exception e) {
+                log.warn("Falló el broadcast de monitoreo (no crítico): {}", e.getMessage());
+            }
 
             try {
                 if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {

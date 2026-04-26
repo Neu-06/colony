@@ -88,6 +88,10 @@ export const routes: Routes = [
 				path: 'metricas',
 				loadComponent: () => import('./features/metricas/dashboard-metricas.component').then(m => m.DashboardMetricasComponent),
 				canActivate: [adminGuard]
+			},
+			{
+				path: 'monitoreo',
+				loadComponent: () => import('./features/monitoreo/monitoreo-global.component').then(m => m.MonitoreoGlobalComponent)
 			}
 		]
 	},
