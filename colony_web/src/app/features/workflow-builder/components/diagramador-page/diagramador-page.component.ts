@@ -10,8 +10,10 @@ import { LienzoCarrilesComponent } from '../lienzo-carriles/lienzo-carriles.comp
 import { PanelPropiedadesComponent } from '../panel-propiedades/panel-propiedades.component';
 import { CollabService } from '../../services/collab.service';
 import { IAService } from '../../services/ia.service';
-import { effect, computed, signal, HostListener } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { JsplumbWrapperService } from '../../services/jsplumb-wrapper.service';
+import { effect, computed, signal, HostListener, ViewChild, AfterViewInit } from '@angular/core';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, filter } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 export interface CursorInfo {
@@ -28,8 +30,10 @@ export interface CursorInfo {
   templateUrl: './diagramador-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DiagramadorPageComponent {
+export class DiagramadorPageComponent implements AfterViewInit {
   private static readonly ALTO_CARRIL_PX = 250;
+
+  @ViewChild(LienzoCarrilesComponent) lienzo!: LienzoCarrilesComponent;
 
   public readonly estado = inject(DiagramadorEstadoService);
   private readonly alertaService = inject(AlertaService);
@@ -39,11 +43,14 @@ export class DiagramadorPageComponent {
   private readonly workflowTemplateService = inject(WorkflowTemplateService);
   private readonly collabService = inject(CollabService);
   private readonly iaService = inject(IAService);
+  private readonly jsplumb = inject(JsplumbWrapperService);
 
   private collabSub?: Subscription;
   private isApplyingSync = false;
   private syncInterval: any;
   private lastSyncStr = '';
+
+  private autoSaveSubject$ = new Subject<void>();
 
   flowName = 'Nuevo Flujo';
   isSaving = false;
@@ -143,6 +150,17 @@ export class DiagramadorPageComponent {
       }
     }, 1000);
 
+    /*
+    // Requerimiento 2: Autosave con RxJS
+    this.autoSaveSubject$.pipe(
+      debounceTime(3000)
+    ).subscribe(() => {
+      if (!this.isReadOnlyMode) {
+        this.guardarBorradorSilencioso();
+      }
+    });
+    */
+
     this.route.paramMap.subscribe((params) => {
       const policyId = params.get('id');
       const templateId = this.route.snapshot.queryParamMap.get('template');
@@ -225,6 +243,14 @@ export class DiagramadorPageComponent {
     });
   }
 
+  ngAfterViewInit(): void {
+    if (this.lienzo) {
+      this.lienzo.diagramChanged.subscribe(() => {
+        this.autoSaveSubject$.next();
+      });
+    }
+  }
+
   ngOnDestroy(): void {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
@@ -283,6 +309,25 @@ export class DiagramadorPageComponent {
     }
 
     this.estado.agregarCarril();
+    this.autoSaveSubject$.next();
+  }
+
+  guardarBorradorSilencioso(): void {
+    this.sincronizarPosicionesYCarrilesDesdeDOM();
+    const aristasLienzo = this.jsplumb.obtenerAristasDesdeLienzo();
+    const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+    
+    const payload = {
+      ...politica,
+      aristas: aristasLienzo.length > 0 ? aristasLienzo : politica.aristas
+    };
+
+    this.politicaService.guardarPolitica(payload).subscribe({
+      next: (saved) => {
+        this.estado.hidratarDesdePolitica(saved);
+        console.log('Autoguardado silencioso completado');
+      }
+    });
   }
 
   guardarBorrador(): void {
@@ -477,9 +522,10 @@ export class DiagramadorPageComponent {
         this.estado.hidratarDesdePolitica(saved);
         this.flowName = saved.nombre || this.flowName;
 
-        if (saved.id) {
-          void this.router.navigate(['/app/canvas', saved.id], { replaceUrl: true });
-        }
+        // Requerimiento 3: ELIMINAR navegación/recarga que rompe el flujo
+        // if (saved.id) {
+        //   void this.router.navigate(['/app/canvas', saved.id], { replaceUrl: true });
+        // }
 
         this.saveMessage = `Flujo guardado como ${estado}.`;
         this.alertaService.mostrarExito('Flujo guardado correctamente');

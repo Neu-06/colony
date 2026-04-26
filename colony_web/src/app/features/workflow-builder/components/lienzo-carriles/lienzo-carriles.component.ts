@@ -7,6 +7,8 @@ import {
   ElementRef,
   HostListener,
   Input,
+  Output,
+  EventEmitter,
   ViewChild,
   computed,
   effect,
@@ -36,6 +38,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   @Input() isReadOnly = false;
   private static readonly ALTO_CARRIL_PX = 250;
   private static readonly ANCHO_CABECERA_CARRIL_PX = 80;
+  @Output() diagramChanged = new EventEmitter<void>();
 
   private readonly estado = inject(DiagramadorEstadoService);
   private readonly jsplumb = inject(JsplumbWrapperService);
@@ -56,7 +59,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   readonly zoomNivel = this.estado.zoomNivel;
   readonly altoCarrilPx = LienzoCarrilesComponent.ALTO_CARRIL_PX;
   readonly altoTotalCanvasPx = computed(() => {
-    const total = this.carriles().reduce((sum, c) => sum + (c.altoPx || this.altoCarrilPx), 0);
+    const total = this.carriles().reduce((sum, c) => sum + (c.alto || c.altoPx || this.altoCarrilPx), 0);
     return Math.max(total, this.altoCarrilPx);
   });
 
@@ -92,7 +95,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.jsplumb.inicializar(this.jsplumbContainerRef.nativeElement, {
-      onConnection: (origenNodoId, destinoNodoId) => {
+      onConnection: (origenNodoId, destinoNodoId, connection) => {
         const nodoOrigen = this.nodos().find((n) => n.idNodo === origenNodoId);
         const esCompuertaCondicional = nodoOrigen && (nodoOrigen.tipo === 'compuerta' || nodoOrigen.tipo === 'gateway' || nodoOrigen.tipo === 'salida_condicional');
 
@@ -121,8 +124,18 @@ export class LienzoCarrilesComponent implements AfterViewInit {
             if (result.isConfirmed && result.value) {
               const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
               if (creada) {
+                // Requerimiento 1: Inyectar Label Overlay directamente en la flecha
+                connection.setParameter('condicion', result.value);
+                connection.addOverlay(["Label", { 
+                  label: result.value, 
+                  location: 0.5, 
+                  id: "condicion-label",
+                  cssClass: "bg-white p-1 text-xs border rounded text-blue-600" 
+                }]);
+
                 this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, result.value);
                 this.estado.actualizarEtiquetaArista(origenNodoId, destinoNodoId, `[${result.value}]`);
+                this.diagramChanged.emit();
               }
             }
             // Siempre sincronizamos para limpiar la flecha temporal si canceló, o para mostrarla con la etiqueta si aceptó.
@@ -134,6 +147,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
         const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
         if (creada) {
           this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, '');
+          this.diagramChanged.emit();
         }
         this.scheduleBoardSync();
       },
@@ -187,6 +201,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     const carrilId = this.resolverCarrilIdPorY(posicion.y);
 
     this.estado.agregarNodo(toolType, carrilId, posicion);
+    this.diagramChanged.emit();
     this.scheduleBoardSync();
   }
 
@@ -235,27 +250,54 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   }
 
   iniciarRedimensionadoCarril(event: MouseEvent, carrilId: string): void {
+    // Deprecated in favor of iniciarResizeAlto
+  }
+
+  async eliminarCarril(index: number): Promise<void> {
+    const carril = this.carriles()[index];
+    if (!carril) return;
+
+    const result = await Swal.fire({
+      title: '¿Eliminar carril?',
+      text: `Se eliminarán todos los nodos dentro de "${carril.nombre}". Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      this.estado.eliminarCarril(carril.id);
+      this.diagramChanged.emit();
+    }
+  }
+
+  // FASE 3: Redimensionado de Alto Dinámico
+  private resizingIndex: number | null = null;
+
+  iniciarResizeAlto(event: MouseEvent, index: number): void {
     event.preventDefault();
-    const carrilActual = this.carriles().find(c => c.id === carrilId);
-    const altoInicial = carrilActual?.altoPx || this.altoCarrilPx;
-    const yInicial = event.clientY;
-    const MIN_ALTO = 120;
+    event.stopPropagation();
+    this.resizingIndex = index;
+  }
 
-    const onMouseMove = (e: MouseEvent) => {
-      const delta = e.clientY - yInicial;
-      const nuevoAlto = Math.max(MIN_ALTO, altoInicial + delta);
-      this.estado.actualizarCarril(carrilId, { altoPx: nuevoAlto });
-      this.scheduleBoardSync();
-    };
+  @HostListener('document:mousemove', ['$event'])
+  onDocumentMouseMove(event: MouseEvent): void {
+    if (this.resizingIndex === null) return;
 
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      this.scheduleBoardSync();
-    };
+    const carril = this.carriles()[this.resizingIndex];
+    if (carril) {
+      const nuevoAlto = (carril.alto || 250) + event.movementY;
+      this.estado.actualizarCarril(carril.id, { alto: Math.max(100, nuevoAlto) });
+      this.jsplumb.repintarTodo();
+    }
+  }
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+  @HostListener('document:mouseup')
+  onDocumentMouseUp(): void {
+    this.resizingIndex = null;
   }
 
   trackByDepartamentoId(_index: number, departamento: DepartamentoDto): string {
@@ -378,6 +420,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     });
 
     this.estado.seleccionarNodo(nodeId);
+    this.diagramChanged.emit();
     this.scheduleBoardSync();
   }
 

@@ -20,6 +20,7 @@ export interface Carril {
   departamentoId?: string;
   orden: number;
   altoPx?: number;
+  alto?: number;
 }
 
 export interface NodoBase {

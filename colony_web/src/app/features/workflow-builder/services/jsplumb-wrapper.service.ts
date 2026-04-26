@@ -3,7 +3,7 @@ import { jsPlumb } from 'jsplumb';
 import { Arista, NodoCanvas } from '../models/canvas.models';
 
 interface CallbacksEventos {
-  onConnection: (origenNodoId: string, destinoNodoId: string) => void;
+  onConnection: (origenNodoId: string, destinoNodoId: string, connection: any) => void;
   onConnectionClick: (origenNodoId: string, destinoNodoId: string) => void;
   onNodeDragStop: (nodeId: string, posicion?: { x: number; y: number }) => void;
 }
@@ -33,7 +33,7 @@ export class JsplumbWrapperService {
       Endpoint: 'Blank',
       ConnectionOverlays: [
         ['Arrow', { location: 1, width: 10, length: 10 }],
-        ['Label', { id: 'label', label: '', cssClass: 'edge-label' }]
+        ['Label', { id: 'label', label: '', cssClass: 'bg-white p-1 text-xs border rounded text-blue-600' }]
       ]
     });
 
@@ -103,7 +103,8 @@ export class JsplumbWrapperService {
         const overlay = connection.getOverlay('label');
         if (overlay) {
           const condicion = connection.getParameter('condicion') || arista.condicion;
-          const texto = [arista.etiqueta, condicion ? `[${condicion}]` : null].filter(Boolean).join(' ');
+          // Mostrar solo la condición si existe, o la etiqueta original
+          const texto = condicion || arista.etiqueta;
           overlay.setLabel(texto || '');
         }
 
@@ -131,6 +132,28 @@ export class JsplumbWrapperService {
     }
 
     this.instancia.repaintEverything();
+  }
+
+  obtenerAristasDesdeLienzo(): Arista[] {
+    if (!this.instancia) return [];
+    
+    return this.instancia.getAllConnections().map((conn: any) => {
+      const origenId = this.extraerNodoId(conn.sourceId);
+      const destinoId = this.extraerNodoId(conn.targetId);
+      const condicion = conn.getParameter('condicion');
+      
+      const arista: Arista = {
+        origenNodoId: origenId || '',
+        destinoNodoId: destinoId || ''
+      };
+      
+      if (condicion) {
+        arista.condicion = condicion;
+        arista.etiqueta = `[${condicion}]`;
+      }
+      
+      return arista;
+    });
   }
 
   destruir(): void {
@@ -185,7 +208,7 @@ export class JsplumbWrapperService {
         }, 800);
       }
 
-      this.callbacks.onConnection(origenNodoId, destinoNodoId);
+      this.callbacks.onConnection(origenNodoId, destinoNodoId, info.connection);
     });
 
     this.instancia.bind('click', (connection: any, originalEvent?: MouseEvent) => {

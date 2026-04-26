@@ -10,7 +10,7 @@
           <section
             data-lane-visual
             class="relative border-b border-gray-300"
-            [style.height.px]="carril.altoPx || altoCarrilPx"
+            [style.min-height.px]="carril.alto || 250"
             [ngClass]="laneIndex % 2 === 0 ? 'bg-slate-50' : 'bg-white'"
           ></section>
         }
@@ -41,13 +41,21 @@
       </div>
 
       <div class="pointer-events-none absolute inset-y-0 left-0 z-30 flex w-20 flex-col">
-        @for (carril of carriles(); track carril.id) {
+        @for (carril of carriles(); track carril.id; let i = $index) {
           <section
             class="relative border-b border-gray-300 overflow-hidden"
-            [style.height.px]="carril.altoPx || altoCarrilPx"
+            [style.min-height.px]="carril.alto || 250"
             [attr.data-carril-id]="carril.id"
           >
             <div class="pointer-events-auto absolute inset-y-0 left-0 flex w-20 items-center justify-center border-r border-gray-300 bg-[var(--color-lane-header)] px-2">
+              <!-- FASE 2: Botón Eliminar Carril -->
+              <button 
+                *ngIf="!isReadOnly"
+                (click)="eliminarCarril(i)" 
+                class="absolute top-1 left-1 text-red-400 hover:text-red-600 opacity-50 hover:opacity-100 transition-opacity z-50" 
+                title="Eliminar Carril"
+              >✖</button>
+
               @if (carrilEditandoId === carril.id) {
                 <select
                   [attr.data-lane-input-for]="carril.id"
@@ -73,11 +81,13 @@
                 </button>
               }
             </div>
-            <!-- Asa de redimensionado vertical -->
-            <div
-              class="absolute bottom-0 left-0 right-0 h-2 cursor-row-resize bg-transparent hover:bg-blue-200 hover:opacity-60 transition-colors z-40"
-              (mousedown)="iniciarRedimensionadoCarril($event, carril.id)"
-              title="Arrastra para cambiar alto del carril"
+            
+            <!-- FASE 3: Drag Handle EXCLUSIVAMENTE en el borde inferior -->
+            <div 
+              *ngIf="!isReadOnly"
+              class="w-full h-2 absolute bottom-0 left-0 cursor-row-resize hover:bg-gray-300 transition-colors z-40" 
+              (mousedown)="iniciarResizeAlto($event, i)"
+              title="Estirar carril hacia abajo"
             ></div>
           </section>
         }
