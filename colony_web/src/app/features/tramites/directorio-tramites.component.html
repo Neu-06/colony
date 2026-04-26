@@ -61,8 +61,21 @@
       @for (campo of primerFormulario.esquemaFormulario; track campo.nombre) {
       <label class="block text-sm">
         <span class="mb-1 block font-semibold text-ink">{{ campo.nombre }}</span>
+        @if (campo.tipo === 'textarea') {
+        <textarea [formControlName]="campo.nombre" rows="3"
+          class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"></textarea>
+        } @else if (campo.tipo === 'datetime-local') {
+        <input type="datetime-local" [formControlName]="campo.nombre"
+          class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+        } @else if (campo.tipo === 'select') {
+        <select [formControlName]="campo.nombre"
+          class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none">
+          <option *ngFor="let opt of (campo.opciones || '').split(',')" [value]="opt.trim()">{{ opt.trim() }}</option>
+        </select>
+        } @else {
         <input [type]="campo.tipo || 'text'" [formControlName]="campo.nombre"
           class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+        }
         @if (form.get(campo.nombre)?.invalid && form.get(campo.nombre)?.touched) {
         <span class="mt-1 block text-xs font-medium text-danger">Campo requerido.</span>
         }

@@ -32,8 +32,10 @@ export class PanelPropiedadesComponent {
     { label: 'Texto', value: 'text' },
     { label: 'Numero', value: 'number' },
     { label: 'Fecha', value: 'date' },
+    { label: 'Fecha y Hora', value: 'datetime-local' },
+    { label: 'Texto Largo (Párrafo)', value: 'textarea' },
     { label: 'Booleano', value: 'boolean' },
-    { label: 'Selección (Lista)', value: 'Seleccion' }
+    { label: 'Selección (Lista)', value: 'select' }
   ];
 
   nodoSeleccionadoActual: NodoCanvas | null = null;
@@ -157,6 +159,10 @@ export class PanelPropiedadesComponent {
       timerProgressBar: true,
       heightAuto: false
     });
+  }
+
+  persistirSilenciosamente(): void {
+    this.persistirEsquemaFormulario(this.camposFormulario);
   }
 
   trackByCampoId(_index: number, campo: CampoFormulario): string {
@@ -319,19 +325,14 @@ export class PanelPropiedadesComponent {
   }
 
   private normalizarTipoCampo(tipo: string | undefined): string {
-    const valor = (tipo ?? '').toLowerCase();
+    const lowercase = (tipo ?? '').toLowerCase().trim();
 
-    if (valor === 'numero' || valor === 'number') {
-      return 'number';
-    }
-
-    if (valor === 'fecha' || valor === 'date') {
-      return 'date';
-    }
-
-    if (valor === 'booleano' || valor === 'boolean' || valor === 'bool') {
-      return 'boolean';
-    }
+    if (lowercase === 'numero' || lowercase === 'number') return 'number';
+    if (lowercase === 'fecha' || lowercase === 'date') return 'date';
+    if (lowercase === 'fechahora' || lowercase === 'datetime-local') return 'datetime-local';
+    if (lowercase === 'textolargo' || lowercase === 'textarea') return 'textarea';
+    if (lowercase === 'booleano' || lowercase === 'boolean' || lowercase === 'bool') return 'boolean';
+    if (lowercase === 'seleccion' || lowercase === 'select') return 'select';
 
     return 'text';
   }

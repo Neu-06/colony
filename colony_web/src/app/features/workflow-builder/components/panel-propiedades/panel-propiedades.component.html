@@ -77,10 +77,15 @@
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Tipo</label>
-                    <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }"
+                    <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }" (ngModelChange)="persistirSilenciosamente()"
                       class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
-                      <option *ngFor="let tipoCampo of tiposCampo" [value]="tipoCampo.value">{{ tipoCampo.label }}
-                      </option>
+                      <option value="text">Texto</option>
+                      <option value="number">Numero</option>
+                      <option value="date">Fecha</option>
+                      <option value="datetime-local">Fecha y Hora</option>
+                      <option value="textarea">Texto Largo (Párrafo)</option>
+                      <option value="boolean">Booleano</option>
+                      <option value="select">Selección (Lista)</option>
                     </select>
                   </div>
                   <div class="flex items-end pb-1.5">
@@ -93,7 +98,7 @@
                 </div>
 
                 <!-- FASE SELECCION: Opciones separadas por comas -->
-                <div *ngIf="campo.tipo === 'Seleccion'">
+                <div *ngIf="campo.tipo === 'select'">
                   <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Opciones (separadas por comas)</label>
                   <input [(ngModel)]="campo.opciones" [ngModelOptions]="{ standalone: true }" type="text"
                     [readonly]="isReadOnly" placeholder="Ej: Aceptado, Rechazado, Pendiente"

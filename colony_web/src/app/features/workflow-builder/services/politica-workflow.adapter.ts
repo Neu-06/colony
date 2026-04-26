@@ -103,7 +103,8 @@ function clonarNodo(nodo: NodoCanvas): NodoCanvas {
       id: campo.id || crypto.randomUUID(),
       nombre: campo.nombre ?? '',
       tipo: normalizarTipoCampo(campo.tipo),
-      requerido: !!campo.requerido
+      requerido: !!campo.requerido,
+      opciones: campo.opciones
     }))
   };
 }
@@ -133,19 +134,14 @@ function normalizarTipo(tipo: string): string {
 }
 
 function normalizarTipoCampo(tipo: string | undefined): string {
-  const valor = (tipo ?? '').toLowerCase();
+  const lowercase = (tipo ?? '').toLowerCase().trim();
 
-  if (valor === 'numero' || valor === 'number') {
-    return 'number';
-  }
-
-  if (valor === 'fecha' || valor === 'date') {
-    return 'date';
-  }
-
-  if (valor === 'booleano' || valor === 'boolean' || valor === 'bool') {
-    return 'boolean';
-  }
+  if (lowercase === 'numero' || lowercase === 'number') return 'number';
+  if (lowercase === 'fecha' || lowercase === 'date') return 'date';
+  if (lowercase === 'fechahora' || lowercase === 'datetime-local') return 'datetime-local';
+  if (lowercase === 'textolargo' || lowercase === 'textarea') return 'textarea';
+  if (lowercase === 'booleano' || lowercase === 'boolean' || lowercase === 'bool') return 'boolean';
+  if (lowercase === 'seleccion' || lowercase === 'select') return 'select';
 
   return 'text';
 }

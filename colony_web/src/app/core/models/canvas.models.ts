@@ -2,6 +2,7 @@ export interface CampoForm {
   nombre: string;
   tipo: string;
   requerido: boolean;
+  opciones?: string;
 }
 
 export interface Arista {

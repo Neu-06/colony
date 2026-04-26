@@ -68,14 +68,22 @@
             @if (campo.tipo === 'textarea') {
             <textarea [formControlName]="campo.nombre" rows="3"
               class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+            } @else if (campo.tipo === 'select') {
+            <select [formControlName]="campo.nombre"
+              class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+              <option *ngFor="let opt of (campo.opciones || '').split(',')" [value]="opt.trim()">{{ opt.trim() }}</option>
+            </select>
             } @else if (campo.tipo === 'number') {
             <input type="number" [formControlName]="campo.nombre"
               class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
             } @else if (campo.tipo === 'date') {
             <input type="date" [formControlName]="campo.nombre"
               class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            } @else if (campo.tipo === 'datetime-local') {
+            <input type="datetime-local" [formControlName]="campo.nombre"
+              class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
             } @else {
-            <input type="text" [formControlName]="campo.nombre"
+            <input [type]="campo.tipo === 'boolean' ? 'checkbox' : 'text'" [formControlName]="campo.nombre"
               class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
             }
           </label>

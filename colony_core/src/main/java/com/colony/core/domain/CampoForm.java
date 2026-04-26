@@ -10,4 +10,5 @@ public class CampoForm {
     private String nombre;
     private String tipo;
     private boolean requerido;
+    private String opciones;
 }
