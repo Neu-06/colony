@@ -126,6 +126,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
               if (creada) {
                 // Requerimiento 1: Inyectar Label Overlay directamente en la flecha
                 connection.setParameter('condicion', result.value);
+                connection.setParameter('etiqueta', `[${result.value}]`);
                 connection.addOverlay(["Label", { 
                   label: result.value, 
                   location: 0.5, 

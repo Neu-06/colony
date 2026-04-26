@@ -95,9 +95,11 @@ export class JsplumbWrapperService {
           continue;
         }
 
-        // Persistir la condición directamente en el objeto de conexión
         if (arista.condicion) {
           connection.setParameter('condicion', arista.condicion);
+        }
+        if (arista.etiqueta) {
+          connection.setParameter('etiqueta', arista.etiqueta);
         }
 
         const overlay = connection.getOverlay('label');
@@ -140,6 +142,7 @@ export class JsplumbWrapperService {
     return this.instancia.getAllConnections().map((conn: any) => {
       const origenId = this.extraerNodoId(conn.sourceId);
       const destinoId = this.extraerNodoId(conn.targetId);
+      const etiqueta = conn.getParameter('etiqueta');
       const condicion = conn.getParameter('condicion');
       
       const arista: Arista = {
@@ -147,7 +150,7 @@ export class JsplumbWrapperService {
         destinoNodoId: destinoId || '',
         salidaOrigenId: conn.endpoints[0]?.getUuid?.() || null,
         entradaDestinoId: conn.endpoints[1]?.getUuid?.() || null,
-        etiqueta: condicion || null,
+        etiqueta: etiqueta || null,
         condicion: condicion || null
       };
       
