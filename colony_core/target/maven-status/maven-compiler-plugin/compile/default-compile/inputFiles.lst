@@ -28,6 +28,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\CorsConfig.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\DataSeeder.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\FirebaseConfig.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\HttpClientConfig.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\security\JwtAuthFilter.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\security\JwtService.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\config\security\SecurityConfig.java
@@ -48,6 +49,7 @@ D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\BandejaController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\CollaborativeWorkflowController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\DepartamentoController.java
+D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\IAController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\MetricasController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\MotorController.java
 D:\universidad\s8\SW1\parcial1\codeproject\colony\colony_core\src\main\java\com\colony\core\infrastructure\controller\PoliticaController.java

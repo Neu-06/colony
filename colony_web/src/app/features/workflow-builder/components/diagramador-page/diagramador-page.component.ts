@@ -9,8 +9,10 @@ import { HeaderToolbarComponent } from '../header-toolbar/header-toolbar.compone
 import { LienzoCarrilesComponent } from '../lienzo-carriles/lienzo-carriles.component';
 import { PanelPropiedadesComponent } from '../panel-propiedades/panel-propiedades.component';
 import { CollabService } from '../../services/collab.service';
+import { IAService } from '../../services/ia.service';
 import { effect, computed, signal, HostListener } from '@angular/core';
 import { Subscription } from 'rxjs';
+import Swal from 'sweetalert2';
 
 export interface CursorInfo {
   x: number;
@@ -36,6 +38,7 @@ export class DiagramadorPageComponent {
   private readonly router = inject(Router);
   private readonly workflowTemplateService = inject(WorkflowTemplateService);
   private readonly collabService = inject(CollabService);
+  private readonly iaService = inject(IAService);
 
   private collabSub?: Subscription;
   private isApplyingSync = false;
@@ -350,6 +353,79 @@ export class DiagramadorPageComponent {
 
   zoomFit(): void {
     this.estado.zoomFit();
+  }
+
+  async analizarWorkflowConIA(): Promise<void> {
+    // Sincronizar posiciones del DOM antes de enviar
+    this.sincronizarPosicionesYCarrilesDesdeDOM();
+    const canvasData = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+
+    // Mostrar spinner de carga
+    Swal.fire({
+      title: 'Analizando con IA...',
+      html: 'La IA está revisando la estructura del workflow.<br><small>Esto puede tardar unos segundos.</small>',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(),
+      heightAuto: false
+    });
+
+    this.iaService.analizarCanvas(canvasData).subscribe({
+      next: (resultado) => {
+        Swal.close();
+
+        const alertasEstructura: string[] = [];
+        if (resultado.faltaInicio) {
+          alertasEstructura.push('<li>🔴 <strong>Falta un nodo de INICIO</strong> en el flujo.</li>');
+        }
+        if (resultado.faltaFin) {
+          alertasEstructura.push('<li>🔴 <strong>Falta un nodo de FIN</strong> en el flujo.</li>');
+        }
+        if (resultado.nodosSinConexion?.length > 0) {
+          alertasEstructura.push(`<li>⚠️ <strong>Nodos sin conexión:</strong> ${resultado.nodosSinConexion.join(', ')}</li>`);
+        }
+
+        const sugerenciasHtml = (resultado.sugerencias ?? []).length > 0
+          ? resultado.sugerencias.map(s => `<li>💡 ${s}</li>`).join('')
+          : '<li>💡 El flujo parece estar bien estructurado.</li>';
+
+        const problemasHtml = alertasEstructura.length > 0
+          ? `<div style="text-align:left;margin-bottom:12px">
+              <p style="font-weight:bold;margin-bottom:6px;color:#dc2626">Problemas detectados:</p>
+              <ul style="padding-left:16px;line-height:1.8">${alertasEstructura.join('')}</ul>
+             </div>`
+          : `<p style="color:#059669;font-weight:bold;margin-bottom:12px">✅ Sin problemas estructurales detectados.</p>`;
+
+        Swal.fire({
+          title: '✨ Análisis de IA Completado',
+          html: `
+            ${problemasHtml}
+            <div style="text-align:left">
+              <p style="font-weight:bold;margin-bottom:6px;color:#7c3aed">Sugerencias de mejora:</p>
+              <ul style="padding-left:16px;line-height:1.9;text-align:left">${sugerenciasHtml}</ul>
+            </div>
+          `,
+          icon: alertasEstructura.length > 0 ? 'warning' : 'success',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#7c3aed',
+          width: '600px',
+          heightAuto: false
+        });
+      },
+      error: (err) => {
+        Swal.close();
+        const is503 = err?.status === 503;
+        Swal.fire({
+          title: is503 ? '🤖 Asistente de IA fuera de línea' : 'Error al analizar',
+          text: is503
+            ? 'El motor de IA no está disponible. Asegúrate de que el servicio colony_ai esté ejecutándose en el puerto 8000.'
+            : 'Ocurrió un error inesperado al contactar el servicio de IA. Intenta nuevamente.',
+          icon: 'error',
+          confirmButtonText: 'Cerrar',
+          heightAuto: false
+        });
+      }
+    });
   }
 
   toggleSidebar(): void {

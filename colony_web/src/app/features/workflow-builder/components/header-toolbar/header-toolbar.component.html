@@ -45,6 +45,17 @@
           >
             {{ isDeleting ? 'Eliminando...' : 'Eliminar Diagrama' }}
           </button>
+
+          <!-- Botón Analizar con IA -->
+          <button
+            type="button"
+            (click)="analizarConIA.emit()"
+            class="relative rounded-lg px-3 py-2 text-sm font-bold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/40"
+            style="background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7); box-shadow: 0 0 0 1px rgba(168,85,247,0.4);"
+            title="Analizar la estructura del workflow con Inteligencia Artificial"
+          >
+            ✨ Analizar con IA
+          </button>
         }
 
         <!-- Botones de Colaboración -->
