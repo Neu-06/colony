@@ -172,48 +172,61 @@ public class MotorInstanciaService {
 
             List<String> siguientesNodosIds = new ArrayList<>();
 
+            // 1. FLUJO CONDICIONAL (Decisión) & 2. BIFURCACIÓN (Fork)
             if (nodoActual instanceof com.colony.core.domain.NodoCompuerta compuerta) {
                 String decisionKey = compuerta.getCondicionLogica();
-                log.info("Evaluando compuerta con decisionKey: {}", decisionKey);
-                
-                if (decisionKey == null || decisionKey.isBlank()) {
-                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar");
-                }
-
                 Object valorObj = acumulado.get(decisionKey);
                 String valorStr = valorObj != null ? String.valueOf(valorObj) : "";
-                log.info("Valor evaluado para la compuerta: {}", valorStr);
-
+                log.info("Evaluando decisión para '{}' con valor: {}", decisionKey, valorStr);
+                
                 Arista aristaCoincidente = aristasSalida.stream()
                         .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
                         .findFirst()
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar"));
-                
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Condición no mapeada en el diagrama: " + valorStr));
                 siguientesNodosIds.add(aristaCoincidente.getDestinoNodoId());
-                log.info("Camino elegido (XOR): {}", aristaCoincidente.getDestinoNodoId());
-            } else {
-                if (!aristasSalida.isEmpty()) {
-                    siguientesNodosIds.add(aristasSalida.get(0).getDestinoNodoId());
-                    log.info("Camino elegido (Lineal): {}", aristasSalida.get(0).getDestinoNodoId());
-                }
+            } else if ("fork".equalsIgnoreCase(nodoActual.getTipo())) {
+                aristasSalida.forEach(a -> siguientesNodosIds.add(a.getDestinoNodoId()));
+                log.info("Bifurcación (FORK): Habilitando {} ramas paralelas", siguientesNodosIds.size());
+            } else if (!aristasSalida.isEmpty()) {
+                siguientesNodosIds.add(aristasSalida.get(0).getDestinoNodoId());
             }
 
+            // 3. UNIÓN (Join) & 4. PASE DE BATUTA
             for (String sigId : siguientesNodosIds) {
                 NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst().orElse(null);
-                if (sigNodo == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se encontró ruta válida para avanzar");
+                if (sigId == null || sigNodo == null) continue;
+
+                // Lógica de Sincronización para JOIN
+                if ("join".equalsIgnoreCase(sigNodo.getTipo())) {
+                    long aristasEntrada = politica.getAristas().stream().filter(a -> a.getDestinoNodoId().equals(sigId)).count();
+                    long llegadasAlJoin = historialRepository.findByInstanciaIDOrderByFechaTransicionAsc(instancia.getId())
+                            .stream().filter(h -> h.getNodoDestino().equals(sigId)).count();
+                    
+                    if (llegadasAlJoin + 1 < aristasEntrada) {
+                        log.info("JOIN: Sincronizando ramas ({} de {}) - Token en espera", llegadasAlJoin + 1, aristasEntrada);
+                        Historial hSync = new Historial();
+                        hSync.setInstanciaID(instancia.getId());
+                        hSync.setNodoOrigen(nodoActualId);
+                        hSync.setNodoDestino(sigId);
+                        hSync.setFechaIngreso(new Date());
+                        hSync.setAccionTomada("SYNC_WAIT");
+                        historialRepository.save(hSync);
+                        continue; // No añadir a nodosActualesIds aún
+                    }
+                    log.info("JOIN: Sincronización completa. Avanzando flujo principal.");
                 }
 
                 if (!esNodoFin(sigNodo)) {
                     instancia.getNodosActualesIds().add(sigId);
-
+                    // Pase de batuta: El motor limpia atendidoPor (L170). Al crear historial nuevo,
+                    // el sistema de bandeja lo detectará como disponible para el carrilId del nuevo nodo.
                     Historial nuevoHist = new Historial();
                     nuevoHist.setInstanciaID(instancia.getId());
                     nuevoHist.setNodoOrigen(nodoActualId);
                     nuevoHist.setNodoDestino(sigId);
                     nuevoHist.setFechaIngreso(new Date());
                     historialRepository.save(nuevoHist);
-                    log.info("Historial creado para el nuevo nodo: {}", sigId);
+                    log.info("Token movido exitosamente al nodo: {}", sigId);
                 } else {
                     log.info("Se alcanzó el nodo FIN: {}", sigId);
                 }

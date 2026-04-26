@@ -41,73 +41,97 @@
     </div>
     }
 
-    <!-- Configuración de Actividad -->
-    @if (nodoActividadSeleccionado) {
-    <form [formGroup]="actividadForm" class="space-y-6">
-      <div>
-        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-light">Nombre de la
-          Tarea</label>
-        <input formControlName="nombre" type="text" [readonly]="isReadOnly"
-          class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition" />
-      </div>
-
-      <div>
-        <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Esquema del Formulario</p>
-          @if (!isReadOnly) {
-          <button type="button" (click)="agregarCampoFormulario()"
-            class="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary hover:bg-primary hover:text-white transition">
-            + Añadir Campo
-          </button>
-          }
+    <!-- Configuración de Actividad (Solo para Tareas Humanas o Inicio con Datos) -->
+    <ng-container *ngIf="nodoSeleccionadoActual?.tipo === 'tarea' || nodoSeleccionadoActual?.tipo === 'inicio'">
+      @if (nodoActividadSeleccionado) {
+      <form [formGroup]="actividadForm" class="space-y-6">
+        <div>
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-light">Nombre de la
+            Tarea</label>
+          <input formControlName="nombre" type="text" [readonly]="isReadOnly"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition" />
         </div>
 
-        <div class="space-y-3">
-          <div *ngFor="let campo of camposFormulario; trackBy: trackByCampoId"
-            class="group relative rounded-xl border border-border bg-background p-4 shadow-sm hover:border-primary/30 transition">
-            <div class="grid gap-3">
-              <div>
-                <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Etiqueta</label>
-                <input [(ngModel)]="campo.nombre" [ngModelOptions]="{ standalone: true }" type="text"
-                  [readonly]="isReadOnly" placeholder="Ej: Motivo de viaje"
-                  class="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary" />
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Tipo</label>
-                  <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }"
-                    class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
-                    <option *ngFor="let tipoCampo of tiposCampo" [value]="tipoCampo.value">{{ tipoCampo.label }}
-                    </option>
-                  </select>
-                </div>
-                <div class="flex items-end pb-1.5">
-                  <label class="flex items-center gap-2 text-xs font-medium text-ink-light cursor-pointer">
-                    <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="campo.requerido"
-                      [ngModelOptions]="{ standalone: true }" class="rounded text-primary focus:ring-primary" />
-                    Requerido
-                  </label>
-                </div>
-              </div>
-            </div>
-
+        <div>
+          <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Esquema del Formulario</p>
             @if (!isReadOnly) {
-            <button type="button" (click)="eliminarCampo(campo.id)"
-              class="absolute -top-2 -right-2 hidden group-hover:flex h-6 w-6 items-center justify-center rounded-full border border-red-200 bg-white text-red-500 shadow-sm hover:bg-red-50 transition"
-              title="Eliminar campo">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                <path
-                  d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-              </svg>
+            <button type="button" (click)="agregarCampoFormulario()"
+              class="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary hover:bg-primary hover:text-white transition">
+              + Añadir Campo
             </button>
             }
           </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let campo of camposFormulario; trackBy: trackByCampoId"
+              class="group relative rounded-xl border border-border bg-background p-4 shadow-sm hover:border-primary/30 transition">
+              <div class="grid gap-3">
+                <div>
+                  <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Etiqueta</label>
+                  <input [(ngModel)]="campo.nombre" [ngModelOptions]="{ standalone: true }" type="text"
+                    [readonly]="isReadOnly" placeholder="Ej: Motivo de viaje"
+                    class="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Tipo</label>
+                    <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }"
+                      class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
+                      <option *ngFor="let tipoCampo of tiposCampo" [value]="tipoCampo.value">{{ tipoCampo.label }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="flex items-end pb-1.5">
+                    <label class="flex items-center gap-2 text-xs font-medium text-ink-light cursor-pointer">
+                      <input type="checkbox" [disabled]="isReadOnly" [(ngModel)]="campo.requerido"
+                        [ngModelOptions]="{ standalone: true }" class="rounded text-primary focus:ring-primary" />
+                      Requerido
+                    </label>
+                  </div>
+                </div>
+
+                <!-- FASE SELECCION: Opciones separadas por comas -->
+                <div *ngIf="campo.tipo === 'Seleccion'">
+                  <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Opciones (separadas por comas)</label>
+                  <input [(ngModel)]="campo.opciones" [ngModelOptions]="{ standalone: true }" type="text"
+                    [readonly]="isReadOnly" placeholder="Ej: Aceptado, Rechazado, Pendiente"
+                    class="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary" />
+                </div>
+              </div>
+
+              @if (!isReadOnly) {
+              <button type="button" (click)="eliminarCampo(campo.id)"
+                class="absolute -top-2 -right-2 hidden group-hover:flex h-6 w-6 items-center justify-center rounded-full border border-red-200 bg-white text-red-500 shadow-sm hover:bg-red-50 transition"
+                title="Eliminar campo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                  <path
+                    d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                </svg>
+              </button>
+              }
+            </div>
+          </div>
+          <div class="h-4"></div> <!-- Espaciador final -->
         </div>
-        <div class="h-4"></div> <!-- Espaciador final -->
+      </form>
+      }
+    </ng-container>
+
+    <!-- Mensaje para Nodos de Control Lógicos (Fork, Join, Compuerta) -->
+    <div *ngIf="nodoSeleccionadoActual?.tipo === 'fork' || nodoSeleccionadoActual?.tipo === 'join' || nodoSeleccionadoActual?.tipo === 'compuerta'"
+      class="rounded-xl border border-border bg-slate-50 p-4 text-sm shadow-sm mb-4">
+      <div class="flex items-center gap-2 font-bold text-slate-800 mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-500">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+        Nodo de Control
       </div>
-    </form>
-    }
+      <p class="text-slate-600 leading-relaxed italic">
+        Este elemento es de carácter lógico y automático. No requiere configuración de nombre ni esquema de formulario humano.
+      </p>
+    </div>
 
     <!-- Otros Nodos -->
     @if (nodoEstadoSeleccionado) {

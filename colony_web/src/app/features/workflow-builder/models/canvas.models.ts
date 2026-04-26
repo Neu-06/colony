@@ -3,6 +3,7 @@ export interface CampoFormulario {
   nombre: string;
   tipo: string;
   requerido: boolean;
+  opciones?: string;
 }
 
 export interface Arista {

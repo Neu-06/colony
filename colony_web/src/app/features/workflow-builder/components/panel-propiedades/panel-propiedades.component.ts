@@ -32,7 +32,8 @@ export class PanelPropiedadesComponent {
     { label: 'Texto', value: 'text' },
     { label: 'Numero', value: 'number' },
     { label: 'Fecha', value: 'date' },
-    { label: 'Booleano', value: 'boolean' }
+    { label: 'Booleano', value: 'boolean' },
+    { label: 'Selección (Lista)', value: 'Seleccion' }
   ];
 
   nodoSeleccionadoActual: NodoCanvas | null = null;
@@ -312,7 +313,8 @@ export class PanelPropiedadesComponent {
       id: campo?.id || crypto.randomUUID(),
       nombre: campo?.nombre ?? '',
       tipo: this.normalizarTipoCampo(campo?.tipo),
-      requerido: !!campo?.requerido
+      requerido: !!campo?.requerido,
+      opciones: campo?.opciones
     }));
   }
 
@@ -347,6 +349,7 @@ export class PanelPropiedadesComponent {
         && campo.nombre === candidato.nombre
         && this.normalizarTipoCampo(campo.tipo) === this.normalizarTipoCampo(candidato.tipo)
         && campo.requerido === candidato.requerido
+        && campo.opciones === candidato.opciones
       );
     });
   }
