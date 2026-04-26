@@ -35,7 +35,6 @@ export class HeaderToolbarComponent {
   @Output() zoomFit = new EventEmitter<void>();
   @Output() readonly createRoom = new EventEmitter<void>();
   @Output() readonly leaveRoom = new EventEmitter<void>();
-  @Output() readonly analizarConIA = new EventEmitter<void>();
 
   readonly dragMimeType = 'application/x-diagramador-node';
 

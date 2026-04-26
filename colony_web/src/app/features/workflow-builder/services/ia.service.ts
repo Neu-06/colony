@@ -25,4 +25,13 @@ export class IAService {
   analizarCanvas(canvasData: object): Observable<IAAnalisisResponse> {
     return this.http.post<IAAnalisisResponse>(`${this.baseUrl}/analizar-canvas`, canvasData);
   }
+
+  /**
+   * Envía el JSON del canvas para ser reparado por la IA.
+   * @param canvasData El estado actual del workflow.
+   * @return El JSON del workflow reparado.
+   */
+  corregirCanvas(canvasData: object): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/corregir-canvas`, canvasData);
+  }
 }

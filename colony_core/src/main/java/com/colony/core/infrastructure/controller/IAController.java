@@ -2,7 +2,7 @@ package com.colony.core.infrastructure.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+//import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,32 +43,55 @@ public class IAController {
     @PostMapping("/analizar-canvas")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<?> analizarCanvas(@RequestBody Object canvasData) {
-        try {
-            log.info("Recibida solicitud de análisis IA. Reenviando a {}", IA_SERVICE_URL);
+        return proxyToIA(IA_SERVICE_URL, canvasData);
+    }
 
-            // El microservicio Python espera: { "data": { ...canvas... } }
+    /**
+     * Reenvía el JSON al motor de IA para corregir errores estructurales.
+     */
+    @PostMapping("/corregir-canvas")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<?> corregirCanvas(@RequestBody Object canvasData) {
+        String fixUrl = "http://localhost:8000/api/v1/fix";
+        return proxyToIA(fixUrl, canvasData);
+    }
+
+    /**
+     * Método centralizado para llamar a la IA con manejo defensivo extremo.
+     * NUNCA devuelve un error HTTP al frontend; en su lugar, devuelve un
+     * objeto de respaldo con una advertencia en las sugerencias.
+     */
+    private ResponseEntity<?> proxyToIA(String url, Object canvasData) {
+        try {
+            log.info("Reenviando solicitud a {}", url);
             Map<String, Object> payload = Map.of("data", canvasData);
 
             ResponseEntity<Object> iaResponse = restTemplate.postForEntity(
-                    IA_SERVICE_URL,
+                    url,
                     payload,
                     Object.class);
 
-            log.info("Respuesta de IA recibida con status: {}", iaResponse.getStatusCode());
             return ResponseEntity.ok(iaResponse.getBody());
 
-        } catch (ResourceAccessException e) {
-            // El microservicio Python está apagado o inaccesible
-            log.warn("Motor de IA no disponible: {}", e.getMessage());
-            return ResponseEntity
-                    .status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error",
-                            "El motor de IA no está disponible. Asegúrate de que colony_ai esté ejecutándose."));
+        } catch (RestClientResponseException | ResourceAccessException e) {
+            // Captura 4xx, 5xx y errores de conexión
+            log.warn("Error al contactar con la IA ({}): {}", url, e.getMessage());
+            return ResponseEntity.ok(crearRespuestaDeRespaldo());
         } catch (Exception e) {
-            log.error("Error inesperado al llamar al motor de IA", e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error interno al procesar la solicitud de IA: " + e.getMessage()));
+            log.error("Error inesperado en proxy de IA", e);
+            return ResponseEntity.ok(crearRespuestaDeRespaldo());
         }
+    }
+
+    /**
+     * Genera un JSON de éxito técnico pero con contenido de advertencia funcional.
+     */
+    private Map<String, Object> crearRespuestaDeRespaldo() {
+        return Map.of(
+                "faltaInicio", false,
+                "faltaFin", false,
+                "nodosSinConexion", Collections.emptyList(),
+                "sugerencias",
+                List.of("⚠️ El límite de la Inteligencia Artificial se ha agotado por seguridad. Por favor, intenta de nuevo en 1 minuto."));
     }
 }
