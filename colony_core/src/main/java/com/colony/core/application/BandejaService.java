@@ -54,9 +54,30 @@ public class BandejaService {
         List<BandejaItemDto> resultado = new ArrayList<>();
 
         for (Instancia instancia : instancias) {
-            if (!perteneceADepartamento(instancia, departamentoId, politicaCache)) {
-                continue;
-            }
+            PoliticaNegocio politica = politicaCache.computeIfAbsent(
+                instancia.getPoliticaId(),
+                (id) -> politicaNegocioRepository.findById(id).orElse(null)
+            );
+
+            if (politica == null) continue;
+
+            // Identificar el nodo específico que pertenece al departamento del usuario
+            List<String> carrilesDelDepto = politica.getCarriles() == null ? List.of() : politica.getCarriles().stream()
+                    .filter(c -> departamentoId.equals(c.getDepartamentoId()))
+                    .map(Carril::getId)
+                    .toList();
+
+            String nodoIdParaDepto = instancia.getNodosActualesIds().stream()
+                    .filter(id -> {
+                        NodoBase n = politica.getNodos().stream().filter(nodo -> id.equals(nodo.getIdNodo())).findFirst().orElse(null);
+                        return n != null && carrilesDelDepto.contains(n.getCarrilId());
+                    })
+                    .findFirst().orElse(null);
+
+            if (nodoIdParaDepto == null) continue;
+
+            NodoBase nodoActual = politica.getNodos().stream().filter(n -> nodoIdParaDepto.equals(n.getIdNodo())).findFirst().orElse(null);
+            String nombreNodo = nodoActual != null ? nodoActual.getNombre() : "Tarea Pendiente";
 
             String semaforo = instancia.getAtendidoPor() == null || instancia.getAtendidoPor().isBlank()
                     ? "ROJO"
@@ -66,7 +87,9 @@ public class BandejaService {
                     instancia.getId(),
                     instancia.getCodigo(),
                     instancia.getFechaInicio(),
-                    semaforo
+                    semaforo,
+                    politica.getNombre() != null ? politica.getNombre() : "Tramite",
+                    nombreNodo
             ));
         }
 
@@ -81,33 +104,4 @@ public class BandejaService {
         instanciaRepository.save(instancia);
     }
 
-    private boolean perteneceADepartamento(
-            Instancia instancia,
-            String departamentoId,
-            Map<String, PoliticaNegocio> politicaCache
-    ) {
-        String politicaId = instancia.getPoliticaId();
-        List<String> nodosActualesIds = instancia.getNodosActualesIds();
-
-        if (politicaId == null || politicaId.isBlank() || nodosActualesIds == null || nodosActualesIds.isEmpty()) {
-            return false;
-        }
-
-        PoliticaNegocio politica = politicaCache.computeIfAbsent(
-                politicaId,
-                (id) -> politicaNegocioRepository.findById(id).orElse(null)
-        );
-
-        if (politica == null || politica.getNodos() == null || politica.getCarriles() == null) {
-            return false;
-        }
-
-        List<String> carrilesDelDepto = politica.getCarriles().stream()
-                .filter(c -> departamentoId.equals(c.getDepartamentoId()))
-                .map(Carril::getId)
-                .toList();
-
-        return politica.getNodos().stream()
-                .anyMatch(n -> nodosActualesIds.contains(n.getIdNodo()) && carrilesDelDepto.contains(n.getCarrilId()));
-    }
 }

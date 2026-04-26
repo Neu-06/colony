@@ -14,6 +14,8 @@
         <thead class="bg-background text-ink-light">
           <tr>
             <th class="px-4 py-3 text-left font-semibold">Codigo de Tramite</th>
+            <th class="px-4 py-3 text-left font-semibold">Trámite / Flujo</th>
+            <th class="px-4 py-3 text-left font-semibold">Tarea Actual</th>
             <th class="px-4 py-3 text-left font-semibold">Fecha</th>
             <th class="px-4 py-3 text-left font-semibold">Semaforo</th>
             <th class="px-4 py-3 text-left font-semibold">Accion</th>
@@ -23,13 +25,13 @@
         <tbody class="divide-y divide-border">
           @if (isLoading) {
           <tr>
-            <td colspan="4" class="px-4 py-5 text-center text-ink-light">Cargando tareas...</td>
+            <td colspan="6" class="px-4 py-5 text-center text-ink-light">Cargando tareas...</td>
           </tr>
           }
 
           @if (!isLoading && tareas.length === 0) {
           <tr>
-            <td colspan="4" class="px-4 py-5 text-center text-ink-light">No hay tramites pendientes en tu departamento.
+            <td colspan="6" class="px-4 py-5 text-center text-ink-light">No hay tramites pendientes en tu departamento.
             </td>
           </tr>
           }
@@ -37,6 +39,12 @@
           @for (tarea of tareas; track tarea.instanciaId) {
           <tr>
             <td class="px-4 py-3 font-semibold text-ink">{{ tarea.codigoTramite }}</td>
+            <td class="px-4 py-3 text-ink">
+              <div class="font-medium">{{ tarea.nombrePolitica }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">{{ tarea.nombreNodoActual }}</span>
+            </td>
             <td class="px-4 py-3 text-ink-light">{{ tarea.fecha ? (tarea.fecha | date:'short') : 'Sin fecha' }}</td>
             <td class="px-4 py-3">
               <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"

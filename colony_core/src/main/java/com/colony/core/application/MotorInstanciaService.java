@@ -171,16 +171,12 @@ public class MotorInstanciaService {
             instancia.getNodosActualesIds().remove(nodoActualId);
             instancia.setAtendidoPor(null);
             log.info("Regla de limpieza aplicada: atendidoPor = null");
-
+            
             List<String> siguientesNodosIds = new ArrayList<>();
-
-            // 1. FLUJO CONDICIONAL (Decisión) & 2. BIFURCACIÓN (Fork)
             if (nodoActual instanceof com.colony.core.domain.NodoCompuerta compuerta) {
                 String decisionKey = compuerta.getCondicionLogica();
                 Object valorObj = acumulado.get(decisionKey);
                 String valorStr = valorObj != null ? String.valueOf(valorObj) : "";
-                log.info("Evaluando decisión para '{}' con valor: {}", decisionKey, valorStr);
-                
                 Arista aristaCoincidente = aristasSalida.stream()
                         .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
                         .findFirst()
@@ -188,24 +184,35 @@ public class MotorInstanciaService {
                 siguientesNodosIds.add(aristaCoincidente.getDestinoNodoId());
             } else if ("fork".equalsIgnoreCase(nodoActual.getTipo())) {
                 aristasSalida.forEach(a -> siguientesNodosIds.add(a.getDestinoNodoId()));
-                log.info("Bifurcación (FORK): Habilitando {} ramas paralelas", siguientesNodosIds.size());
             } else if (!aristasSalida.isEmpty()) {
                 siguientesNodosIds.add(aristasSalida.get(0).getDestinoNodoId());
             }
 
-            // 3. UNIÓN (Join) & 4. PASE DE BATUTA
-            for (String sigId : siguientesNodosIds) {
+            List<String> colaProcesamiento = new ArrayList<>(siguientesNodosIds);
+            while (!colaProcesamiento.isEmpty()) {
+                String sigId = colaProcesamiento.remove(0);
                 NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst().orElse(null);
+                
                 if (sigId == null || sigNodo == null) continue;
 
-                // Lógica de Sincronización para JOIN
-                if ("join".equalsIgnoreCase(sigNodo.getTipo())) {
+                // 1. AUTO-AVANCE: Si es un nodo de control, procesar y encolar sus salidas
+                String tipoSig = sigNodo.getTipo() == null ? "" : sigNodo.getTipo().toLowerCase(Locale.ROOT);
+                
+                if ("fork".equalsIgnoreCase(tipoSig)) {
+                    log.info("Auto-avance FORK detectado: {}", sigId);
+                    politica.getAristas().stream()
+                            .filter(a -> a.getOrigenNodoId().equals(sigId))
+                            .forEach(a -> colaProcesamiento.add(a.getDestinoNodoId()));
+                    continue;
+                }
+                
+                if ("join".equalsIgnoreCase(tipoSig)) {
                     long aristasEntrada = politica.getAristas().stream().filter(a -> a.getDestinoNodoId().equals(sigId)).count();
                     long llegadasAlJoin = historialRepository.findByInstanciaIDOrderByFechaTransicionAsc(instancia.getId())
                             .stream().filter(h -> h.getNodoDestino().equals(sigId)).count();
                     
                     if (llegadasAlJoin + 1 < aristasEntrada) {
-                        log.info("JOIN: Sincronizando ramas ({} de {}) - Token en espera", llegadasAlJoin + 1, aristasEntrada);
+                        log.info("JOIN esperando ramas: {}/{}", llegadasAlJoin + 1, aristasEntrada);
                         Historial hSync = new Historial();
                         hSync.setInstanciaID(instancia.getId());
                         hSync.setNodoOrigen(nodoActualId);
@@ -213,31 +220,59 @@ public class MotorInstanciaService {
                         hSync.setFechaIngreso(new Date());
                         hSync.setAccionTomada("SYNC_WAIT");
                         historialRepository.save(hSync);
-                        continue; // No añadir a nodosActualesIds aún
+                        continue;
                     }
-                    log.info("JOIN: Sincronización completa. Avanzando flujo principal.");
+                    log.info("JOIN completo: avanzando salidas");
+                    politica.getAristas().stream()
+                            .filter(a -> a.getOrigenNodoId().equals(sigId))
+                            .forEach(a -> colaProcesamiento.add(a.getDestinoNodoId()));
+                    continue;
                 }
 
+                if (sigNodo instanceof com.colony.core.domain.NodoCompuerta compuertaSig) {
+                    log.info("Auto-avance DECISION detectado: {}", sigId);
+                    String decisionKey = compuertaSig.getCondicionLogica();
+                    Object valorObj = acumulado.get(decisionKey);
+                    String valorStr = valorObj != null ? String.valueOf(valorObj) : "";
+                    
+                    Arista coincidente = politica.getAristas().stream()
+                            .filter(a -> a.getOrigenNodoId().equals(sigId))
+                            .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
+                            .findFirst().orElse(null);
+                    
+                    if (coincidente != null) {
+                        colaProcesamiento.add(coincidente.getDestinoNodoId());
+                    }
+                    continue;
+                }
+
+                // 2. ATERRIZAJE: Si es Tarea o Fin
                 if (!esNodoFin(sigNodo)) {
                     instancia.getNodosActualesIds().add(sigId);
-                    // Pase de batuta: El motor limpia atendidoPor (L170). Al crear historial nuevo,
-                    // el sistema de bandeja lo detectará como disponible para el carrilId del nuevo nodo.
                     Historial nuevoHist = new Historial();
                     nuevoHist.setInstanciaID(instancia.getId());
                     nuevoHist.setNodoOrigen(nodoActualId);
                     nuevoHist.setNodoDestino(sigId);
                     nuevoHist.setFechaIngreso(new Date());
                     historialRepository.save(nuevoHist);
-                    log.info("Token movido exitosamente al nodo: {}", sigId);
+                    log.info("Token aterrizado en tarea: {}", sigId);
                 } else {
-                    log.info("Se alcanzó el nodo FIN: {}", sigId);
+                    log.info("Token aterrizado en FIN: {}", sigId);
+                    // Registrar fin en el historial para el Join si fuera necesario
+                    Historial hFin = new Historial();
+                    hFin.setInstanciaID(instancia.getId());
+                    hFin.setNodoOrigen(nodoActualId);
+                    hFin.setNodoDestino(sigId);
+                    hFin.setFechaIngreso(new Date());
+                    hFin.setAccionTomada("FIN");
+                    historialRepository.save(hFin);
                 }
             }
 
             if (instancia.getNodosActualesIds().isEmpty()) {
                 instancia.setEstadoGeneral(FINALIZADO);
                 instancia.setFechaFin(new Date());
-                log.info("Regla de Cierre aplicada: estadoGeneral = FINALIZADO");
+                log.info("Instancia finalizada automáticamente");
             } else {
                 instancia.setEstadoGeneral(EN_PROCESO);
             }

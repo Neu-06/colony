@@ -97,6 +97,17 @@ export class AtencionTramiteComponent implements OnInit {
     });
   }
 
+  cancelar(): void {
+    void this.router.navigate(['/app/bandeja']);
+  }
+
+  get isAutomatica(): boolean {
+    if (!this.tramite) return false;
+    // Si el backend accidentalmente nos manda un nodo de control, lo detectamos
+    const tipo = (this.tramite.nodoActualId || '').toLowerCase();
+    return tipo.includes('fork') || tipo.includes('join') || tipo.includes('decision') || tipo.includes('gateway');
+  }
+
   formatValor(value: unknown): string {
     if (value === null || value === undefined) {
       return '-';

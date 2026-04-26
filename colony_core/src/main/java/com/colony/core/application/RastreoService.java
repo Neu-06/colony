@@ -1,9 +1,7 @@
 package com.colony.core.application;
 
 import com.colony.core.application.dto.RastreoResponseDto;
-import com.colony.core.domain.Carril;
 import com.colony.core.domain.Instancia;
-import com.colony.core.domain.NodoBase;
 import com.colony.core.domain.PoliticaNegocio;
 import com.colony.core.infrastructure.repository.HistorialRepository;
 import com.colony.core.infrastructure.repository.InstanciaRepository;
@@ -28,19 +26,42 @@ public class RastreoService {
         Instancia instancia = instanciaRepository.findByCodigo(codigo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tramite no encontrado"));
 
-        String estado = mapearEstado(instancia.getEstadoGeneral());
-        String ubicacion = resolverUbicacionActual(instancia);
+        PoliticaNegocio politica = politicaNegocioRepository.findById(instancia.getPoliticaId()).orElse(null);
+        String nombrePolitica = politica != null ? politica.getNombre() : "Trámite";
+
+        // Cache de nombres de nodos para optimizar el timeline
+        java.util.Map<String, String> nombresNodos = new java.util.HashMap<>();
+        if (politica != null && politica.getNodos() != null) {
+            politica.getNodos().forEach(n -> nombresNodos.put(n.getIdNodo(), n.getNombre()));
+        }
+
+        String nodoActualId = instancia.getNodosActualesIds().isEmpty() ? "" : instancia.getNodosActualesIds().get(0);
+        String nombreNodoActual = nombresNodos.getOrDefault(nodoActualId, "Finalizado");
+
         List<String> timeline = historialRepository.findByInstanciaIDOrderByFechaTransicionAsc(instancia.getId())
                 .stream()
-                .map((item) -> item.getAccionTomada() == null || item.getAccionTomada().isBlank()
-                        ? "Transicion de nodo"
-                        : item.getAccionTomada())
+                .map((item) -> {
+                    String nombreNodo = nombresNodos.getOrDefault(item.getNodoDestino(), "Nodo");
+                    String accionRaw = item.getAccionTomada();
+
+                    String etiqueta = switch (accionRaw != null ? accionRaw : "") {
+                        case "INICIO_TRAMITE" -> "Trámite iniciado en";
+                        case "AVANZAR" -> "Tarea completada, pasa a";
+                        case "SYNC_WAIT" -> "En espera de otras ramas en";
+                        case "FIN" -> "Flujo finalizado en";
+                        default -> "Llegada a";
+                    };
+
+                    return etiqueta + " " + nombreNodo;
+                })
                 .toList();
 
         return new RastreoResponseDto(
                 instancia.getCodigo(),
-                estado,
-                ubicacion,
+                nombrePolitica,
+                mapearEstado(instancia.getEstadoGeneral()),
+                nodoActualId,
+                nombreNodoActual,
                 instancia.getFechaInicio(),
                 timeline);
     }
@@ -57,43 +78,6 @@ public class RastreoService {
             instancia.getDispositivosSuscritos().add(token);
             instanciaRepository.save(instancia);
         }
-    }
-
-    private String resolverUbicacionActual(Instancia instancia) {
-        if (instancia.getPoliticaId() == null || instancia.getPoliticaId().isBlank()) {
-            return "Sin departamento asignado";
-        }
-
-        PoliticaNegocio politica = politicaNegocioRepository.findById(instancia.getPoliticaId()).orElse(null);
-        if (politica == null || politica.getNodos() == null || politica.getCarriles() == null) {
-            return "Sin departamento asignado";
-        }
-
-        List<String> nodosActualesIds = instancia.getNodosActualesIds();
-
-        if (nodosActualesIds == null || nodosActualesIds.isEmpty()) {
-            return "Sin departamento asignado";
-        }
-
-        String nodoActualId = nodosActualesIds.get(0);
-
-        NodoBase nodo = politica.getNodos().stream()
-                .filter((item) -> nodoActualId.equals(item.getIdNodo()))
-                .findFirst()
-                .orElse(null);
-
-        if (nodo == null || nodo.getCarrilId() == null) {
-            return "Sin departamento asignado";
-        }
-
-        Carril carril = politica.getCarriles().stream()
-                .filter((item) -> nodo.getCarrilId().equals(item.getId()))
-                .findFirst()
-                .orElse(null);
-
-        return carril == null || carril.getNombre() == null || carril.getNombre().isBlank()
-                ? "Sin departamento asignado"
-                : carril.getNombre();
     }
 
     private String mapearEstado(String estadoGeneral) {

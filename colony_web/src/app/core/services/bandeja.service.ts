@@ -8,6 +8,8 @@ export interface BandejaItemDto {
   codigoTramite: string;
   fecha?: string;
   semaforo: 'ROJO' | 'AMARILLO';
+  nombrePolitica: string;
+  nombreNodoActual: string;
 }
 
 export interface AtencionTramiteDto {

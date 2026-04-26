@@ -6,6 +6,8 @@ public record BandejaItemDto(
         String instanciaId,
         String codigoTramite,
         Date fecha,
-        String semaforo
+        String semaforo,
+        String nombrePolitica,
+        String nombreNodoActual
 ) {
 }

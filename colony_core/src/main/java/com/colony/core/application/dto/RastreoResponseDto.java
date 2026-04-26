@@ -5,8 +5,10 @@ import java.util.List;
 
 public record RastreoResponseDto(
         String codigo,
+        String nombrePolitica,
         String estadoGeneral,
-        String nodoActual,
+        String nodoActualId,
+        String nombreNodoActual,
         Date fechaInicio,
         List<String> historial
 ) {

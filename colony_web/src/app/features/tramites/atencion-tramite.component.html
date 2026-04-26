@@ -96,10 +96,24 @@
         }
       </form>
 
-      <button type="button" (click)="completarYEnviar()" [disabled]="isSubmitting"
-        class="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-70">
-        {{ isSubmitting ? 'Enviando...' : 'Completar y Enviar' }}
-      </button>
+      @if (isAutomatica) {
+      <div class="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+        <p class="animate-pulse text-sm font-semibold text-primary">Procesando lógicas automáticas...</p>
+        <p class="mt-1 text-xs text-ink-light">Este nodo se resolverá sin intervención humana.</p>
+      </div>
+      } @else {
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" (click)="cancelar()"
+          class="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink-light hover:bg-background transition">
+          Cancelar
+        </button>
+
+        <button type="button" (click)="completarYEnviar()" [disabled]="isSubmitting"
+          class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-70 transition">
+          {{ isSubmitting ? 'Enviando...' : 'Completar y Enviar' }}
+        </button>
+      </div>
+      }
     </section>
   </div>
   }

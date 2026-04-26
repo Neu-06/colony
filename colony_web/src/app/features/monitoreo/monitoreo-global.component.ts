@@ -10,6 +10,7 @@ export interface InstanciaMonitorDto {
   estadoGeneral: string;
   semaforo: string;
   nodoActualId: string;
+  nombreNodoActual: string;
   fechaInicio?: string;
 }
 
@@ -22,8 +23,10 @@ export interface GrupoPoliticaDto {
 
 export interface RastreoResultado {
   codigo: string;
+  nombrePolitica: string;
   estadoGeneral: string;
-  nodoActual: string;
+  nodoActualId: string;
+  nombreNodoActual: string;
   fechaInicio: string;
   historial: string[];
 }

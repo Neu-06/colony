@@ -56,6 +56,10 @@
     @if (rastreoResultado) {
     <div class="mt-4 rounded-xl border border-border bg-background p-4 grid grid-cols-3 gap-4">
       <div>
+        <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Trámite / Flujo</p>
+        <p class="text-sm font-bold text-ink truncate">{{ rastreoResultado.nombrePolitica }}</p>
+      </div>
+      <div>
         <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Código</p>
         <p class="font-mono text-sm font-bold text-ink">{{ rastreoResultado.codigo }}</p>
       </div>
@@ -67,8 +71,8 @@
         </span>
       </div>
       <div>
-        <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Nodo / Dpto Actual</p>
-        <p class="text-sm text-ink truncate">{{ rastreoResultado.nodoActual || '—' }}</p>
+        <p class="text-[10px] font-bold uppercase text-ink-light mb-1">Paso Actual</p>
+        <p class="text-sm font-bold text-primary truncate" [title]="rastreoResultado.nodoActualId">{{ rastreoResultado.nombreNodoActual }}</p>
       </div>
       @if (rastreoResultado.historial && rastreoResultado.historial.length > 0) {
       <div class="col-span-3 border-t border-border pt-3">
@@ -169,8 +173,8 @@
                 {{ inst.codigo }}
               </p>
               <!-- Nodo actual -->
-              <p class="text-[11px] text-ink-light mb-3 truncate" title="{{ inst.nodoActualId }}">
-                📍 {{ inst.nodoActualId || 'Sin nodo asignado' }}
+              <p class="text-[11px] font-semibold text-ink mb-3 truncate" [title]="inst.nodoActualId">
+                📍 {{ inst.nombreNodoActual || inst.nodoActualId || 'Finalizado' }}
               </p>
               <!-- Badges -->
               <div class="flex items-center gap-2 flex-wrap">
