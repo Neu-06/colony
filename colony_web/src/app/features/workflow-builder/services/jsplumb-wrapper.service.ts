@@ -144,13 +144,12 @@ export class JsplumbWrapperService {
       
       const arista: Arista = {
         origenNodoId: origenId || '',
-        destinoNodoId: destinoId || ''
+        destinoNodoId: destinoId || '',
+        salidaOrigenId: conn.endpoints[0]?.getUuid?.() || null,
+        entradaDestinoId: conn.endpoints[1]?.getUuid?.() || null,
+        etiqueta: condicion || null,
+        condicion: condicion || null
       };
-      
-      if (condicion) {
-        arista.condicion = condicion;
-        arista.etiqueta = `[${condicion}]`;
-      }
       
       return arista;
     });

@@ -39,7 +39,8 @@ export function fromPoliticaToSnapshot(politica: PoliticaNegocio): SnapshotWorkf
       destinoNodoId: arista.destinoNodoId,
       salidaOrigenId: arista.salidaOrigenId,
       entradaDestinoId: arista.entradaDestinoId,
-      etiqueta: arista.etiqueta
+      etiqueta: arista.etiqueta,
+      condicion: arista.condicion
     }))
   };
 }
@@ -66,7 +67,8 @@ export function toPoliticaFromSnapshot(snapshot: SnapshotWorkflow, meta: MetaPol
       destinoNodoId: arista.destinoNodoId,
       salidaOrigenId: arista.salidaOrigenId,
       entradaDestinoId: arista.entradaDestinoId,
-      etiqueta: arista.etiqueta
+      etiqueta: arista.etiqueta,
+      condicion: arista.condicion
     }))
   };
 }

@@ -500,13 +500,16 @@ export class DiagramadorPageComponent implements AfterViewInit {
   }
 
   private persistPolicy(estado: string, incrementarVersion = false): void {
+    this.sincronizarPosicionesYCarrilesDesdeDOM();
+    const aristasLienzo = this.jsplumb.obtenerAristasDesdeLienzo();
     const politica = this.estado.toPoliticaNegocio(this.flowName, estado);
+    
     const payload = {
       ...politica,
       nombre: politica.nombre,
       carriles: politica.carriles ?? [],
       nodos: politica.nodos ?? [],
-      aristas: politica.aristas ?? []
+      aristas: aristasLienzo // FORZAR lectura de jsPlumb antes de enviar al backend
     };
 
     if (incrementarVersion) {

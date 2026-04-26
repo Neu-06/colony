@@ -1,95 +1,67 @@
 <section class="relative h-full w-full overflow-auto rounded-2xl border border-gray-300 bg-[var(--color-canvas-bg)]">
-  <div
-    class="relative min-w-[1100px] origin-top-left transition-transform duration-150"
-    [style.transform]="'scale(' + zoomNivel() + ')'"
-    [style.height.px]="altoTotalCanvasPx()"
-  >
+  <div class="relative min-w-[1100px] origin-top-left transition-transform duration-150"
+    [style.transform]="'scale(' + zoomNivel() + ')'" [style.height.px]="altoTotalCanvasPx()">
     <div #boardSurface class="absolute inset-0">
       <div class="absolute inset-0 z-0 flex flex-col">
         @for (carril of carriles(); track carril.id; let laneIndex = $index) {
-          <section
-            data-lane-visual
-            class="relative border-b border-gray-300"
-            [style.min-height.px]="carril.alto || 250"
-            [ngClass]="laneIndex % 2 === 0 ? 'bg-slate-50' : 'bg-white'"
-          ></section>
+        <section data-lane-visual class="relative border-b border-gray-300" [style.min-height.px]="carril.alto || 250"
+          [ngClass]="laneIndex % 2 === 0 ? 'bg-slate-50' : 'bg-white'"></section>
         }
       </div>
 
-      <div
-        #jsplumbContainer
-        id="jsplumb-container"
-        data-lane-dropzone
-        class="absolute inset-0 z-10 h-full w-full"
-        (dragover)="allowDrop($event)"
-        (drop)="onDrop($event)"
-        (click)="clearSelection($event)"
-      >
+      <div #jsplumbContainer id="jsplumb-container" data-lane-dropzone class="absolute inset-0 z-10 h-full w-full"
+        (dragover)="allowDrop($event)" (drop)="onDrop($event)" (click)="clearSelection($event)">
         @for (nodo of nodos(); track nodo.idNodo) {
-          <article
-            [id]="nodeElementId(nodo.idNodo)"
-            data-node-card
-            (click)="onNodeClick(nodo, $event)"
-            class="absolute z-20 cursor-move select-none"
-            [style.left.px]="nodo.posicion.x"
-            [style.top.px]="nodo.posicion.y"
-            [ngClass]="isSelected(nodo.idNodo) ? 'ring-2 ring-blue-500 ring-offset-1 rounded-md' : ''"
-          >
-            <app-nodo-visual [datos]="nodo"></app-nodo-visual>
-          </article>
+        <article [id]="nodeElementId(nodo.idNodo)" data-node-card (click)="onNodeClick(nodo, $event)"
+          class="absolute z-20 cursor-move select-none" [style.left.px]="nodo.posicion.x"
+          [style.top.px]="nodo.posicion.y"
+          [ngClass]="isSelected(nodo.idNodo) ? 'ring-2 ring-blue-500 ring-offset-1 rounded-md' : ''">
+          <app-nodo-visual [datos]="nodo"></app-nodo-visual>
+        </article>
         }
       </div>
 
       <div class="pointer-events-none absolute inset-y-0 left-0 z-30 flex w-20 flex-col">
         @for (carril of carriles(); track carril.id; let i = $index) {
-          <section
-            class="relative border-b border-gray-300 overflow-hidden"
-            [style.min-height.px]="carril.alto || 250"
-            [attr.data-carril-id]="carril.id"
-          >
-            <div class="pointer-events-auto absolute inset-y-0 left-0 flex w-20 items-center justify-center border-r border-gray-300 bg-[var(--color-lane-header)] px-2">
-              <!-- FASE 2: Botón Eliminar Carril -->
-              <button 
-                *ngIf="!isReadOnly"
-                (click)="eliminarCarril(i)" 
-                class="absolute top-1 left-1 text-red-400 hover:text-red-600 opacity-50 hover:opacity-100 transition-opacity z-50" 
-                title="Eliminar Carril"
-              >✖</button>
+        <section class="relative border-b border-gray-300 overflow-hidden" [style.min-height.px]="carril.alto || 250"
+          [attr.data-carril-id]="carril.id">
+          <div
+            class="pointer-events-auto absolute inset-y-0 left-0 flex w-20 items-center justify-center border-r border-gray-300 bg-[var(--color-lane-header)] px-2">
+            <!-- FASE 2: Botón Eliminar Carril -->
+            <button (click)="eliminarCarril(i)"
+              class="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+              title="Eliminar carril">
+              <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-4 w-4" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
 
-              @if (carrilEditandoId === carril.id) {
-                <select
-                  [attr.data-lane-input-for]="carril.id"
-                  [ngModel]="carril.departamentoId || ''"
-                  (ngModelChange)="actualizarCarrilConDepartamento(carril.id, $event)"
-                  (blur)="finalizarEdicionCarril()"
-                  (keydown.enter)="finalizarEdicionCarril()"
-                  class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none focus:ring-1 focus:ring-blue-400 [text-orientation:mixed] [writing-mode:vertical-rl]"
-                >
-                  <option value="" disabled>SELECCIONA</option>
-                  @for (departamento of departamentos; track departamento.id) {
-                    <option [value]="departamento.id">{{ departamento.nombre }}</option>
-                  }
-                </select>
-              } @else {
-                <button
-                  type="button"
-                  (click)="iniciarEdicionCarril(carril.id)"
-                  class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none [text-orientation:mixed] [writing-mode:vertical-rl]"
-                  title="Haz clic para asignar departamento"
-                >
-                  {{ carril.nombre || 'CARRIL' }}
-                </button>
+            @if (carrilEditandoId === carril.id) {
+            <select [attr.data-lane-input-for]="carril.id" [ngModel]="carril.departamentoId || ''"
+              (ngModelChange)="actualizarCarrilConDepartamento(carril.id, $event)" (blur)="finalizarEdicionCarril()"
+              (keydown.enter)="finalizarEdicionCarril()"
+              class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none focus:ring-1 focus:ring-blue-400 [text-orientation:mixed] [writing-mode:vertical-rl]">
+              <option value="" disabled>SELECCIONA</option>
+              @for (departamento of departamentos; track departamento.id) {
+              <option [value]="departamento.id">{{ departamento.nombre }}</option>
               }
-            </div>
-            
-            <!-- FASE 3: Drag Handle EXCLUSIVAMENTE en el borde inferior -->
-            <div 
-              *ngIf="!isReadOnly"
-              class="w-full h-2 absolute bottom-0 left-0 cursor-row-resize hover:bg-gray-300 transition-colors z-40" 
-              (mousedown)="iniciarResizeAlto($event, i)"
-              title="Estirar carril hacia abajo"
-            ></div>
-          </section>
+            </select>
+            } @else {
+            <button type="button" (click)="iniciarEdicionCarril(carril.id)"
+              class="w-full rotate-180 bg-transparent text-center text-[11px] font-bold uppercase tracking-widest text-slate-700 outline-none [text-orientation:mixed] [writing-mode:vertical-rl]"
+              title="Haz clic para asignar departamento">
+              {{ carril.nombre || 'CARRIL' }}
+            </button>
+            }
+          </div>
+
+          <!-- FASE 3: Drag Handle EXCLUSIVAMENTE en el borde inferior -->
+          <div *ngIf="!isReadOnly"
+            class="w-full h-2 absolute bottom-0 left-0 cursor-row-resize hover:bg-gray-300 transition-colors z-40"
+            (mousedown)="iniciarResizeAlto($event, i)" title="Estirar carril hacia abajo"></div>
+        </section>
         }
       </div>
     </div>
