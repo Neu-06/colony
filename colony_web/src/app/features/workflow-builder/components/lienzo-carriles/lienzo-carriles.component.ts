@@ -120,11 +120,11 @@ export class LienzoCarrilesComponent implements AfterViewInit {
               }
               return null;
             }
-          }).then((result) => {
+                    }).then((result) => {
             if (result.isConfirmed && result.value) {
               const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
               if (creada) {
-                // Requerimiento 1: Inyectar Label Overlay directamente en la flecha
+                // 1. Configuración local de jsPlumb (Overlay visual)
                 connection.setParameter('condicion', result.value);
                 connection.setParameter('etiqueta', `[${result.value}]`);
                 connection.addOverlay(["Label", { 
@@ -134,14 +134,21 @@ export class LienzoCarrilesComponent implements AfterViewInit {
                   cssClass: "bg-white p-1 text-xs border rounded text-blue-600" 
                 }]);
 
+                // 2. FORZAR SINCRONIZACIÓN Y BROADCAST (PASO ÚNICO)
                 this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, result.value);
                 this.estado.actualizarEtiquetaArista(origenNodoId, destinoNodoId, `[${result.value}]`);
-                this.diagramChanged.emit();
+                
+                // Actualizar el modelo local extrayendo datos frescos del lienzo
+                const aristasActualizadas = this.jsplumb.obtenerAristasDesdeLienzo();
+                this.estado.setAristas(aristasActualizadas); 
+                
+                // Emitir cambio para que el componente padre realice el broadcast inmediato
+                this.diagramChanged.emit(); 
               }
             }
-            // Siempre sincronizamos para limpiar la flecha temporal si canceló, o para mostrarla con la etiqueta si aceptó.
             this.scheduleBoardSync();
           });
+
           return;
         }
 

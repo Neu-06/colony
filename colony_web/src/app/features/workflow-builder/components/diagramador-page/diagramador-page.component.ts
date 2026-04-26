@@ -133,22 +133,20 @@ export class DiagramadorPageComponent implements AfterViewInit {
       }
     });
 
-    // Bucle de sincronización en tiempo real (1 vez por segundo)
     this.syncInterval = setInterval(() => {
       if (this.collabService.isConnected() && !this.isApplyingSync) {
-        this.sincronizarPosicionesYCarrilesDesdeDOM();
-        const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
-        const currentStateStr = JSON.stringify(politica);
-        
-        if (this.lastSyncStr !== currentStateStr) {
-          this.lastSyncStr = currentStateStr;
-          this.collabService.sendAction({
-            type: 'SYNC_STATE',
-            payload: { flowName: this.flowName, politica }
-          });
-        }
+        this.broadcastEstadoColaborativo(true); // Sincronización pasiva
       }
     }, 1000);
+
+    if (this.lienzo) {
+      this.lienzo.diagramChanged.subscribe(() => {
+        if (this.collabService.isConnected()) {
+          this.broadcastEstadoColaborativo();
+        }
+        this.autoSaveSubject$.next();
+      });
+    }
 
     /*
     // Requerimiento 2: Autosave con RxJS
@@ -539,5 +537,21 @@ export class DiagramadorPageComponent implements AfterViewInit {
         this.alertaService.mostrarError(this.saveMessage);
       }
     });
+  }
+
+  public broadcastEstadoColaborativo(esPasivo = false): void {
+    if (!this.collabService.isConnected() || this.isApplyingSync) return;
+
+    this.sincronizarPosicionesYCarrilesDesdeDOM();
+    const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
+    const currentStateStr = JSON.stringify(politica);
+
+    if (this.lastSyncStr !== currentStateStr) {
+      this.lastSyncStr = currentStateStr;
+      this.collabService.sendAction({
+        type: 'SYNC_STATE',
+        payload: { flowName: this.flowName, politica }
+      });
+    }
   }
 }
