@@ -83,7 +83,7 @@
         </a>
         }
 
-        @if (canAccessCanvas() && !isPendingAssignment()) {
+        @if (isSuperAdmin() || canAccessCanvas() && !isPendingAssignment()) {
         <a routerLink="/app/metricas" routerLinkActive="bg-primary text-white" (click)="closeSidebar()"
           class="block rounded-xl border border-border px-3 py-3 text-sm transition hover:border-primary">
           <p class="font-semibold">Métricas de Rendimiento</p>
