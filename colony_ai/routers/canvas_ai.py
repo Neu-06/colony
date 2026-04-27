@@ -41,12 +41,37 @@ async def recommend_flow(canvas: CanvasData):
         response = client.chat.completions.create(
             model=AI_MODEL,
             messages=[
-                {"role": "system", "content": "Eres un analista experto en BPMN. Analiza el JSON y responde únicamente con un objeto JSON."},
-                {"role": "user", "content": f"Analiza este flujo y devuelve un JSON con: {{'faltaInicio': bool, 'faltaFin': bool, 'nodosSinConexion': [], 'sugerencias': []}}. JSON: {json_str}"}
+                {
+                    "role": "system", 
+                    "content": "Eres un analista experto en BPMN. Analiza el JSON y responde ÚNICAMENTE con un objeto JSON. IMPORTANTE: El campo 'sugerencias' DEBE ser estrictamente un array de strings puros (ej: ['texto1', 'texto2']), NUNCA un array de objetos."
+                },
+                {
+                    "role": "user", 
+                    "content": f"Analiza este flujo y devuelve un JSON con: {{'faltaInicio': bool, 'faltaFin': bool, 'nodosSinConexion': ['id1'], 'sugerencias': ['mejorar x']}}. JSON: {json_str}"
+                }
             ],
             response_format={"type": "json_object"}
         )
-        return json.loads(response.choices[0].message.content)
+        
+        result_dict = json.loads(response.choices[0].message.content)
+        
+        # --- BLINDAJE DE FORMATO ---
+        raw_sugerencias = result_dict.get("sugerencias", [])
+        clean_sugerencias = []
+        for s in raw_sugerencias:
+            if isinstance(s, dict):
+                # Si la IA mandó un objeto, extraemos el primer valor que encontremos
+                valor = next(iter(s.values())) if s else ""
+                clean_sugerencias.append(str(valor))
+            else:
+                # Si ya es string, lo guardamos
+                clean_sugerencias.append(str(s))
+        
+        result_dict["sugerencias"] = clean_sugerencias
+        # ---------------------------
+        
+        return IAResponse(**result_dict)
+        
     except Exception as e:
         print(f"🔥 ERROR EN RECOMMEND (GROQ): {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -78,7 +103,15 @@ async def chat_canvas(request: CanvasChatRequest):
             messages=[
                 {
                     "role": "system", 
-                    "content": "Eres un copiloto BPMN. Analiza el JSON y la orden del usuario. Tienes libertad para modificar, eliminar o agregar nodos/aristas. Devuelve ÚNICAMENTE un JSON válido de jsPlumb que contenga las llaves 'nodos', 'aristas' y 'carriles'. Cero texto adicional."
+                    "content": """
+Eres un Copiloto BPMN experto. Recibes un JSON de jsPlumb y una orden del usuario.
+Tu único objetivo es devolver el JSON modificado basándote en la orden.
+
+REGLAS ESTRUCTURALES ESTRICTAS:
+1. REGLA DE ELIMINACIÓN: Si el usuario pide eliminar un nodo (tarea, inicio, fin), DEBES BORRAR EL OBJETO COMPLETO del array "nodos". NUNCA lo renombres como "nodo eliminado" o "tarea vacía". Si borras un nodo, TAMBIÉN DEBES BORRAR del array "aristas" cualquier conexión que tuviera a ese nodo como 'fuente' o 'destino'.
+2. REGLA ESPACIAL: Los nodos nuevos deben tener x > 180 y y > 50 para no tapar las cabeceras.
+3. REGLA DE FORMATO: Devuelve ÚNICAMENTE un objeto JSON válido y limpio. NO uses caracteres de escape extraños en las claves (no uses \\"). NO incluyas formato Markdown (```json).
+"""
                 },
                 {
                     "role": "user", 

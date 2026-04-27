@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, PLATFORM_ID, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiCopilotoService } from '../../../../core/services/ai-copiloto.service';
@@ -21,6 +21,8 @@ declare var webkitSpeechRecognition: any;
 export class AiAssistantComponent {
   @Input() canvasJson: any;
   @Output() updateCanvas = new EventEmitter<any>();
+
+  @ViewChild('chatScroll') private chatScrollContainer!: ElementRef;
 
   private readonly aiService = inject(AiCopilotoService);
   private readonly platformId = inject(PLATFORM_ID);
@@ -81,11 +83,21 @@ export class AiAssistantComponent {
     }
   }
 
+  private hacerScrollAbajo(): void {
+    setTimeout(() => {
+      try {
+        this.chatScrollContainer.nativeElement.scrollTop = this.chatScrollContainer.nativeElement.scrollHeight;
+      } catch (err) {}
+    }, 100);
+  }
+
   enviarComando(): void {
     if (!this.comandoDetectado.trim() || this.isAiLoading) return;
 
     const userText = this.comandoDetectado.trim();
     this.messages.push({ role: 'user', text: userText });
+    this.hacerScrollAbajo();
+    
     this.comandoDetectado = '';
     this.isAiLoading = true;
 
@@ -94,6 +106,7 @@ export class AiAssistantComponent {
         this.isAiLoading = false;
         if (nuevoJson) {
           this.messages.push({ role: 'assistant', text: 'Entendido. He procesado tu solicitud en el lienzo.' });
+          this.hacerScrollAbajo();
           this.updateCanvas.emit(nuevoJson);
           
           Swal.fire({
@@ -109,6 +122,7 @@ export class AiAssistantComponent {
       error: () => {
         this.isAiLoading = false;
         this.messages.push({ role: 'assistant', text: 'Error al conectar con el cerebro de IA.' });
+        this.hacerScrollAbajo();
       }
     });
   }
@@ -124,8 +138,12 @@ export class AiAssistantComponent {
           ? `IA Sugiere: ${res.sugerencias.join('. ')}` 
           : 'Tu diagrama se ve impecable.';
         this.messages.push({ role: 'assistant', text: msg });
+        this.hacerScrollAbajo();
       },
-      error: () => this.isAiLoading = false
+      error: () => {
+        this.isAiLoading = false;
+        this.hacerScrollAbajo();
+      }
     });
   }
 
@@ -137,9 +155,13 @@ export class AiAssistantComponent {
       next: (nuevoJson) => {
         this.isAiLoading = false;
         this.messages.push({ role: 'assistant', text: 'He corregido la estructura del flujo automáticamente.' });
+        this.hacerScrollAbajo();
         this.updateCanvas.emit(nuevoJson);
       },
-      error: () => this.isAiLoading = false
+      error: () => {
+        this.isAiLoading = false;
+        this.hacerScrollAbajo();
+      }
     });
   }
 }
