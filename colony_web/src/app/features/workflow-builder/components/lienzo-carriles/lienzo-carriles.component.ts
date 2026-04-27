@@ -381,7 +381,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     const localX = (event.clientX - rect.left) / zoom;
     const localY = (event.clientY - rect.top) / zoom;
 
-    const minX = LienzoCarrilesComponent.ANCHO_CABECERA_CARRIL_PX + 8;
+    const minX = 180; // Frontera estricta: Ancho de cabecera
     const rawX = localX - nodeSize.width / 2;
     const rawY = localY - nodeSize.height / 2;
 
@@ -401,7 +401,7 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     }
 
     const contenedor = this.jsplumbContainerRef.nativeElement;
-    const minX = LienzoCarrilesComponent.ANCHO_CABECERA_CARRIL_PX + 8;
+    const minX = 180; // Frontera estricta
     let x = posicion?.x;
     let y = posicion?.y;
 
@@ -443,6 +443,23 @@ export class LienzoCarrilesComponent implements AfterViewInit {
     return carriles[indice].id;
   }
 
+  /**
+   * FASE 1: EL ESCUDO SANITIZADOR
+   * Fuerza que los nodos no invadan la zona de cabeceras (X < 180)
+   */
+  private sanitizarPosicionesNodos(nodos: NodoCanvas[]): NodoCanvas[] {
+    const MIN_X = 180;
+    const MIN_Y = 20;
+
+    return nodos.map(nodo => ({
+      ...nodo,
+      posicion: {
+        x: Math.max(MIN_X, Number(nodo.posicion?.x || 0)),
+        y: Math.max(MIN_Y, Number(nodo.posicion?.y || 0))
+      }
+    }));
+  }
+
   private scheduleBoardSync(): void {
     if (!this.vistaLista) {
       return;
@@ -454,7 +471,8 @@ export class LienzoCarrilesComponent implements AfterViewInit {
 
     this.redrawHandle = requestAnimationFrame(() => {
       this.redrawHandle = null;
-      this.jsplumb.sincronizarNodos(this.nodos(), (idNodo) => this.nodeElementId(idNodo));
+      const nodosSanitizados = this.sanitizarPosicionesNodos(this.nodos());
+      this.jsplumb.sincronizarNodos(nodosSanitizados, (idNodo) => this.nodeElementId(idNodo));
       this.jsplumb.dibujarAristas(this.aristas(), (idNodo) => this.nodeElementId(idNodo), this.aristaSeleccionada(), this.zoomNivel());
       this.refreshResizeObserverTargets();
     });

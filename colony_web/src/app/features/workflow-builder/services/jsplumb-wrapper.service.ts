@@ -273,7 +273,8 @@ export class JsplumbWrapperService {
     }
 
     this.instancia.draggable(elementId, {
-      containment: 'parent'
+      containment: 'parent',
+      grid: [10, 10]
     });
 
     const policy = this.getEndpointPolicy(tipoEndpoint);
