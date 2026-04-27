@@ -1,0 +1,21 @@
+# IGNORAR APP MOVIL
+colony_app/
+
+
+# IGNORAR JAVA (Spring Boot)
+target/
+*.class
+*.jar
+*.war
+
+# IGNORAR PYTHON (FastAPI)
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# IGNORAR ANGULAR (Frontend)
+node_modules/
+dist/
+.angular/
