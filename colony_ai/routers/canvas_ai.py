@@ -25,7 +25,7 @@ AI_MODEL = "llama-3.3-70b-versatile"
 # CONSTANTES DE DISEÑO ESPACIAL
 # Usadas en el post-procesador para corregir coordenadas si la IA falla
 # ===========================================================================
-HEADER_WIDTH = 200       # Zona prohibida izquierda (cabeceras de carril)
+HEADER_WIDTH = 80        # Zona prohibida izquierda (cabeceras de carril w-20 = 80px)
 LANE_HEIGHT   = 250      # Altura por carril
 X_STEP        = 260      # Separación horizontal entre pasos del flujo
 X_BRANCH_STEP = 240      # Separación para ramas en compuertas
@@ -202,12 +202,11 @@ def sanitizar_resultado(resultado: dict) -> dict:
 
     # ─── 2. NORMALIZAR NODOS ──────────────────────────────────────────────────
     ALTO_CARRIL = 250
-    HEADER_X    = 160   # Mínimo X para no tapar cabeceras
+    HEADER_X    = 100   # Mínimo X para no tapar cabeceras (80px + 20px margen)
 
-    # Calcular canvas disponible: si hay muchos nodos distribuirlos dinámicamente
+    # Calcular canvas disponible: El front tiene min-w-[1100px]
     total_nodos = max(len(nodos_raw), 1)
-    # Ancho disponible por carril: distribuimos hasta 3200px
-    canvas_ancho = min(max(total_nodos * 280, 900), 1100)
+    canvas_ancho = 1100
 
     node_ids = set()
     posiciones_usadas = set()
