@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -5,10 +7,16 @@ from routers import canvas_ai, funcionario_ai
 
 app = FastAPI(title="Colony AI Microservice")
 
+frontend_origins = [
+    origin.strip()
+    for origin in os.getenv("FASTAPI_ALLOWED_ORIGINS", "http://localhost:4200").split(",")
+    if origin.strip()
+]
+
 # Configurar CORS para comunicación con el Frontend (Angular)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=frontend_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,4 +32,9 @@ async def root():
 
 if __name__ == "__main__":
     # Puerto 8000 para ser consumido por el Core y el Web
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host=os.getenv("FASTAPI_HOST", "0.0.0.0"),
+        port=int(os.getenv("FASTAPI_PORT", "8000")),
+        reload=True,
+    )

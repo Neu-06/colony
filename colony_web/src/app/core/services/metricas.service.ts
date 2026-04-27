@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface KpiGeneralDTO {
   totalInstancias: number;
@@ -20,17 +21,17 @@ export interface MetricaRendimientoDTO {
 })
 export class MetricasService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/metricas';
+  private readonly apiUrl = `${environment.backendBaseUrl}/api/metricas`;
 
   getGeneral(): Observable<KpiGeneralDTO> {
-    return this.http.get<KpiGeneralDTO>('http://localhost:8080/api/metricas/general');
+    return this.http.get<KpiGeneralDTO>(`${this.apiUrl}/general`);
   }
 
   getRendimientoUsuarios(): Observable<MetricaRendimientoDTO[]> {
-    return this.http.get<MetricaRendimientoDTO[]>('http://localhost:8080/api/metricas/rendimiento-usuarios');
+    return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/rendimiento-usuarios`);
   }
 
   getCuellosBotella(): Observable<MetricaRendimientoDTO[]> {
-    return this.http.get<MetricaRendimientoDTO[]>('http://localhost:8080/api/metricas/cuellos-botella');
+    return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/cuellos-botella`);
   }
 }

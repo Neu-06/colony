@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export interface TareaItemAI {
   instanciaId: string;
@@ -40,7 +41,7 @@ export interface ResultadoValidarEnvio {
 @Injectable({ providedIn: 'root' })
 export class FuncionarioAiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8000/api/v1/funcionario';
+  private readonly baseUrl = `${environment.aiBaseUrl}/api/v1/funcionario`;
 
   /**
    * Interpreta un comando sobre la bandeja (ej: "abre la tarea más urgente")

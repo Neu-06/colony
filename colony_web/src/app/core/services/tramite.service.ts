@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CampoForm } from '../models/canvas.models';
+import { environment } from '../../../environments/environment';
 
 export interface TramiteCatalogoDto {
   id: string;
@@ -30,8 +31,8 @@ interface IniciarInstanciaRequest {
 })
 export class TramiteService {
   private readonly http = inject(HttpClient);
-  private readonly tramitesApi = 'http://localhost:8080/api/tramites';
-  private readonly motorApi = 'http://localhost:8080/api/motor';
+  private readonly tramitesApi = `${environment.backendBaseUrl}/api/tramites`;
+  private readonly motorApi = `${environment.backendBaseUrl}/api/motor`;
 
   listarPublicados(departamentoId: string): Observable<TramiteCatalogoDto[]> {
     return this.http.get<TramiteCatalogoDto[]>(`${this.tramitesApi}/publicados/${departamentoId}`);

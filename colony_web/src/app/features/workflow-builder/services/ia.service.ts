@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export interface IAAnalisisResponse {
   faltaInicio: boolean;
@@ -16,7 +17,7 @@ export interface IAAnalisisResponse {
 @Injectable({ providedIn: 'root' })
 export class IAService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api/ia';
+  private readonly baseUrl = `${environment.backendBaseUrl}/api/ia`;
 
   /**
    * Envía el JSON del canvas a Spring Boot para análisis con Gemini.

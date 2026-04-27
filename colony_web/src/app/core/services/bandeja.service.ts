@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CampoForm } from '../models/canvas.models';
+import { environment } from '../../../environments/environment';
 
 export interface BandejaItemDto {
   instanciaId: string;
@@ -33,8 +34,8 @@ interface AvanzarInstanciaRequest {
 })
 export class BandejaService {
   private readonly http = inject(HttpClient);
-  private readonly bandejaApi = 'http://localhost:8080/api/bandeja';
-  private readonly motorApi = 'http://localhost:8080/api/motor';
+  private readonly bandejaApi = `${environment.backendBaseUrl}/api/bandeja`;
+  private readonly motorApi = `${environment.backendBaseUrl}/api/motor`;
 
   listarPorDepartamento(departamentoId: string): Observable<BandejaItemDto[]> {
     return this.http.get<BandejaItemDto[]>(`${this.bandejaApi}/${departamentoId}`);

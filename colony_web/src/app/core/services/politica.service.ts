@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PoliticaNegocio } from '../models/canvas.models';
+import { environment } from '../../../environments/environment';
 
 export interface PoliticaPublicadaResumen {
   id: string;
@@ -16,7 +17,7 @@ export interface PoliticaPublicadaResumen {
 })
 export class PoliticaService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/politicas';
+  private readonly apiUrl = `${environment.backendBaseUrl}/api/politicas`;
 
   guardarPolitica(politica: PoliticaNegocio): Observable<PoliticaNegocio> {
     return this.http.post<PoliticaNegocio>(this.apiUrl, politica);

@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import { Subject } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export interface CollabAction {
   type: string;
@@ -61,7 +62,7 @@ export class CollabService {
     this.currentRoom = code;
     
     this.client = new Client({
-      brokerURL: 'ws://localhost:8080/ws-collab',
+      brokerURL: `${environment.websocketBaseUrl}/ws-collab`,
       reconnectDelay: 5000,
       onConnect: () => {
         if (this.client && this.currentRoom) {

@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { map, Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 interface AuthUser {
   id?: string;
@@ -41,7 +42,7 @@ export interface RegisterPayload {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly apiBaseUrl = 'http://localhost:8080/api/auth';
+  private readonly apiBaseUrl = `${environment.backendBaseUrl}/api/auth`;
 
   private readonly tokenKey = 'token';
   private readonly userIdKey = 'userId';

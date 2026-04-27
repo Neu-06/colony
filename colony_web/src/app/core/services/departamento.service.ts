@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface DepartamentoDto {
   id: string;
@@ -17,7 +18,7 @@ export interface DepartamentoPayload {
 })
 export class DepartamentoService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/departamentos';
+  private readonly apiUrl = `${environment.backendBaseUrl}/api/departamentos`;
 
   listar(): Observable<DepartamentoDto[]> {
     return this.http.get<DepartamentoDto[]>(this.apiUrl);

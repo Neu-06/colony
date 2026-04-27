@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DepartamentoDto, DepartamentoService } from '../../../core/services/departamento.service';
 import { AlertaService } from '../../../core/services/alerta.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 interface UserRow {
   id: string;
@@ -34,7 +35,7 @@ export class UserManagementComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly alertaService = inject(AlertaService);
   private readonly departamentoService = inject(DepartamentoService);
-  private readonly apiUrl = 'http://localhost:8080/api/usuarios';
+  private readonly apiUrl = `${environment.backendBaseUrl}/api/usuarios`;
   private readonly rootSuperAdminEmail = 'super@colony.com';
   private readonly sinAsignar = 'SIN_ASIGNAR';
 

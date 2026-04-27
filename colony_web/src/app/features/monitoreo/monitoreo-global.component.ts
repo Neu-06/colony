@@ -3,6 +3,7 @@ import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Client } from '@stomp/stompjs';
+import { environment } from '../../../environments/environment';
 
 export interface InstanciaMonitorDto {
   instanciaId: string;
@@ -40,8 +41,8 @@ export interface RastreoResultado {
 })
 export class MonitoreoGlobalComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/monitoreo';
-  private readonly rastreoUrl = 'http://localhost:8080/api/rastreo';
+  private readonly apiUrl = `${environment.backendBaseUrl}/api/monitoreo`;
+  private readonly rastreoUrl = `${environment.backendBaseUrl}/api/rastreo`;
 
   // --- SECCIÓN A: Rastreador ---
   codigoBusqueda = '';
@@ -106,7 +107,7 @@ export class MonitoreoGlobalComponent implements OnInit, OnDestroy {
 
   private conectarWebSocket(): void {
     this.stompClient = new Client({
-      brokerURL: 'ws://localhost:8080/ws-collab',
+      brokerURL: `${environment.websocketBaseUrl}/ws-collab`,
       reconnectDelay: 5000,
       onConnect: () => {
         this.stompClient?.subscribe('/topic/monitoreo', (message) => {

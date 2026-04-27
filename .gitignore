@@ -1,21 +1,43 @@
-# IGNORAR APP MOVIL
+# 1. SECRETOS Y CREDENCIALES
+.env
+.env.*
+!.env.example
+*firebase*.json
+*-adminsdk-*.json
+*.pem
+*.key
+secrets/
+
+# 2. APP MOVIL
 colony_app/
 
-
-# IGNORAR JAVA (Spring Boot)
+# 3. JAVA - SPRING BOOT
 target/
 *.class
 *.jar
 *.war
+logs/
+*.log
+# -> (Git subirá 'src/main/resources' automáticamente, está bien)
 
-# IGNORAR PYTHON (FastAPI)
+# 4. PYTHON - FASTAPI (Ignoramos entornos virtuales y caché)
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 venv/
 env/
-.env
+.venv/
 
-# IGNORAR ANGULAR (Frontend)
+
+# 5. ANGULAR (Ignoramos librerías pesadas, dejamos environments)
 node_modules/
 dist/
 .angular/
+npm-debug.log
+
+
+ ARCHIVOS DE SISTEMA E IDEs 
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

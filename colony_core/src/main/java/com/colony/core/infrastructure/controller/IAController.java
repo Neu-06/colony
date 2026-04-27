@@ -3,6 +3,7 @@ package com.colony.core.infrastructure.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 //import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class IAController {
 
-    private static final String IA_SERVICE_URL = "http://localhost:8000/api/v1/recommend";
+    @Value("${app.ai.recommend-url:http://localhost:8000/api/v1/recommend}")
+    private String iaRecommendUrl;
+
+    @Value("${app.ai.fix-url:http://localhost:8000/api/v1/fix}")
+    private String iaFixUrl;
 
     private final RestTemplate restTemplate;
 
@@ -43,7 +48,7 @@ public class IAController {
     @PostMapping("/analizar-canvas")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<?> analizarCanvas(@RequestBody Object canvasData) {
-        return proxyToIA(IA_SERVICE_URL, canvasData);
+        return proxyToIA(iaRecommendUrl, canvasData);
     }
 
     /**
@@ -52,8 +57,7 @@ public class IAController {
     @PostMapping("/corregir-canvas")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<?> corregirCanvas(@RequestBody Object canvasData) {
-        String fixUrl = "http://localhost:8000/api/v1/fix";
-        return proxyToIA(fixUrl, canvasData);
+        return proxyToIA(iaFixUrl, canvasData);
     }
 
     /**
