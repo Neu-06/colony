@@ -4,8 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 
 public record AvanzarInstanciaRequest(
-        @NotBlank String instanciaId,
-        @NotBlank String usuarioId,
-        Map<String, Object> datosNuevos
-) {
+                @NotBlank String instanciaId,
+                @NotBlank String usuarioId,
+                Map<String, Object> datosNuevos) {
 }

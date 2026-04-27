@@ -61,7 +61,7 @@ export class BandejaTareasComponent implements OnInit {
     this.bandejaService.tomarTramite(item.instanciaId, usuarioId).subscribe({
       next: () => {
         this.openingId = null;
-        void this.router.navigate(['/app/tramites/atencion', item.instanciaId]);
+        void this.router.navigate(['/app/tramites/atencion', item.instanciaId], { queryParams: { tareaId: item.nodoActualId } });
       },
       error: () => {
         this.openingId = null;

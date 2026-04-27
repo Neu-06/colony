@@ -10,6 +10,7 @@ export interface BandejaItemDto {
   semaforo: 'ROJO' | 'AMARILLO';
   nombrePolitica: string;
   nombreNodoActual: string;
+  nodoActualId: string;
 }
 
 export interface AtencionTramiteDto {
@@ -42,8 +43,10 @@ export class BandejaService {
     return this.http.put<void>(`${this.bandejaApi}/tomar/${instanciaId}/${usuarioId}`, {});
   }
 
-  obtenerAtencion(instanciaId: string): Observable<AtencionTramiteDto> {
-    return this.http.get<AtencionTramiteDto>(`${this.motorApi}/atencion/${instanciaId}`);
+  obtenerAtencion(instanciaId: string, tareaId?: string): Observable<AtencionTramiteDto> {
+    let url = `${this.motorApi}/atencion/${instanciaId}`;
+    if (tareaId) url += `?tareaId=${tareaId}`;
+    return this.http.get<AtencionTramiteDto>(url);
   }
 
   avanzarTramite(instanciaId: string, usuarioId: string, datosNuevos: Record<string, unknown>): Observable<unknown> {

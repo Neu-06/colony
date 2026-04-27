@@ -54,7 +54,8 @@ public class MotorInstanciaService {
         String segundoNodoId = aristaPrimeraTarea.getDestinoNodoId();
 
         if (segundoNodoId == null || segundoNodoId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La primera tarea no tiene un nodo destino valido");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La primera tarea no tiene un nodo destino valido");
         }
 
         Instancia instancia = new Instancia();
@@ -87,19 +88,23 @@ public class MotorInstanciaService {
         return new IniciarInstanciaResponse(guardada.getCodigo());
     }
 
-    public AtencionTramiteDto obtenerAtencion(String instanciaId) {
+    public AtencionTramiteDto obtenerAtencion(String instanciaId, String tareaId) {
         Instancia instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instancia no encontrada"));
 
         PoliticaNegocio politica = politicaNegocioRepository.findById(instancia.getPoliticaId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Politica no encontrada"));
 
-        // Retornamos el esquema del primer nodo actual como compatibilidad
-        String nodoActualId = instancia.getNodosActualesIds().isEmpty() ? null : instancia.getNodosActualesIds().get(0);
-        
+        // Si se provee tareaId, verificamos que esté en los nodos actuales de la
+        // instancia
+        String nodoActualId = (tareaId != null && instancia.getNodosActualesIds().contains(tareaId))
+                ? tareaId
+                : (instancia.getNodosActualesIds().isEmpty() ? null : instancia.getNodosActualesIds().get(0));
+
         List<com.colony.core.domain.CampoForm> esquema = new ArrayList<>();
         if (nodoActualId != null) {
-            NodoBase nodoActual = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(nodoActualId)).findFirst().orElse(null);
+            NodoBase nodoActual = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(nodoActualId))
+                    .findFirst().orElse(null);
             if (nodoActual instanceof NodoActividad actividad && actividad.getEsquemaFormulario() != null) {
                 esquema = actividad.getEsquemaFormulario();
             }
@@ -114,8 +119,7 @@ public class MotorInstanciaService {
                 instancia.getCodigo(),
                 nodoActualId,
                 datos,
-                esquema
-        );
+                esquema);
     }
 
     public Instancia avanzar(AvanzarInstanciaRequest request) {
@@ -148,13 +152,16 @@ public class MotorInstanciaService {
                     .filter(n -> n.getIdNodo().equals(nodoActualId)).findFirst()
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nodo actual invalido"));
 
-            Historial historialAbierto = historialRepository.findFirstByInstanciaIDAndNodoDestinoAndFechaFinAtencionIsNullOrderByFechaIngresoDesc(request.instanciaId(), nodoActualId);
+            Historial historialAbierto = historialRepository
+                    .findFirstByInstanciaIDAndNodoDestinoAndFechaFinAtencionIsNullOrderByFechaIngresoDesc(
+                            request.instanciaId(), nodoActualId);
             if (historialAbierto != null) {
                 historialAbierto.setFechaFinAtencion(new Date());
                 historialAbierto.setEjecutadoPor(request.usuarioId());
                 historialAbierto.setAccionTomada("AVANZAR");
                 if (historialAbierto.getFechaInicioAtencion() != null) {
-                    long diffInMillies = Math.abs(historialAbierto.getFechaFinAtencion().getTime() - historialAbierto.getFechaInicioAtencion().getTime());
+                    long diffInMillies = Math.abs(historialAbierto.getFechaFinAtencion().getTime()
+                            - historialAbierto.getFechaInicioAtencion().getTime());
                     historialAbierto.setTiempoResolucionSegundos(diffInMillies / 1000);
                 }
                 historialRepository.save(historialAbierto);
@@ -171,7 +178,7 @@ public class MotorInstanciaService {
             instancia.getNodosActualesIds().remove(nodoActualId);
             instancia.setAtendidoPor(null);
             log.info("Regla de limpieza aplicada: atendidoPor = null");
-            
+
             List<String> siguientesNodosIds = new ArrayList<>();
             if (nodoActual instanceof com.colony.core.domain.NodoCompuerta compuerta) {
                 String decisionKey = compuerta.getCondicionLogica();
@@ -180,7 +187,8 @@ public class MotorInstanciaService {
                 Arista aristaCoincidente = aristasSalida.stream()
                         .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
                         .findFirst()
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Condición no mapeada en el diagrama: " + valorStr));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Condición no mapeada en el diagrama: " + valorStr));
                 siguientesNodosIds.add(aristaCoincidente.getDestinoNodoId());
             } else if ("fork".equalsIgnoreCase(nodoActual.getTipo())) {
                 aristasSalida.forEach(a -> siguientesNodosIds.add(a.getDestinoNodoId()));
@@ -191,13 +199,15 @@ public class MotorInstanciaService {
             List<String> colaProcesamiento = new ArrayList<>(siguientesNodosIds);
             while (!colaProcesamiento.isEmpty()) {
                 String sigId = colaProcesamiento.remove(0);
-                NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst().orElse(null);
-                
-                if (sigId == null || sigNodo == null) continue;
+                NodoBase sigNodo = politica.getNodos().stream().filter(n -> n.getIdNodo().equals(sigId)).findFirst()
+                        .orElse(null);
+
+                if (sigId == null || sigNodo == null)
+                    continue;
 
                 // 1. AUTO-AVANCE: Si es un nodo de control, procesar y encolar sus salidas
                 String tipoSig = sigNodo.getTipo() == null ? "" : sigNodo.getTipo().toLowerCase(Locale.ROOT);
-                
+
                 if ("fork".equalsIgnoreCase(tipoSig)) {
                     log.info("Auto-avance FORK detectado: {}", sigId);
                     politica.getAristas().stream()
@@ -205,12 +215,14 @@ public class MotorInstanciaService {
                             .forEach(a -> colaProcesamiento.add(a.getDestinoNodoId()));
                     continue;
                 }
-                
+
                 if ("join".equalsIgnoreCase(tipoSig)) {
-                    long aristasEntrada = politica.getAristas().stream().filter(a -> a.getDestinoNodoId().equals(sigId)).count();
-                    long llegadasAlJoin = historialRepository.findByInstanciaIDOrderByFechaTransicionAsc(instancia.getId())
+                    long aristasEntrada = politica.getAristas().stream().filter(a -> a.getDestinoNodoId().equals(sigId))
+                            .count();
+                    long llegadasAlJoin = historialRepository
+                            .findByInstanciaIDOrderByFechaTransicionAsc(instancia.getId())
                             .stream().filter(h -> h.getNodoDestino().equals(sigId)).count();
-                    
+
                     if (llegadasAlJoin + 1 < aristasEntrada) {
                         log.info("JOIN esperando ramas: {}/{}", llegadasAlJoin + 1, aristasEntrada);
                         Historial hSync = new Historial();
@@ -234,12 +246,12 @@ public class MotorInstanciaService {
                     String decisionKey = compuertaSig.getCondicionLogica();
                     Object valorObj = acumulado.get(decisionKey);
                     String valorStr = valorObj != null ? String.valueOf(valorObj) : "";
-                    
+
                     Arista coincidente = politica.getAristas().stream()
                             .filter(a -> a.getOrigenNodoId().equals(sigId))
                             .filter(a -> valorStr.equalsIgnoreCase(a.getCondicion()))
                             .findFirst().orElse(null);
-                    
+
                     if (coincidente != null) {
                         colaProcesamiento.add(coincidente.getDestinoNodoId());
                     }
@@ -282,8 +294,10 @@ public class MotorInstanciaService {
 
             // BROADCAST WebSocket al dashboard de monitoreo
             try {
-                String nodoActualBroadcast = (guardada.getNodosActualesIds() == null || guardada.getNodosActualesIds().isEmpty())
-                        ? "—" : guardada.getNodosActualesIds().get(0);
+                String nodoActualBroadcast = (guardada.getNodosActualesIds() == null
+                        || guardada.getNodosActualesIds().isEmpty())
+                                ? "—"
+                                : guardada.getNodosActualesIds().get(0);
                 Map<String, Object> broadcast = new HashMap<>();
                 broadcast.put("instanciaId", guardada.getId());
                 broadcast.put("codigo", guardada.getCodigo());
@@ -304,8 +318,7 @@ public class MotorInstanciaService {
                     pushNotificationService.enviarNotificacion(
                             guardada.getDispositivosSuscritos(),
                             "Actualización de Trámite",
-                            cuerpo
-                    );
+                            cuerpo);
                 }
             } catch (Exception e) {
                 log.warn("El motor avanzó correctamente, pero falló el envío de la notificación: {}", e.getMessage());

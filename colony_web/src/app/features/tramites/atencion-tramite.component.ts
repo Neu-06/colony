@@ -37,19 +37,21 @@ export class AtencionTramiteComponent implements OnInit {
 
   ngOnInit(): void {
     const instanciaId = this.route.snapshot.paramMap.get('instanciaId');
+    const tareaId = this.route.snapshot.queryParamMap.get('tareaId');
+    
     if (!instanciaId) {
       this.errorMessage = 'No se recibio el ID del tramite.';
       return;
     }
 
-    this.cargarTramite(instanciaId);
+    this.cargarTramite(instanciaId, tareaId || undefined);
   }
 
-  cargarTramite(instanciaId: string): void {
+  cargarTramite(instanciaId: string, tareaId?: string): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.bandejaService.obtenerAtencion(instanciaId).subscribe({
+    this.bandejaService.obtenerAtencion(instanciaId, tareaId).subscribe({
       next: (tramite) => {
         this.tramite = tramite;
         this.form.reset({});

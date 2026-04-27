@@ -26,8 +26,10 @@ public class MotorController {
 
     @GetMapping("/atencion/{instanciaId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
-    public ResponseEntity<AtencionTramiteDto> obtenerAtencion(@PathVariable String instanciaId) {
-        return ResponseEntity.ok(motorInstanciaService.obtenerAtencion(instanciaId));
+    public ResponseEntity<AtencionTramiteDto> obtenerAtencion(
+            @PathVariable String instanciaId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String tareaId) {
+        return ResponseEntity.ok(motorInstanciaService.obtenerAtencion(instanciaId, tareaId));
     }
 
     @PostMapping("/avanzar")

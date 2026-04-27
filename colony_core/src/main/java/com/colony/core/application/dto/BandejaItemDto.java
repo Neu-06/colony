@@ -8,6 +8,7 @@ public record BandejaItemDto(
         Date fecha,
         String semaforo,
         String nombrePolitica,
-        String nombreNodoActual
+        String nombreNodoActual,
+        String nodoActualId
 ) {
 }
