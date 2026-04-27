@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from routers import canvas_ai
+from routers import canvas_ai, funcionario_ai
 
 app = FastAPI(title="Colony AI Microservice")
 
@@ -16,6 +16,7 @@ app.add_middleware(
 
 # Incluir Routers Modulares
 app.include_router(canvas_ai.router)
+app.include_router(funcionario_ai.router)
 
 @app.get("/")
 async def root():

@@ -66,4 +66,11 @@
       </table>
     </div>
   </section>
+
+  <!-- Copiloto IA Flotante: no invasivo, separado de la lógica de la bandeja -->
+  <app-copiloto-funcionario
+    [tareas]="tareasParaAI"
+    (navegarATarea)="onAiAbrirTarea($event)">
+  </app-copiloto-funcionario>
+
 </section>

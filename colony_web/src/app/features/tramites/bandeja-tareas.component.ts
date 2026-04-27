@@ -4,11 +4,13 @@ import { Router } from '@angular/router';
 import { AlertaService } from '../../core/services/alerta.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BandejaItemDto, BandejaService } from '../../core/services/bandeja.service';
+import { CopilotoFuncionarioComponent } from './ai-copiloto-funcionario/copiloto-funcionario.component';
+import { TareaItemAI } from './ai-copiloto-funcionario/funcionario-ai.service';
 
 @Component({
   selector: 'app-bandeja-tareas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CopilotoFuncionarioComponent],
   templateUrl: './bandeja-tareas.component.html'
 })
 export class BandejaTareasComponent implements OnInit {
@@ -21,6 +23,24 @@ export class BandejaTareasComponent implements OnInit {
   isLoading = false;
   openingId: string | null = null;
   errorMessage = '';
+
+  get tareasParaAI(): TareaItemAI[] {
+    return this.tareas.map(t => ({
+      instanciaId: t.instanciaId,
+      codigoTramite: t.codigoTramite,
+      nombrePolitica: t.nombrePolitica,
+      nombreNodoActual: t.nombreNodoActual,
+      fecha: t.fecha,
+      semaforo: t.semaforo
+    }));
+  }
+
+  onAiAbrirTarea(event: { instanciaId: string }): void {
+    const tarea = this.tareas.find(t => t.instanciaId === event.instanciaId);
+    if (tarea) {
+      this.abrirTramite(tarea);
+    }
+  }
 
   ngOnInit(): void {
     this.cargarBandeja();

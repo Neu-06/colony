@@ -1,0 +1,154 @@
+<!-- Botón flotante disparador -->
+<button
+  id="btn-copiloto-funcionario"
+  (click)="togglePanel()"
+  [class.bg-indigo-600]="!estaEscuchando"
+  [class.bg-red-500]="estaEscuchando"
+  [class.animate-pulse]="estaEscuchando || isLoading"
+  class="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+  title="Copiloto IA - Asistente de Trámites">
+  @if (isLoading) {
+    <!-- Spinner -->
+    <svg class="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+    </svg>
+  } @else if (estaEscuchando) {
+    <!-- Ondas de micrófono activo -->
+    <div class="flex gap-0.5 items-end h-5">
+      <div class="w-1 bg-white rounded-full animate-bounce" style="height:8px; animation-delay:0s"></div>
+      <div class="w-1 bg-white rounded-full animate-bounce" style="height:14px; animation-delay:0.15s"></div>
+      <div class="w-1 bg-white rounded-full animate-bounce" style="height:10px; animation-delay:0.3s"></div>
+      <div class="w-1 bg-white rounded-full animate-bounce" style="height:16px; animation-delay:0.1s"></div>
+      <div class="w-1 bg-white rounded-full animate-bounce" style="height:8px; animation-delay:0.25s"></div>
+    </div>
+  } @else {
+    <!-- Ícono IA/Robot -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+    </svg>
+  }
+</button>
+
+<!-- Panel del Copiloto -->
+@if (panelAbierto) {
+<div class="fixed bottom-24 right-6 z-50 w-80 rounded-2xl border border-indigo-100 bg-white shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
+
+  <!-- Header del Panel -->
+  <div class="flex items-center justify-between rounded-t-2xl bg-indigo-600 px-4 py-3">
+    <div class="flex items-center gap-2">
+      <div class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-white">Copiloto IA</p>
+        <p class="text-[10px] text-indigo-200">Asistente de Trámites</p>
+      </div>
+    </div>
+    <button (click)="togglePanel()" class="text-white/60 hover:text-white transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Contexto actual -->
+  <div class="border-b border-indigo-50 bg-indigo-50/50 px-4 py-2">
+    @if (esquemaFormulario.length > 0) {
+      <p class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wide">📋 Modo: Rellenar Formulario</p>
+      <p class="text-[10px] text-slate-500 mt-0.5">Dicta los datos o usa texto para rellenar campos automáticamente</p>
+    } @else if (tareas.length > 0) {
+      <p class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wide">📂 Modo: Gestión de Bandeja</p>
+      <p class="text-[10px] text-slate-500 mt-0.5">{{ tareas.length }} tarea(s) pendiente(s) — dime cuál abrir</p>
+    } @else {
+      <p class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wide">💬 Asistente disponible</p>
+    }
+  </div>
+
+  <!-- Respuesta de la IA -->
+  @if (mensajeRespuesta) {
+  <div class="mx-4 my-3 rounded-xl border px-4 py-3 text-sm leading-relaxed transition-all"
+    [class.border-red-200]="esError" [class.bg-red-50]="esError" [class.text-red-700]="esError"
+    [class.border-emerald-200]="!esError" [class.bg-emerald-50]="!esError" [class.text-emerald-800]="!esError">
+    <p>{{ mensajeRespuesta }}</p>
+  </div>
+  }
+
+  <!-- Área de texto + controles -->
+  <div class="p-4 space-y-3">
+    <div class="relative rounded-xl border border-slate-200 bg-slate-50 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+      <textarea
+        [(ngModel)]="texto"
+        rows="3"
+        [placeholder]="estaEscuchando ? '🔴 Escuchando... habla ahora' : 'Escribe o dicta un comando...'"
+        [disabled]="isLoading"
+        class="w-full bg-transparent px-3 py-2 text-sm text-slate-700 outline-none resize-none placeholder:text-slate-400 disabled:opacity-50">
+      </textarea>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex gap-2">
+      <!-- Micrófono -->
+      <button
+        (click)="toggleVoz()"
+        [disabled]="isLoading"
+        [class.bg-red-50]="estaEscuchando" [class.text-red-500]="estaEscuchando" [class.border-red-300]="estaEscuchando"
+        [class.animate-pulse]="estaEscuchando"
+        [class.bg-slate-50]="!estaEscuchando" [class.text-slate-400]="!estaEscuchando" [class.border-slate-200]="!estaEscuchando"
+        class="flex-none rounded-xl border p-2.5 transition-all hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-40">
+        @if (estaEscuchando) {
+          <div class="flex gap-0.5 items-end h-4">
+            <div class="w-1 bg-red-500 rounded-full" style="height:6px"></div>
+            <div class="w-1 bg-red-500 rounded-full" style="height:12px"></div>
+            <div class="w-1 bg-red-500 rounded-full" style="height:8px"></div>
+          </div>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+          </svg>
+        }
+      </button>
+
+      <!-- Enviar texto -->
+      <button
+        (click)="procesarComando()"
+        [disabled]="!texto.trim() || isLoading"
+        class="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all">
+        @if (isLoading) {
+          Procesando...
+        } @else {
+          Ejecutar
+        }
+      </button>
+    </div>
+
+    <!-- Comandos rápidos contextuales -->
+    <div class="flex flex-wrap gap-1.5">
+      @if (esquemaFormulario.length > 0) {
+        <button (click)="texto = 'Verifica si el formulario está completo y envíalo'; procesarComando()"
+          [disabled]="isLoading"
+          class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-all disabled:opacity-40">
+          ✅ Enviar Formulario
+        </button>
+      }
+      @if (tareas.length > 0) {
+        <button (click)="texto = 'Abre la tarea más urgente'; procesarComando()"
+          [disabled]="isLoading"
+          class="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[10px] font-bold text-red-700 hover:bg-red-100 transition-all disabled:opacity-40">
+          🔴 Más Urgente
+        </button>
+        <button (click)="texto = 'Abre la tarea más antigua'; procesarComando()"
+          [disabled]="isLoading"
+          class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-700 hover:bg-amber-100 transition-all disabled:opacity-40">
+          ⏳ Más Antigua
+        </button>
+      }
+    </div>
+  </div>
+</div>
+}

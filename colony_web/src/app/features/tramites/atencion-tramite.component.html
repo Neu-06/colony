@@ -117,4 +117,13 @@
     </section>
   </div>
   }
-</section>
+
+  <!-- Copiloto IA Flotante: modo formulario activo, no altera la resolución manual -->
+  <app-copiloto-funcionario
+    [esquemaFormulario]="esquemaParaAI"
+    [valoresActuales]="valoresParaAI"
+    (camposRellenados)="onAiCamposRellenados($event)"
+    (solicitarEnvio)="onAiSolicitarEnvio()">
+  </app-copiloto-funcionario>
+
+</section>

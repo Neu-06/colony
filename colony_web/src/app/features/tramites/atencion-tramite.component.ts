@@ -5,11 +5,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AlertaService } from '../../core/services/alerta.service';
 import { AtencionTramiteDto, BandejaService } from '../../core/services/bandeja.service';
 import { AuthService } from '../../core/services/auth.service';
+import { CopilotoFuncionarioComponent, AiFormFillEvent } from './ai-copiloto-funcionario/copiloto-funcionario.component';
+import { CampoFormularioAI } from './ai-copiloto-funcionario/funcionario-ai.service';
 
 @Component({
   selector: 'app-atencion-tramite',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CopilotoFuncionarioComponent],
   templateUrl: './atencion-tramite.component.html'
 })
 export class AtencionTramiteComponent implements OnInit {
@@ -26,6 +28,32 @@ export class AtencionTramiteComponent implements OnInit {
   errorMessage = '';
 
   readonly form = this.fb.group({});
+
+  // Adaptador para que el copiloto entienda el esquema
+  get esquemaParaAI(): CampoFormularioAI[] {
+    return (this.tramite?.esquemaFormulario ?? []).map(c => ({
+      nombre: c.nombre,
+      tipo: c.tipo,
+      requerido: c.requerido,
+      opciones: c.opciones
+    }));
+  }
+
+  get valoresParaAI(): Record<string, unknown> {
+    return this.form.value as Record<string, unknown>;
+  }
+
+  onAiCamposRellenados(event: AiFormFillEvent): void {
+    for (const [campo, valor] of Object.entries(event.camposRellenos)) {
+      if (this.form.contains(campo)) {
+        this.form.get(campo)!.setValue(valor);
+      }
+    }
+  }
+
+  onAiSolicitarEnvio(): void {
+    this.completarYEnviar();
+  }
 
   get historialEntries(): Array<{ key: string; value: unknown }> {
     if (!this.tramite?.datosDinamicos) {
