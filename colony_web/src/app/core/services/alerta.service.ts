@@ -8,7 +8,7 @@ export class AlertaService {
   mostrarExito(mensaje: string): void {
     const toast = Swal.mixin({
       toast: true,
-      position: 'top-end',
+      position: 'bottom-start',
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
@@ -28,7 +28,7 @@ export class AlertaService {
   mostrarError(mensaje: string): void {
     const toast = Swal.mixin({
       toast: true,
-      position: 'top-end',
+      position: 'bottom-start',
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
