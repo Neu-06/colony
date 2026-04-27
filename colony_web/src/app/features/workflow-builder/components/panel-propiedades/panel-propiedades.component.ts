@@ -19,7 +19,7 @@ export class PanelPropiedadesComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly estado = inject(DiagramadorEstadoService);
 
-  tabActiva: 'propiedades' | 'ia' = 'propiedades';
+  tabActiva: 'propiedades' | 'ia' = 'ia';
 
   // Snapshot en tiempo real para la IA
   readonly datosCanvas = computed(() => ({

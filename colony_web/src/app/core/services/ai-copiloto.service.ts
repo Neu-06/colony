@@ -19,8 +19,8 @@ export class AiCopilotoService {
 
   enviarComandoChat(canvasData: any, comando: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/chat`, { 
-      canvas_data: canvasData, 
-      comando_usuario: comando 
+      canvasJson: canvasData, 
+      comando: comando 
     });
   }
 }

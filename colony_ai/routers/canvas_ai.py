@@ -31,8 +31,8 @@ class IAResponse(BaseModel):
     sugerencias: List[str]
 
 class CanvasChatRequest(BaseModel):
-    canvas_data: dict
-    comando_usuario: str
+    canvasJson: dict  # Llave exacta enviada por Angular
+    comando: str      # Llave exacta enviada por Angular
 
 # Modelo preferido para velocidad y bajo costo
 AI_MODEL = 'gemini-2.0-flash'
@@ -54,8 +54,10 @@ async def recommend_flow(canvas: CanvasData):
             contents=prompt,
             config=GENAI_CONFIG
         )
-        return response.parsed
+        # Limpieza y parseo manual para seguridad
+        return json.loads(response.text.strip())
     except Exception as e:
+        print(f"🔥 ERROR EN RECOMMEND: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/fix")
@@ -74,32 +76,40 @@ async def fix_flow(canvas: CanvasData):
             contents=prompt,
             config=GENAI_CONFIG
         )
-        return response.parsed
+        return json.loads(response.text.strip())
     except Exception as e:
+        print(f"🔥 ERROR EN FIX: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat")
 async def chat_canvas(request: CanvasChatRequest):
-    json_str = json.dumps(request.canvas_data)
-    prompt = f"""
-    Eres un Copiloto de modelado BPMN. 
-    Recibes un JSON de jsPlumb/Angular y un comando del usuario: '{request.comando_usuario}'. 
-    Tienes 3 libertades absolutas:
-    1) AGREGAR nodos o aristas nuevos si el usuario lo solicita.
-    2) ELIMINAR nodos o aristas existentes (si eliminas un nodo, borra también sus conexiones).
-    3) MODIFICAR textos (labels), posiciones (x, y) o tipos de nodos.
-    
-    Devuelve ÚNICAMENTE el JSON modificado conservando la estructura exacta (nodos[], aristas[]). 
-    No agregues explicaciones ni formato markdown.
-    JSON actual:
-    {json_str}
-    """
     try:
+        json_str = json.dumps(request.canvasJson)
+        prompt = f"""
+        Eres un Copiloto de modelado BPMN de élite. 
+        Recibes un JSON que representa nodos, aristas y carriles de un diagrama, y un comando del usuario: '{request.comando}'. 
+        
+        Tienes 3 libertades ABSOLUTAS:
+        1) AGREGAR: Crea nuevos nodos o aristas si el usuario lo pide (ej: "Agrega un nodo de pago").
+        2) ELIMINAR: Borra nodos o aristas (ej: "Borra el inicio"). Si borras un nodo, elimina todas sus aristas conectadas.
+        3) MODIFICAR: Cambia nombres, posiciones (x, y) o tipos.
+        
+        IMPORTANTE: Devuelve ÚNICAMENTE el JSON modificado. No incluyas texto extra, ni markdown, ni explicaciones.
+        MANTÉN LA ESTRUCTURA: {{"nodos": [], "aristas": [], "carriles": []}}
+        
+        JSON ACTUAL:
+        {json_str}
+        """
+        
         response = client.models.generate_content(
             model=AI_MODEL,
             contents=prompt,
             config=GENAI_CONFIG
         )
-        return response.parsed
+        
+        # Blindaje de parseo
+        return json.loads(response.text.strip())
+        
     except Exception as e:
+        print(f"🔥 ERROR FATAL EN CHAT: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error en Chat IA: {str(e)}")
