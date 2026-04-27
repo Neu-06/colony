@@ -24,6 +24,7 @@ export interface AtencionTramiteDto {
 interface AvanzarInstanciaRequest {
   instanciaId: string;
   usuarioId: string;
+  nodoId?: string;
   datosNuevos: Record<string, unknown>;
 }
 
@@ -49,8 +50,8 @@ export class BandejaService {
     return this.http.get<AtencionTramiteDto>(url);
   }
 
-  avanzarTramite(instanciaId: string, usuarioId: string, datosNuevos: Record<string, unknown>): Observable<unknown> {
-    const payload: AvanzarInstanciaRequest = { instanciaId, usuarioId, datosNuevos };
+  avanzarTramite(instanciaId: string, usuarioId: string, datosNuevos: Record<string, unknown>, nodoId?: string): Observable<unknown> {
+    const payload: AvanzarInstanciaRequest = { instanciaId, usuarioId, datosNuevos, nodoId };
     return this.http.post(`${this.motorApi}/avanzar`, payload);
   }
 }

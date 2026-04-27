@@ -145,7 +145,14 @@ public class MotorInstanciaService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La instancia no tiene nodos activos");
             }
 
-            String nodoActualId = instancia.getNodosActualesIds().get(0);
+            String nodoActualId = (request.nodoId() != null && instancia.getNodosActualesIds().contains(request.nodoId()))
+                    ? request.nodoId()
+                    : instancia.getNodosActualesIds().get(0);
+            
+            // Si el usuario envió un nodoId que no es parte de los activos de la instancia, error
+            if (request.nodoId() != null && !instancia.getNodosActualesIds().contains(request.nodoId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La tarea " + request.nodoId() + " no está activa o ya fue procesada.");
+            }
             log.info("Nodo actual evaluado: {}", nodoActualId);
 
             NodoBase nodoActual = politica.getNodos().stream()

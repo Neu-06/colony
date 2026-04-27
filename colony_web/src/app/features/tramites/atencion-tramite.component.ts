@@ -86,7 +86,12 @@ export class AtencionTramiteComponent implements OnInit {
     this.isSubmitting = true;
     const usuarioId = this.authService.getCurrentUserId() || '';
 
-    this.bandejaService.avanzarTramite(this.tramite.instanciaId, usuarioId, this.form.value as Record<string, unknown>).subscribe({
+    this.bandejaService.avanzarTramite(
+      this.tramite.instanciaId, 
+      usuarioId, 
+      this.form.value as Record<string, unknown>,
+      this.tramite.nodoActualId
+    ).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.alertaService.mostrarExito('Tramite enviado al siguiente estado.');
