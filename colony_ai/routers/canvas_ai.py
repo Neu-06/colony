@@ -3,23 +3,23 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Any, List
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
 router = APIRouter(prefix="/api/v1/canvas", tags=["Canvas AI"])
 
-# Validar llave
-api_key = os.getenv("GEMINI_API_KEY")
+# Validar llave de Groq
+api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
-    raise RuntimeError("GEMINI_API_KEY no encontrada en el archivo .env")
+    raise RuntimeError("GROQ_API_KEY no encontrada en el archivo .env")
 
-# Inicializar cliente de Google GenAI
-client = genai.Client(api_key=api_key)
+# Inicializar cliente de Groq
+client = Groq(api_key=api_key)
 
-# Configuración compartida para forzar salida JSON nativa en Gemini
-GENAI_CONFIG = {"response_mime_type": "application/json"}
+# Modelo de Groq (Llama 3.1 8B es más rápido y económico para pruebas)
+AI_MODEL = "llama-3.1-8b-instant"
 
 class CanvasData(BaseModel):
     data: Any
@@ -31,85 +31,67 @@ class IAResponse(BaseModel):
     sugerencias: List[str]
 
 class CanvasChatRequest(BaseModel):
-    canvasJson: dict  # Llave exacta enviada por Angular
-    comando: str      # Llave exacta enviada por Angular
-
-# Modelo preferido para velocidad y bajo costo
-AI_MODEL = 'gemini-2.0-flash'
+    canvasJson: dict  # Recibido desde Angular
+    comando: str      # Recibido desde Angular
 
 @router.post("/recommend", response_model=IAResponse)
 async def recommend_flow(canvas: CanvasData):
     json_str = json.dumps(canvas.data)
-    prompt = f"""
-    Eres un analista experto en flujos de trabajo BPMN. 
-    Analiza el siguiente JSON de un flujo.
-    Responde ÚNICAMENTE con un JSON que cumpla esta estructura:
-    {{"faltaInicio": bool, "faltaFin": bool, "nodosSinConexion": ["nodo_id"], "sugerencias": ["sug1", "sug2"]}}
-    JSON a analizar:
-    {json_str}
-    """
     try:
-        response = client.models.generate_content(
+        response = client.chat.completions.create(
             model=AI_MODEL,
-            contents=prompt,
-            config=GENAI_CONFIG
+            messages=[
+                {"role": "system", "content": "Eres un analista experto en BPMN. Analiza el JSON y responde únicamente con un objeto JSON."},
+                {"role": "user", "content": f"Analiza este flujo y devuelve un JSON con: {{'faltaInicio': bool, 'faltaFin': bool, 'nodosSinConexion': [], 'sugerencias': []}}. JSON: {json_str}"}
+            ],
+            response_format={"type": "json_object"}
         )
-        # Limpieza y parseo manual para seguridad
-        return json.loads(response.text.strip())
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
-        print(f"🔥 ERROR EN RECOMMEND: {str(e)}")
+        print(f"🔥 ERROR EN RECOMMEND (GROQ): {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/fix")
 async def fix_flow(canvas: CanvasData):
     json_str = json.dumps(canvas.data)
-    prompt = f"""
-    Eres un reparador experto de JSON de jsPlumb para flujos BPMN. 
-    Devuelve el MISMO JSON EXACTO, pero reparando si falta INICIO o FIN.
-    Coordenadas 100,100 para nuevos nodos. No alteres IDs existentes.
-    JSON a reparar:
-    {json_str}
-    """
     try:
-        response = client.models.generate_content(
+        response = client.chat.completions.create(
             model=AI_MODEL,
-            contents=prompt,
-            config=GENAI_CONFIG
+            messages=[
+                {"role": "system", "content": "Eres un reparador de flujos BPMN. Devuelve el JSON corregido."},
+                {"role": "user", "content": f"Repara este JSON si falta inicio/fin. Devuelve solo el JSON: {json_str}"}
+            ],
+            response_format={"type": "json_object"}
         )
-        return json.loads(response.text.strip())
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
-        print(f"🔥 ERROR EN FIX: {str(e)}")
+        print(f"🔥 ERROR EN FIX (GROQ): {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat")
 async def chat_canvas(request: CanvasChatRequest):
     try:
         json_str = json.dumps(request.canvasJson)
-        prompt = f"""
-        Eres un Copiloto de modelado BPMN de élite. 
-        Recibes un JSON que representa nodos, aristas y carriles de un diagrama, y un comando del usuario: '{request.comando}'. 
         
-        Tienes 3 libertades ABSOLUTAS:
-        1) AGREGAR: Crea nuevos nodos o aristas si el usuario lo pide (ej: "Agrega un nodo de pago").
-        2) ELIMINAR: Borra nodos o aristas (ej: "Borra el inicio"). Si borras un nodo, elimina todas sus aristas conectadas.
-        3) MODIFICAR: Cambia nombres, posiciones (x, y) o tipos.
-        
-        IMPORTANTE: Devuelve ÚNICAMENTE el JSON modificado. No incluyas texto extra, ni markdown, ni explicaciones.
-        MANTÉN LA ESTRUCTURA: {{"nodos": [], "aristas": [], "carriles": []}}
-        
-        JSON ACTUAL:
-        {json_str}
-        """
-        
-        response = client.models.generate_content(
+        response = client.chat.completions.create(
             model=AI_MODEL,
-            contents=prompt,
-            config=GENAI_CONFIG
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "Eres un copiloto BPMN. Analiza el JSON y la orden del usuario. Tienes libertad para modificar, eliminar o agregar nodos/aristas. Devuelve ÚNICAMENTE un JSON válido de jsPlumb que contenga las llaves 'nodos', 'aristas' y 'carriles'. Cero texto adicional."
+                },
+                {
+                    "role": "user", 
+                    "content": f"Comando: {request.comando}. JSON actual: {json_str}"
+                }
+            ],
+            response_format={"type": "json_object"}
         )
         
-        # Blindaje de parseo
-        return json.loads(response.text.strip())
+        # Parseo del contenido de la respuesta de Groq
+        resultado_ia = json.loads(response.choices[0].message.content)
+        return resultado_ia
         
     except Exception as e:
-        print(f"🔥 ERROR FATAL EN CHAT: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error en Chat IA: {str(e)}")
+        print(f"🔥 ERROR FATAL EN CHAT (GROQ): {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error en Chat Groq: {str(e)}")
