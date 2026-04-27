@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, effect, inject, Input } from '@angular/core';
+import { Component, DestroyRef, effect, inject, Input, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta, PoliticaNegocio } from '../../models/canvas.models';
+import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta } from '../../models/canvas.models';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
-import { IAService, IAAnalisisResponse } from '../../services/ia.service';
+import { AiAssistantComponent } from '../ai-assistant/ai-assistant.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-panel-propiedades',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, AiAssistantComponent],
   templateUrl: './panel-propiedades.component.html'
 })
 export class PanelPropiedadesComponent {
@@ -18,12 +18,15 @@ export class PanelPropiedadesComponent {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly estado = inject(DiagramadorEstadoService);
-  private readonly iaService = inject(IAService);
 
   tabActiva: 'propiedades' | 'ia' = 'propiedades';
-  cargandoIA = false;
-  analisisIA: IAAnalisisResponse | null = null;
-  errorIA: string | null = null;
+
+  // Snapshot en tiempo real para la IA
+  readonly datosCanvas = computed(() => ({
+    nodos: this.estado.nodos(),
+    aristas: this.estado.aristas(),
+    carriles: this.estado.carriles()
+  }));
 
   private readonly nodoSeleccionadoSignal = this.estado.nodoSeleccionado;
   private readonly aristaSeleccionadaSignal = this.estado.aristaSeleccionada;
@@ -191,71 +194,11 @@ export class PanelPropiedadesComponent {
     this.tabActiva = tab;
   }
 
-  analizarConIA(): void {
-    this.cargandoIA = true;
-    this.errorIA = null;
-    this.analisisIA = null;
-
-    // Obtener snapshot actual del canvas
-    const politica = this.estado.toPoliticaNegocio('Análisis Temporal', 'BORRADOR');
-
-    this.iaService.analizarCanvas(politica).subscribe({
-      next: (res) => {
-        this.analisisIA = res;
-        this.cargandoIA = false;
-      },
-      error: (err) => {
-        this.cargandoIA = false;
-        if (err.status === 429) {
-          Swal.fire({
-            title: 'IA Saturada',
-            text: 'El Asistente de IA está saturado. Por favor, espera unos segundos antes de volver a consultarlo.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido',
-            heightAuto: false
-          });
-          return;
-        }
-        this.errorIA = err.status === 503 ? 'El servicio de IA no está disponible.' : 'Error al conectar con la IA.';
-      }
-    });
-  }
-
-  autocorregirFlujo(): void {
-    if (!this.analisisIA) return;
-    
-    this.cargandoIA = true;
-    const politica = this.estado.toPoliticaNegocio('Corrección Temporal', 'BORRADOR');
-
-    this.iaService.corregirCanvas(politica).subscribe({
-      next: (politicaReparada) => {
-        this.estado.hidratarDesdePolitica(politicaReparada);
-        this.analisisIA = null; // Resetear análisis tras corregir
-        this.cargandoIA = false;
-        
-        Swal.fire({
-          title: '¡Corregido!',
-          text: 'El flujo ha sido reparado automáticamente.',
-          icon: 'success',
-          timer: 2000,
-          heightAuto: false
-        });
-      },
-      error: (err) => {
-        this.cargandoIA = false;
-        if (err.status === 429) {
-          Swal.fire({
-            title: 'IA Saturada',
-            text: 'El Asistente de IA está saturado. Por favor, espera unos segundos antes de volver a consultarlo.',
-            icon: 'warning',
-            confirmButtonText: 'Entendido',
-            heightAuto: false
-          });
-          return;
-        }
-        this.errorIA = 'No se pudo realizar la autocorrección.';
-      }
-    });
+  recargarLienzo(nuevoEstado: any): void {
+    if (!nuevoEstado) return;
+    this.estado.setNodos(nuevoEstado.nodos || []);
+    this.estado.setAristas(nuevoEstado.aristas || []);
+    if (nuevoEstado.carriles) this.estado.setCarriles(nuevoEstado.carriles);
   }
 
   private esNodoActividadEditable(nodo: NodoCanvas | null): nodo is NodoActividad {

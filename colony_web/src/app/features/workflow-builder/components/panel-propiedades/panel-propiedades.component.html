@@ -5,7 +5,7 @@
       <button (click)="setTab('ia')" [class.bg-white]="tabActiva === 'ia'" [class.shadow-sm]="tabActiva === 'ia'"
         [class.text-purple-600]="tabActiva === 'ia'"
         class="flex-1 rounded-md px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-200">
-        ✨ Asistente IA
+        Asistente IA
       </button>
       <button (click)="setTab('propiedades')" [class.bg-white]="tabActiva === 'propiedades'"
         [class.shadow-sm]="tabActiva === 'propiedades'" [class.text-primary]="tabActiva === 'propiedades'"
@@ -77,7 +77,8 @@
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Tipo</label>
-                    <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }" (ngModelChange)="persistirSilenciosamente()"
+                    <select [(ngModel)]="campo.tipo" [disabled]="isReadOnly" [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="persistirSilenciosamente()"
                       class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
                       <option value="text">Texto</option>
                       <option value="number">Numero</option>
@@ -99,7 +100,8 @@
 
                 <!-- FASE SELECCION: Opciones separadas por comas -->
                 <div *ngIf="campo.tipo === 'select'">
-                  <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Opciones (separadas por comas)</label>
+                  <label class="text-[10px] font-bold text-ink-light uppercase mb-1 block">Opciones (separadas por
+                    comas)</label>
                   <input [(ngModel)]="campo.opciones" [ngModelOptions]="{ standalone: true }" type="text"
                     [readonly]="isReadOnly" placeholder="Ej: Aceptado, Rechazado, Pendiente"
                     class="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary" />
@@ -125,16 +127,20 @@
     </ng-container>
 
     <!-- Mensaje para Nodos de Control Lógicos (Fork, Join, Compuerta) -->
-    <div *ngIf="nodoSeleccionadoActual?.tipo === 'fork' || nodoSeleccionadoActual?.tipo === 'join' || nodoSeleccionadoActual?.tipo === 'compuerta'"
+    <div
+      *ngIf="nodoSeleccionadoActual?.tipo === 'fork' || nodoSeleccionadoActual?.tipo === 'join' || nodoSeleccionadoActual?.tipo === 'compuerta'"
       class="rounded-xl border border-border bg-slate-50 p-4 text-sm shadow-sm mb-4">
       <div class="flex items-center gap-2 font-bold text-slate-800 mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-500">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-5 h-5 text-slate-500">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
         </svg>
         Nodo de Control
       </div>
       <p class="text-slate-600 leading-relaxed italic">
-        Este elemento es de carácter lógico y automático. No requiere configuración de nombre ni esquema de formulario humano.
+        Este elemento es de carácter lógico y automático. No requiere configuración de nombre ni esquema de formulario
+        humano.
       </p>
     </div>
 
@@ -196,101 +202,10 @@
 
     <!-- PESTAÑA ASISTENTE IA -->
     @if (tabActiva === 'ia') {
-    <div class="flex flex-col h-full">
-      <div class="mb-4">
-        <button (click)="analizarConIA()" [disabled]="cargandoIA"
-          class="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 text-sm font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50">
-          @if (cargandoIA) {
-          <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-          } @else {
-          <span>✨ Analizar con IA</span>
-          }
-        </button>
-      </div>
-
-      @if (cargandoIA) {
-      <div class="space-y-4 animate-pulse">
-        <div class="h-12 bg-gray-200 rounded-lg"></div>
-        <div class="h-24 bg-gray-200 rounded-lg"></div>
-        <div class="h-32 bg-gray-200 rounded-lg"></div>
-      </div>
-      }
-
-      @if (errorIA) {
-      <div class="rounded-lg bg-red-50 p-4 border border-red-100 mb-4">
-        <div class="flex gap-3">
-          <span class="text-red-500">❌</span>
-          <p class="text-xs font-medium text-red-800">{{ errorIA }}</p>
-        </div>
-      </div>
-      }
-
-      @if (analisisIA) {
-      <div class="space-y-4">
-        <!-- Errores Críticos -->
-        @if (analisisIA.faltaInicio || analisisIA.faltaFin) {
-        <div class="space-y-2">
-          @if (analisisIA.faltaInicio) {
-          <div class="rounded-lg bg-red-50 p-3 border border-red-100 flex items-center gap-3">
-            <span class="text-lg">🔴</span>
-            <span class="text-xs font-bold text-red-900">Falta nodo de INICIO</span>
-          </div>
-          }
-          @if (analisisIA.faltaFin) {
-          <div class="rounded-lg bg-red-50 p-3 border border-red-100 flex items-center gap-3">
-            <span class="text-lg">🔴</span>
-            <span class="text-xs font-bold text-red-900">Falta nodo de FIN</span>
-          </div>
-          }
-        </div>
-        }
-
-        <!-- Nodos huérfanos -->
-        @if (analisisIA.nodosSinConexion.length > 0) {
-        <div class="rounded-lg bg-amber-50 p-3 border border-amber-100">
-          <p class="text-[10px] font-bold text-amber-800 uppercase mb-2">⚠️ Nodos sin conexión</p>
-          <ul class="list-disc pl-4 space-y-1">
-            @for (id of analisisIA.nodosSinConexion; track id) {
-            <li class="text-xs text-amber-900 font-medium">{{ id }}</li>
-            }
-          </ul>
-        </div>
-        }
-
-        <!-- Sugerencias -->
-        <div class="rounded-lg bg-blue-50 p-3 border border-blue-100">
-          <p class="text-[10px] font-bold text-blue-800 uppercase mb-2">💡 Sugerencias</p>
-          <ul class="space-y-2">
-            @for (sug of analisisIA.sugerencias; track sug) {
-            <li class="text-xs text-blue-900 leading-relaxed bg-white/50 rounded p-2">{{ sug }}</li>
-            }
-          </ul>
-        </div>
-
-        <!-- Botón Autocorregir vs Mensaje de Éxito -->
-        @if (analisisIA.faltaInicio || analisisIA.faltaFin || analisisIA.nodosSinConexion.length > 0) {
-        <button (click)="autocorregirFlujo()"
-          class="w-full mt-4 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition shadow-md flex items-center justify-center gap-2">
-          🛠️ Autocorregir Flujo
-        </button>
-        } @else {
-        <div class="mt-4 rounded-md bg-green-100 p-3 border border-green-200 flex items-center gap-3">
-          <span class="text-green-600">✅</span>
-          <p class="text-xs font-bold text-green-800">¡Excelente trabajo! Tu flujo está estructurado correctamente.</p>
-        </div>
-        }
-      </div>
-      } @else if (!cargandoIA) {
-      <div class="flex flex-col items-center justify-center py-10 text-center opacity-40">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-          class="w-12 h-12 mb-3">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
-        </svg>
-        <p class="text-xs px-6">Pulsa analizar para recibir consejos del Asistente IA sobre tu proceso.</p>
-      </div>
-      }
-    </div>
+      <app-ai-assistant 
+        [canvasJson]="datosCanvas()" 
+        (updateCanvas)="recargarLienzo($event)">
+      </app-ai-assistant>
     }
   </div>
 

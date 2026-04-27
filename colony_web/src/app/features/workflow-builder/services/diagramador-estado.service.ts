@@ -246,6 +246,14 @@ export class DiagramadorEstadoService {
     this._aristas.set([...aristas]);
   }
 
+  setNodos(nodos: NodoCanvas[]): void {
+    this._nodos.set(nodos.map(n => this.normalizarNodo(n)));
+  }
+
+  setCarriles(carriles: Carril[]): void {
+    this._carriles.set([...carriles]);
+  }
+
   setZoom(nivel: number): void {
     const acotado = Math.min(DiagramadorEstadoService.MAX_ZOOM, Math.max(DiagramadorEstadoService.MIN_ZOOM, nivel));
     this._zoomNivel.set(Number(acotado.toFixed(2)));
