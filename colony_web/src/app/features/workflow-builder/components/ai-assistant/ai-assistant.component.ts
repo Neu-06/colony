@@ -33,6 +33,7 @@ export class AiAssistantComponent {
   isAiLoading = false;
   estaEscuchando = false;
   recognition: any;
+  private silenceTimer: any;
 
   constructor() {
     this.initSpeechRecognition();
@@ -41,52 +42,78 @@ export class AiAssistantComponent {
   initSpeechRecognition() {
     if (isPlatformBrowser(this.platformId) && ('webkitSpeechRecognition' in window)) {
       this.recognition = new webkitSpeechRecognition();
-      this.recognition.continuous = false;
-      this.recognition.interimResults = false;
+      
+      // CONFIGURACIÓN PARA EVITAR CORTES
+      this.recognition.continuous = true; // Escucha constante hasta que paremos manual o detectemos silencio largo
+      this.recognition.interimResults = true; // Feedback inmediato
       this.recognition.lang = 'es-ES';
 
       this.recognition.onstart = () => {
-        this.ngZone.run(() => this.estaEscuchando = true);
-      };
-
-      this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        const confidence = event.results[0][0].confidence;
-        
         this.ngZone.run(() => {
-          this.comandoDetectado = transcript;
-          this.estaEscuchando = false;
-          
-          // Si la confianza es alta, enviamos automáticamente
-          if (confidence > 0.8) {
-            this.enviarComando();
-          }
+          this.estaEscuchando = true;
+          console.log("Micrófono activo");
         });
       };
 
-      this.recognition.onerror = () => {
+      this.recognition.onresult = (event: any) => {
+        this.ngZone.run(() => {
+          let transcript = '';
+          for (let i = 0; i < event.results.length; ++i) {
+            transcript += event.results[i][0].transcript;
+          }
+          this.comandoDetectado = transcript;
+
+          // DETECCIÓN DE SILENCIO PARA ENVIAR (1.5 segundos de silencio)
+          clearTimeout(this.silenceTimer);
+          this.silenceTimer = setTimeout(() => {
+            if (this.estaEscuchando && this.comandoDetectado.trim()) {
+              this.enviarComando();
+              this.recognition.stop();
+            }
+          }, 1500);
+        });
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.error("Error de reconocimiento:", event.error);
         this.ngZone.run(() => this.estaEscuchando = false);
       };
 
       this.recognition.onend = () => {
-        this.ngZone.run(() => this.estaEscuchando = false);
+        this.ngZone.run(() => {
+          this.estaEscuchando = false;
+          console.log("Micrófono desactivado");
+        });
       };
     }
   }
 
   toggleDictado() {
+    if (!this.recognition) return;
+
     if (this.estaEscuchando) {
       this.recognition.stop();
+      this.estaEscuchando = false;
     } else {
       this.comandoDetectado = '';
-      this.recognition.start();
+      try {
+        this.recognition.start();
+        // El estado se pondrá true en onstart para ser precisos, 
+        // pero podemos ponerlo aquí para feedback instantáneo si onstart tarda
+        this.estaEscuchando = true; 
+      } catch (e) {
+        this.recognition.stop();
+        this.estaEscuchando = false;
+      }
     }
   }
 
   private hacerScrollAbajo(): void {
     setTimeout(() => {
       try {
-        this.chatScrollContainer.nativeElement.scrollTop = this.chatScrollContainer.nativeElement.scrollHeight;
+        if (this.chatScrollContainer) {
+          this.chatScrollContainer.nativeElement.scrollTop = this.chatScrollContainer.nativeElement.scrollHeight;
+        }
       } catch (err) {}
     }, 100);
   }

@@ -19,8 +19,9 @@ if not api_key:
 client = Groq(api_key=api_key)
 
 # Modelo de Groq (Llama 3.1 8B es más rápido y económico para pruebas)
-AI_MODEL = "llama-3.1-8b-instant"
 
+#AI_MODEL = "llama-3.1-8b-instant"
+AI_MODEL = "llama-3.3-70b-versatile"
 class CanvasData(BaseModel):
     data: Any
 
@@ -101,16 +102,31 @@ async def chat_canvas(request: CanvasChatRequest):
         response = client.chat.completions.create(
             model=AI_MODEL,
             messages=[
-                {
-                    "role": "system", 
-                    "content": """
-Eres un Copiloto BPMN experto. Recibes un JSON de jsPlumb y una orden del usuario.
-Tu único objetivo es devolver el JSON modificado basándote en la orden.
+              {
+                    "role": "system",
+                    "content": """Eres un Consultor de Negocios y Arquitecto BPMN Nivel Senior. 
+El usuario te pedirá que diseñes un flujo de trabajo. Tu misión es devolver un JSON impecable y lógico.
 
-REGLAS ESTRUCTURALES ESTRICTAS:
-1. REGLA DE ELIMINACIÓN: Si el usuario pide eliminar un nodo (tarea, inicio, fin), DEBES BORRAR EL OBJETO COMPLETO del array "nodos". NUNCA lo renombres como "nodo eliminado" o "tarea vacía". Si borras un nodo, TAMBIÉN DEBES BORRAR del array "aristas" cualquier conexión que tuviera a ese nodo como 'fuente' o 'destino'.
-2. REGLA ESPACIAL: Los nodos nuevos deben tener x > 180 y y > 50 para no tapar las cabeceras.
-3. REGLA DE FORMATO: Devuelve ÚNICAMENTE un objeto JSON válido y limpio. NO uses caracteres de escape extraños en las claves (no uses \\"). NO incluyas formato Markdown (```json).
+REGLAS DE CREATIVIDAD (COMPÓRTATE COMO UN EXPERTO, NO COMO UN ROBOT):
+1. PROCESOS REALES: Los procesos reales no son una línea recta. Usa condiciones, aprobaciones, rechazos.
+2. TIPOS DE NODOS PERMITIDOS: Usa "Inicio", "Tarea", "Compuerta" (para decisiones) y "Fin".
+3. FORMULARIOS: Si una "Tarea" requiere que un humano ingrese datos (ej. "Llenar Solicitud", "Evaluar Crédito"), DEBES agregar campos al array 'esquemaFormulario'. 
+   - Ejemplo: "esquemaFormulario": [{"nombre": "Monto", "tipo": "number"}, {"nombre": "Motivo", "tipo": "text"}]
+   - Si es una tarea automática, déjalo vacío: [].
+
+REGLAS DE ESTRUCTURA JSON (CRÍTICAS PARA EL FRONTEND):
+- La clave identificadora de TODOS los elementos debe ser "id" (con i minúscula, NUNCA "_id"). NUNCA uses "undefined".
+- CARRILES: {"id": "c-1", "nombre": "Ventas", "orden": 1}
+- NODOS: {"id": "n-1", "nombre": "...", "tipo": "...", "posicion": {"x": 100, "y": 100}, "carrilId": "c-1", "esquemaFormulario": [...]}
+- ARISTAS: {"id": "a-1", "origenNodoId": "n-1", "destinoNodoId": "n-2"}
+
+REGLAS DEL PATIO DE JUEGOS (DISTRIBUCIÓN ESPACIAL INTELIGENTE):
+- Distribuye el diagrama como un humano: De izquierda a derecha.
+- Avanza en el eje X: Inicio en x: 100. Siguiente paso en x: 350. Siguiente en x: 600.
+- Ramificaciones (Uso del eje Y): Si pones una "Compuerta" en x: 600, y: 100, la ruta de "Aprobado" debe ir a x: 850, y: 100. La ruta de "Rechazado" debe ir hacia abajo, a x: 850, y: 300. ¡NO apiles nodos!
+- Carriles: Si un nodo cruza a otro departamento (ej. de Ventas a Finanzas), asígnale el "carrilId" correspondiente y ajusta su "y" para que caiga visualmente dentro de ese carril.
+
+Devuelve ÚNICAMENTE el JSON crudo con "carriles", "nodos" y "aristas".
 """
                 },
                 {

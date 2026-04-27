@@ -3,7 +3,7 @@
     [style.transform]="'scale(' + zoomNivel() + ')'" [style.height.px]="altoTotalCanvasPx()">
     <div #boardSurface class="absolute inset-0">
       <div class="absolute inset-0 z-0 flex flex-col">
-        @for (carril of carriles(); track carril.id; let laneIndex = $index) {
+        @for (carril of carriles(); track carril.id || $index; let laneIndex = $index) {
         <section data-lane-visual class="relative border-b border-gray-300" [style.min-height.px]="carril.alto || 250"
           [ngClass]="laneIndex % 2 === 0 ? 'bg-slate-50' : 'bg-white'"></section>
         }
@@ -22,7 +22,7 @@
       </div>
 
       <div class="pointer-events-none absolute inset-y-0 left-0 z-30 flex w-20 flex-col">
-        @for (carril of carriles(); track carril.id; let i = $index) {
+        @for (carril of carriles(); track carril.id || $index; let i = $index) {
         <section class="relative border-b border-gray-300 overflow-hidden" [style.min-height.px]="carril.alto || 250"
           [attr.data-carril-id]="carril.id">
           <div
