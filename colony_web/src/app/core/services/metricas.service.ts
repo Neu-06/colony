@@ -28,4 +28,8 @@ export class MetricasService {
   getRendimientoUsuarios(): Observable<MetricaRendimientoDTO[]> {
     return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/rendimiento-usuarios`);
   }
+
+  getCuellosBotella(): Observable<MetricaRendimientoDTO[]> {
+    return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/cuellos-botella`);
+  }
 }

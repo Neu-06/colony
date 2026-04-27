@@ -11,6 +11,7 @@ export interface InstanciaMonitorDto {
   semaforo: string;
   nodoActualId: string;
   nombreNodoActual: string;
+  tareasActualesNombres: string[];
   fechaInicio?: string;
 }
 
@@ -134,12 +135,10 @@ export class MonitoreoGlobalComponent implements OnInit, OnDestroy {
   }
 
   semaforoBadgeClass(semaforo: string): string {
-    switch ((semaforo || '').toUpperCase()) {
-      case 'VERDE':    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'AMARILLO': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'ROJO':
-      default:         return 'bg-red-100 text-red-800 border-red-200';
-    }
+    const s = (semaforo || '').toUpperCase();
+    if (s === 'VERDE') return 'bg-green-500 text-white border-green-600';
+    if (s === 'AMARILLO') return 'bg-yellow-500 text-white border-yellow-600';
+    return 'bg-red-500 text-white border-red-600';
   }
 
   semaforoIcon(semaforo: string): string {

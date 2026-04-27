@@ -15,39 +15,42 @@ export class DashboardMetricasComponent implements OnInit {
 
   kpis: KpiGeneralDTO | null = null;
   rendimiento: MetricaRendimientoDTO[] = [];
+  cuellos: MetricaRendimientoDTO[] = [];
   isLoading = true;
 
-  // Chart Configuration
-  public barChartOptions: ChartConfiguration['options'] = {
+  // Chart 1: Productividad (Barras Verticales)
+  public prodChartOptions: ChartConfiguration['options'] = {
     responsive: true,
-    scales: {
-      x: {},
-      y: {
-        min: 0,
-        title: {
-          display: true,
-          text: 'Minutos Promedio'
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        display: true,
-      }
-    }
+    scales: { y: { min: 0, title: { display: true, text: 'Tareas Completadas' } } },
+    plugins: { legend: { display: true } }
   };
-  public barChartType: ChartType = 'bar';
-  public barChartData: ChartData<'bar'> = {
+  public prodChartData: ChartData<'bar'> = {
     labels: [],
-    datasets: [
-      { 
-        data: [], 
-        label: 'Tiempo Promedio de Resolución (Minutos)',
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1
-      }
-    ]
+    datasets: [{ 
+      data: [], 
+      label: 'Tareas por Funcionario',
+      backgroundColor: 'rgba(34, 197, 94, 0.6)',
+      borderColor: 'rgb(34, 197, 94)',
+      borderWidth: 1
+    }]
+  };
+
+  // Chart 2: Cuellos de Botella (Barras Horizontales)
+  public bottleneckChartOptions: ChartConfiguration['options'] = {
+    indexAxis: 'y',
+    responsive: true,
+    scales: { x: { min: 0, title: { display: true, text: 'Minutos Promedio' } } },
+    plugins: { legend: { display: true } }
+  };
+  public bottleneckChartData: ChartData<'bar'> = {
+    labels: [],
+    datasets: [{ 
+      data: [], 
+      label: 'Tiempo Promedio (Minutos)',
+      backgroundColor: 'rgba(239, 68, 68, 0.6)',
+      borderColor: 'rgb(239, 68, 68)',
+      borderWidth: 1
+    }]
   };
 
   ngOnInit(): void {
@@ -56,27 +59,29 @@ export class DashboardMetricasComponent implements OnInit {
 
   cargarDatos(): void {
     this.isLoading = true;
-    this.metricasService.getGeneral().subscribe({
-      next: (data) => {
-        this.kpis = data;
-      }
-    });
+    
+    // Carga paralela de KPIs
+    this.metricasService.getGeneral().subscribe(data => this.kpis = data);
 
+    // Carga de Productividad
     this.metricasService.getRendimientoUsuarios().subscribe({
       next: (data) => {
         this.rendimiento = data;
-        this.actualizarGrafico();
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
+        this.prodChartData.labels = data.map(r => r.identificador || 'Anonimo');
+        this.prodChartData.datasets[0].data = data.map(r => r.cantidadTramites);
       }
     });
-  }
 
-  actualizarGrafico(): void {
-    this.barChartData.labels = this.rendimiento.map(r => r.identificador || 'Anonimo');
-    this.barChartData.datasets[0].data = this.rendimiento.map(r => Number((r.tiempoPromedioSegundos / 60).toFixed(2)));
+    // Carga de Cuellos de Botella
+    this.metricasService.getCuellosBotella().subscribe({
+      next: (data) => {
+        this.cuellos = data;
+        this.bottleneckChartData.labels = data.map(r => r.identificador || 'Tarea');
+        this.bottleneckChartData.datasets[0].data = data.map(r => Number((r.tiempoPromedioSegundos / 60).toFixed(2)));
+        this.isLoading = false;
+      },
+      error: () => this.isLoading = false
+    });
   }
 
   formatearTiempo(segundos: number): string {

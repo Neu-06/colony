@@ -1,21 +1,5 @@
 <section class="space-y-8">
 
-  <!-- ───────────── KPI HEADER ───────────── -->
-  <div class="grid grid-cols-3 gap-4">
-    <div class="rounded-2xl border border-border bg-surface p-5 shadow-sm text-center">
-      <p class="text-3xl font-extrabold text-ink">{{ totalInstancias() }}</p>
-      <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-light">Total Instancias</p>
-    </div>
-    <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm text-center">
-      <p class="text-3xl font-extrabold text-blue-700">{{ enProceso() }}</p>
-      <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-blue-500">En Proceso</p>
-    </div>
-    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm text-center">
-      <p class="text-3xl font-extrabold text-emerald-700">{{ finalizados() }}</p>
-      <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-emerald-500">Finalizados</p>
-    </div>
-  </div>
-
   <!-- ───────────── SECCIÓN A: MINI RASTREADOR ───────────── -->
   <div class="rounded-2xl border border-border bg-surface p-6 shadow-sm">
     <div class="flex items-center gap-3 mb-4">
@@ -172,8 +156,8 @@
                 {{ inst.codigo }}
               </p>
               <!-- Nodo actual -->
-              <p class="text-[11px] font-semibold text-ink mb-3 truncate" [title]="inst.nodoActualId">
-                📍 {{ inst.nombreNodoActual || inst.nodoActualId || 'Finalizado' }}
+              <p class="text-[11px] font-semibold text-ink mb-3 truncate" [title]="inst.tareasActualesNombres.join(', ')">
+                📍 {{ inst.tareasActualesNombres.join(', ') || 'Sin tareas activas' }}
               </p>
               <!-- Badges -->
               <div class="flex items-center gap-2 flex-wrap">
@@ -183,7 +167,7 @@
                 </span>
                 <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
                   [ngClass]="estadoBadgeClass(inst.estadoGeneral)">
-                  {{ inst.estadoGeneral === 'EN_PROCESO' ? 'En Proceso' : (inst.estadoGeneral || '—') }}
+                  {{ inst.estadoGeneral }}
                 </span>
               </div>
             </div>

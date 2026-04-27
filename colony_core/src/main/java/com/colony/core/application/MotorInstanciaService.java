@@ -290,10 +290,12 @@ public class MotorInstanciaService {
 
             if (instancia.getNodosActualesIds().isEmpty()) {
                 instancia.setEstadoGeneral(FINALIZADO);
+                instancia.setSemaforo("VERDE");
                 instancia.setFechaFin(new Date());
                 log.info("Instancia finalizada automáticamente");
             } else {
                 instancia.setEstadoGeneral(EN_PROCESO);
+                instancia.setSemaforo("AMARILLO");
             }
 
             Instancia guardada = instanciaRepository.save(instancia);
@@ -301,17 +303,33 @@ public class MotorInstanciaService {
 
             // BROADCAST WebSocket al dashboard de monitoreo
             try {
-                String nodoActualBroadcast = (guardada.getNodosActualesIds() == null
-                        || guardada.getNodosActualesIds().isEmpty())
-                                ? "—"
-                                : guardada.getNodosActualesIds().get(0);
+                // Enriquecer nombres de tareas para el dashboard
+                List<String> tareasNombres = new ArrayList<>();
+                if (politica != null && guardada.getNodosActualesIds() != null) {
+                    for (String nodoId : guardada.getNodosActualesIds()) {
+                        NodoBase nodo = politica.getNodos().stream()
+                            .filter(n -> n.getIdNodo().equals(nodoId)).findFirst().orElse(null);
+                        if (nodo != null) {
+                            String nombreDepto = "Sin Carril";
+                            if (nodo.getCarrilId() != null && politica.getCarriles() != null) {
+                                nombreDepto = politica.getCarriles().stream()
+                                    .filter(c -> c.getId().equals(nodo.getCarrilId()))
+                                    .map(com.colony.core.domain.Carril::getNombre)
+                                    .findFirst().orElse("Sin Carril");
+                            }
+                            tareasNombres.add(nodo.getNombre() + " (" + nombreDepto + ")");
+                        }
+                    }
+                }
+
                 Map<String, Object> broadcast = new HashMap<>();
                 broadcast.put("instanciaId", guardada.getId());
                 broadcast.put("codigo", guardada.getCodigo());
                 broadcast.put("politicaId", guardada.getPoliticaId());
                 broadcast.put("estadoGeneral", guardada.getEstadoGeneral());
-                broadcast.put("semaforo", guardada.getSemaforo() != null ? guardada.getSemaforo() : "ROJO");
-                broadcast.put("nodoActualId", nodoActualBroadcast);
+                broadcast.put("semaforo", calcularSemaforo(guardada));
+                broadcast.put("nodosActualesIds", guardada.getNodosActualesIds());
+                broadcast.put("tareasActualesNombres", tareasNombres);
                 messagingTemplate.convertAndSend("/topic/monitoreo", broadcast);
                 log.info("Broadcast de monitoreo enviado para instancia: {}", guardada.getCodigo());
             } catch (Exception e) {
@@ -348,6 +366,24 @@ public class MotorInstanciaService {
     private boolean esNodoFin(NodoBase nodo) {
         String tipo = nodo.getTipo() == null ? "" : nodo.getTipo().trim().toLowerCase(Locale.ROOT);
         return "fin".equals(tipo) || "end".equals(tipo);
+    }
+
+    private String calcularSemaforo(Instancia inst) {
+        if ("FINALIZADO".equalsIgnoreCase(inst.getEstadoGeneral())) {
+            return "VERDE";
+        }
+
+        Historial ultima = historialRepository.findFirstByInstanciaIDOrderByFechaTransicionDesc(inst.getId());
+        Date referencia = (ultima != null && ultima.getFechaTransicion() != null) 
+            ? ultima.getFechaTransicion() 
+            : inst.getFechaInicio();
+
+        if (referencia == null) return "AMARILLO";
+
+        long diff = new Date().getTime() - referencia.getTime();
+        long horas = diff / (1000 * 60 * 60);
+
+        return horas > 24 ? "ROJO" : "AMARILLO";
     }
 
     private String generarCodigoRastreo() {
