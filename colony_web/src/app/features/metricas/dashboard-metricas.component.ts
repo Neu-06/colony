@@ -1,16 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { KpiGeneralDTO, MetricaRendimientoDTO, MetricasService } from '../../core/services/metricas.service';
 
+import { DecimalPipe } from '@angular/common';
+
 @Component({
   selector: 'app-dashboard-metricas',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, BaseChartDirective, DecimalPipe],
   templateUrl: './dashboard-metricas.component.html'
 })
 export class DashboardMetricasComponent implements OnInit {
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
   private readonly metricasService = inject(MetricasService);
 
   kpis: KpiGeneralDTO | null = null;
@@ -18,20 +21,29 @@ export class DashboardMetricasComponent implements OnInit {
   cuellos: MetricaRendimientoDTO[] = [];
   isLoading = true;
 
-  // Chart 1: Productividad (Barras Verticales)
-  public prodChartOptions: ChartConfiguration['options'] = {
+  // Chart 1: Distribución (Doughnut)
+  public distChartOptions: ChartConfiguration['options'] = {
     responsive: true,
-    scales: { y: { min: 0, title: { display: true, text: 'Tareas Completadas' } } },
-    plugins: { legend: { display: true } }
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { usePointStyle: true, font: { size: 12 } }
+      }
+    }
   };
-  public prodChartData: ChartData<'bar'> = {
+  public distChartData: ChartData<'doughnut'> = {
     labels: [],
-    datasets: [{ 
-      data: [], 
-      label: 'Tareas por Funcionario',
-      backgroundColor: 'rgba(34, 197, 94, 0.6)',
-      borderColor: 'rgb(34, 197, 94)',
-      borderWidth: 1
+    datasets: [{
+      data: [],
+      backgroundColor: [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(139, 92, 246, 0.8)'
+      ],
+      hoverOffset: 4
     }]
   };
 
@@ -39,8 +51,9 @@ export class DashboardMetricasComponent implements OnInit {
   public bottleneckChartOptions: ChartConfiguration['options'] = {
     indexAxis: 'y',
     responsive: true,
+    maintainAspectRatio: false,
     scales: { x: { min: 0, title: { display: true, text: 'Minutos Promedio' } } },
-    plugins: { legend: { display: true } }
+    plugins: { legend: { display: false } }
   };
   public bottleneckChartData: ChartData<'bar'> = {
     labels: [],
@@ -49,7 +62,8 @@ export class DashboardMetricasComponent implements OnInit {
       label: 'Tiempo Promedio (Minutos)',
       backgroundColor: 'rgba(239, 68, 68, 0.6)',
       borderColor: 'rgb(239, 68, 68)',
-      borderWidth: 1
+      borderWidth: 1,
+      borderRadius: 8
     }]
   };
 
@@ -60,24 +74,34 @@ export class DashboardMetricasComponent implements OnInit {
   cargarDatos(): void {
     this.isLoading = true;
     
-    // Carga paralela de KPIs
-    this.metricasService.getGeneral().subscribe(data => this.kpis = data);
+    this.metricasService.getGeneral().subscribe(data => {
+      this.kpis = data;
+    });
 
-    // Carga de Productividad
     this.metricasService.getRendimientoUsuarios().subscribe({
       next: (data) => {
         this.rendimiento = data;
-        this.prodChartData.labels = data.map(r => r.identificador || 'Anonimo');
-        this.prodChartData.datasets[0].data = data.map(r => r.cantidadTramites);
+        this.distChartData = {
+          labels: data.map(r => r.identificador || 'Anónimo'),
+          datasets: [{ 
+            ...this.distChartData.datasets[0],
+            data: data.map(r => r.cantidadTramites)
+          }]
+        };
+        this.chart?.update();
       }
     });
 
-    // Carga de Cuellos de Botella
     this.metricasService.getCuellosBotella().subscribe({
       next: (data) => {
         this.cuellos = data;
-        this.bottleneckChartData.labels = data.map(r => r.identificador || 'Tarea');
-        this.bottleneckChartData.datasets[0].data = data.map(r => Number((r.tiempoPromedioSegundos / 60).toFixed(2)));
+        this.bottleneckChartData = {
+          labels: data.map(r => r.identificador || 'Tarea'),
+          datasets: [{ 
+            ...this.bottleneckChartData.datasets[0],
+            data: data.map(r => Number((r.tiempoPromedioSegundos / 60).toFixed(2)))
+          }]
+        };
         this.isLoading = false;
       },
       error: () => this.isLoading = false
@@ -93,7 +117,6 @@ export class DashboardMetricasComponent implements OnInit {
   }
 
   esCuelloBotella(segundos: number): boolean {
-    // Umbral de 24 horas = 86400 segundos
-    return segundos > 86400;
+    return segundos > 3600; // Más de 1 hora
   }
 }

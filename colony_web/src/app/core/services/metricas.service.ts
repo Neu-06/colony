@@ -6,6 +6,7 @@ export interface KpiGeneralDTO {
   totalInstancias: number;
   enProceso: number;
   finalizadas: number;
+  totalDepartamentos: number;
 }
 
 export interface MetricaRendimientoDTO {
@@ -19,17 +20,17 @@ export interface MetricaRendimientoDTO {
 })
 export class MetricasService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/metricas';
+  private readonly apiUrl = '/api/metricas';
 
   getGeneral(): Observable<KpiGeneralDTO> {
-    return this.http.get<KpiGeneralDTO>(`${this.apiUrl}/general`);
+    return this.http.get<KpiGeneralDTO>('http://localhost:8080/api/metricas/general');
   }
 
   getRendimientoUsuarios(): Observable<MetricaRendimientoDTO[]> {
-    return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/rendimiento-usuarios`);
+    return this.http.get<MetricaRendimientoDTO[]>('http://localhost:8080/api/metricas/rendimiento-usuarios');
   }
 
   getCuellosBotella(): Observable<MetricaRendimientoDTO[]> {
-    return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/cuellos-botella`);
+    return this.http.get<MetricaRendimientoDTO[]>('http://localhost:8080/api/metricas/cuellos-botella');
   }
 }

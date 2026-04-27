@@ -11,4 +11,5 @@ public class KpiGeneralDTO {
     private long totalInstancias;
     private long enProceso;
     private long finalizadas;
+    private long totalDepartamentos;
 }
