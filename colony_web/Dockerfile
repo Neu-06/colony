@@ -13,11 +13,8 @@ RUN sed -i "s|backendBaseUrl: '.*'|backendBaseUrl: '${WEB_BACKEND_BASE_URL}'|" s
  && sed -i "s|frontendOrigin: '.*'|frontendOrigin: '${WEB_FRONTEND_ORIGIN}'|" src/environments/environment.ts
 RUN npm run build
 
-FROM nginx:1.27-alpine
-RUN addgroup -S app && adduser -S app -G app
+FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY --from=build /app/dist/colony_web /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-RUN chown -R app:app /usr/share/nginx/html /var/cache/nginx /var/run /etc/nginx
-USER app
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off; pid /tmp/nginx.pid;"]
+CMD ["nginx", "-g", "daemon off;"]
