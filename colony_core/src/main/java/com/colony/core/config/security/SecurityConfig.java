@@ -1,5 +1,5 @@
 package com.colony.core.config.security;
-    
+
 import com.colony.core.application.UsuarioDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,20 +35,6 @@ public class SecurityConfig {
     private final UsuarioDetailsService usuarioDetailsService;
 
     @Bean
-    @Order(0)
-    public SecurityFilterChain metricasFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/api/metricas/**")
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-
-        return http.build();
-    }
-
-    @Bean
-    @Order(1)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
@@ -58,16 +43,16 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                     response.setContentType("application/json");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + authException.getMessage() + "\"}");
+                    response.getWriter().write(
+                            "{\"error\": \"Unauthorized\", \"message\": \"" + authException.getMessage() + "\"}");
                 }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/api/rastreo/**").permitAll()
+                        .requestMatchers("/api/rastreo/**").permitAll()
                         .requestMatchers("/ws-collab/**").permitAll()
-                    .requestMatchers("/api/metricas/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        // Todo lo demás, incluyendo métricas, pasa por el filtro JWT
+                        .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -86,8 +71,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-    
 
     @Bean
     public PasswordEncoder passwordEncoder() {
