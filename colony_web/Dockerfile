@@ -14,7 +14,9 @@ RUN sed -i "s|backendBaseUrl: '.*'|backendBaseUrl: '${WEB_BACKEND_BASE_URL}'|" s
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine
-COPY --from=build /app/dist/colony_web /usr/share/nginx/html
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=build /app/dist/colony_web /tmp/dist
+RUN if [ -d /tmp/dist/browser ]; then cp -R /tmp/dist/browser/* /usr/share/nginx/html/; else cp -R /tmp/dist/* /usr/share/nginx/html/; fi
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
