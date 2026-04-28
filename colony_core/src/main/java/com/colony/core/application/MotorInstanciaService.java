@@ -336,17 +336,18 @@ public class MotorInstanciaService {
                 log.warn("Falló el broadcast de monitoreo (no crítico): {}", e.getMessage());
             }
 
-            try {
-                if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
-                    String cuerpo = String.format("Colony: Tu trámite ha sido actualizado. Estado actual: %s",
-                            FINALIZADO.equals(guardada.getEstadoGeneral()) ? "FINALIZADO" : "EN PROCESO");
+            // --- Notificaciones Push ---
+            if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
+                try {
+                    log.info("Enviando notificación Push a " + guardada.getDispositivosSuscritos().size() + " dispositivos...");
                     pushNotificationService.enviarNotificacion(
                             guardada.getDispositivosSuscritos(),
-                            "Actualización de Trámite",
-                            cuerpo);
+                            "Trámite Actualizado",
+                            "El trámite ha avanzado a una nueva tarea."
+                    );
+                } catch (Exception e) {
+                    log.error("Error al enviar notificación Push: {}", e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                log.warn("El motor avanzó correctamente, pero falló el envío de la notificación: {}", e.getMessage());
             }
 
             return guardada;
