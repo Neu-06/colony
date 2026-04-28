@@ -35,7 +35,7 @@ public class JwtService {
             String rol = (usuario.getRol() == null || usuario.getRol().isBlank()) ? "FUNCIONARIO" : usuario.getRol();
             String departamentoId = (usuario.getDepartamentoId() == null || usuario.getDepartamentoId().isBlank())
                     ? "SIN_ASIGNAR"
-                : usuario.getDepartamentoId();
+                    : usuario.getDepartamentoId();
             String userId = usuario.getId();
             claims.put("rol", rol);
             claims.put("departamentoId", departamentoId);
