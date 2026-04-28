@@ -1,12 +1,85 @@
+version: "3.9"
+
 services:
   mongodb:
     image: mongo:8.2
     container_name: colony_mongodb
     restart: unless-stopped
+    env_file: .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
     ports:
       - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - colony-net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet -u \"$MONGO_INITDB_ROOT_USERNAME\" -p \"$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval \"db.runCommand({ ping: 1 }).ok\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  colony_ai:
+    build:
+      context: ./colony_ai
+    container_name: colony_ai
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${FASTAPI_PORT:-8000}:8000"
+    networks:
+      - colony-net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  colony_core:
+    build:
+      context: ./colony_core
+    container_name: colony_core
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      colony_ai:
+        condition: service_healthy
+    networks:
+      - colony-net
+
+  colony_web:
+    build:
+      context: ./colony_web
+      args:
+        WEB_BACKEND_BASE_URL: ${WEB_BACKEND_BASE_URL:-http://localhost:8080}
+        WEB_AI_BASE_URL: ${WEB_AI_BASE_URL:-http://localhost:8000}
+        WEB_WS_BASE_URL: ${WEB_WS_BASE_URL:-ws://localhost:8080}
+        WEB_FRONTEND_ORIGIN: ${WEB_FRONTEND_ORIGIN:-http://localhost:4200}
+    container_name: colony_web
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      colony_core:
+        condition: service_started
+      colony_ai:
+        condition: service_healthy
+    networks:
+      - colony-net
+
+networks:
+  colony-net:
+    driver: bridge
 
 volumes:
   mongo_data:
