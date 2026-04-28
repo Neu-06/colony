@@ -14,7 +14,6 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +32,6 @@ public class MetricasController {
     private final DepartamentoRepository departamentoRepository;
 
     @GetMapping("/general")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<KpiGeneralDTO> getKpiGeneral() {
         long total = instanciaRepository.count();
         long enProceso = instanciaRepository.countByEstadoGeneral("EN_PROCESO");
@@ -44,7 +42,6 @@ public class MetricasController {
     }
 
     @GetMapping("/rendimiento-usuarios")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<List<MetricaRendimientoDTO>> getRendimientoUsuarios() {
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("ejecutadoPor").ne(null)),
@@ -84,7 +81,6 @@ public class MetricasController {
     }
 
     @GetMapping("/cuellos-botella")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<List<MetricaRendimientoDTO>> getCuellosBotella() {
         // Top 5 Cuellos de Botella (Promedio de resolución)
         Aggregation aggregation = Aggregation.newAggregation(
