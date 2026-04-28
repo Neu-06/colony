@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/rastreo/**").permitAll()
                         .requestMatchers("/ws-collab/**").permitAll()
-                        .requestMatchers("/api/metricas/**").authenticated()
+                    .requestMatchers("/api/metricas/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
