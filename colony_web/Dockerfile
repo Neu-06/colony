@@ -19,5 +19,5 @@ COPY --from=build /app/dist/colony_web /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 RUN chown -R app:app /usr/share/nginx/html /var/cache/nginx /var/run /etc/nginx
 USER app
-EXPOSE 80
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
