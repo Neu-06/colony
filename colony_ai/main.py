@@ -7,16 +7,10 @@ from routers import canvas_ai, funcionario_ai
 
 app = FastAPI(title="Colony AI Microservice")
 
-frontend_origins = [
-    origin.strip()
-    for origin in os.getenv("FASTAPI_ALLOWED_ORIGINS", "http://localhost:4200").split(",")
-    if origin.strip()
-]
-
-# Configurar CORS para comunicación con el Frontend (Angular)
+# Configurar CORS para el frontend de desarrollo
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=frontend_origins,
+    allow_origins=["https://javi-dev.me"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

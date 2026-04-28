@@ -19,6 +19,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-collab")
-                .setAllowedOriginPatterns("*");
+                .setAllowedOrigins("https://javi-dev.me");
     }
 }
