@@ -10,7 +10,7 @@ app = FastAPI(title="Colony AI Microservice")
 # Configurar CORS para el frontend de desarrollo
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://javi-dev.me"],
+    allow_origins=["http://localhost:4200"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
