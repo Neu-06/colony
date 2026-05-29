@@ -32,4 +32,5 @@ public class Instancia {
     private Date fechaInicio;
     private Date fechaFin;
     private List<String> dispositivosSuscritos;
+    private List<DocumentoRef> documentosAdjuntos = new java.util.ArrayList<>();
 }

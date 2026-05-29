@@ -26,19 +26,19 @@
   --color-info: #3b82f6; /* Azul claro: Alertas informativas */
 
   /* COLORES ESPECÍFICOS DEL CANVAS (Nodos y Calles) */
-  --color-canvas-bg: #f8fafc;         /* Gris muy claro para el fondo del lienzo (estilo Miro/Figma) */
+  --color-canvas-bg: #f8fafc; /* Gris muy claro para el fondo del lienzo (estilo Miro/Figma) */
   --color-lane-header: #f1f5f9;
-  --color-canvas-grid: #cbd5e1;       /* Gris medio para los puntos o líneas de la cuadrícula */
-  --color-swimlane-border: #94a3b8;   /* Borde para separar las calles/departamentos */
-  --color-swimlane-bg-alt: #ffffff;   /* Fondo alterno para las calles (cebreado sutil) */
-  
+  --color-canvas-grid: #cbd5e1; /* Gris medio para los puntos o líneas de la cuadrícula */
+  --color-swimlane-border: #94a3b8; /* Borde para separar las calles/departamentos */
+  --color-swimlane-bg-alt: #ffffff; /* Fondo alterno para las calles (cebreado sutil) */
+
   /* Semántica de Nodos */
-  --color-node-start: #10b981;        /* Verde: Nodo de Inicio */
-  --color-node-task: #dbeafe;         /* Azul claro para nodo de tarea */
+  --color-node-start: #10b981; /* Verde: Nodo de Inicio */
+  --color-node-task: #dbeafe; /* Azul claro para nodo de tarea */
   --color-node-border: #3b82f6;
-  --color-node-gateway: #312e81;      /* Azul indigo para nodo de compuerta */
-  --color-node-end: #ef4444;          /* Rojo: Nodo de Fin */
-  --color-node-line: #64748b;         /* Color de las flechas conectoras */
+  --color-node-gateway: #312e81; /* Azul indigo para nodo de compuerta */
+  --color-node-end: #ef4444; /* Rojo: Nodo de Fin */
+  --color-node-line: #64748b; /* Color de las flechas conectoras */
   --color-glow-success: #22c55e;
 
   /* Alias para clases utilitarias en el Canvas */

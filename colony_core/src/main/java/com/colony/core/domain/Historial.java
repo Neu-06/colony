@@ -4,11 +4,13 @@ import java.util.Date;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @NoArgsConstructor
 @Document(collection = "historial")
+@CompoundIndex(name = "idx_instancia_fecha", def = "{'instanciaID': 1, 'fechaIngreso': -1}")
 public class Historial {
 
     @Id

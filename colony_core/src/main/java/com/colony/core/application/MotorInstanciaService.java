@@ -22,10 +22,12 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.colony.core.application.events.InstanciaAvanzadaEvent;
 
 @Slf4j
 @Service
@@ -41,6 +43,7 @@ public class MotorInstanciaService {
     private final TramiteService tramiteService;
     private final PushNotificationService pushNotificationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     public IniciarInstanciaResponse iniciar(IniciarInstanciaRequest request) {
         PoliticaNegocio politica = politicaNegocioRepository.findById(request.politicaId())
@@ -145,13 +148,16 @@ public class MotorInstanciaService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La instancia no tiene nodos activos");
             }
 
-            String nodoActualId = (request.nodoId() != null && instancia.getNodosActualesIds().contains(request.nodoId()))
-                    ? request.nodoId()
-                    : instancia.getNodosActualesIds().get(0);
-            
-            // Si el usuario envió un nodoId que no es parte de los activos de la instancia, error
+            String nodoActualId = (request.nodoId() != null
+                    && instancia.getNodosActualesIds().contains(request.nodoId()))
+                            ? request.nodoId()
+                            : instancia.getNodosActualesIds().get(0);
+
+            // Si el usuario envió un nodoId que no es parte de los activos de la instancia,
+            // error
             if (request.nodoId() != null && !instancia.getNodosActualesIds().contains(request.nodoId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La tarea " + request.nodoId() + " no está activa o ya fue procesada.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "La tarea " + request.nodoId() + " no está activa o ya fue procesada.");
             }
             log.info("Nodo actual evaluado: {}", nodoActualId);
 
@@ -212,7 +218,7 @@ public class MotorInstanciaService {
                 if (sigId == null || sigNodo == null)
                     continue;
 
-                // 1. AUTO-AVANCE: Si es un nodo de control, procesar y encolar sus salidas
+                // AUTO-AVANCE: Si es un nodo de control, procesar y encolar sus salidas
                 String tipoSig = sigNodo.getTipo() == null ? "" : sigNodo.getTipo().toLowerCase(Locale.ROOT);
 
                 if ("fork".equalsIgnoreCase(tipoSig)) {
@@ -265,7 +271,7 @@ public class MotorInstanciaService {
                     continue;
                 }
 
-                // 2. ATERRIZAJE: Si es Tarea o Fin
+                // ATERRIZAJE: Si es Tarea o Fin
                 if (!esNodoFin(sigNodo)) {
                     instancia.getNodosActualesIds().add(sigId);
                     Historial nuevoHist = new Historial();
@@ -301,6 +307,10 @@ public class MotorInstanciaService {
             Instancia guardada = instanciaRepository.save(instancia);
             log.info("Avance de instancia guardado con éxito. Estado: {}", guardada.getEstadoGeneral());
 
+            // informa de manera asincrona el avance de la instancia
+            eventPublisher.publishEvent(
+                    new InstanciaAvanzadaEvent(guardada.getId(), guardada.getPoliticaId(), nodoActualId));
+
             // BROADCAST WebSocket al dashboard de monitoreo
             try {
                 // Enriquecer nombres de tareas para el dashboard
@@ -308,14 +318,14 @@ public class MotorInstanciaService {
                 if (politica != null && guardada.getNodosActualesIds() != null) {
                     for (String nodoId : guardada.getNodosActualesIds()) {
                         NodoBase nodo = politica.getNodos().stream()
-                            .filter(n -> n.getIdNodo().equals(nodoId)).findFirst().orElse(null);
+                                .filter(n -> n.getIdNodo().equals(nodoId)).findFirst().orElse(null);
                         if (nodo != null) {
                             String nombreDepto = "Sin Carril";
                             if (nodo.getCarrilId() != null && politica.getCarriles() != null) {
                                 nombreDepto = politica.getCarriles().stream()
-                                    .filter(c -> c.getId().equals(nodo.getCarrilId()))
-                                    .map(com.colony.core.domain.Carril::getNombre)
-                                    .findFirst().orElse("Sin Carril");
+                                        .filter(c -> c.getId().equals(nodo.getCarrilId()))
+                                        .map(com.colony.core.domain.Carril::getNombre)
+                                        .findFirst().orElse("Sin Carril");
                             }
                             tareasNombres.add(nodo.getNombre() + " (" + nombreDepto + ")");
                         }
@@ -339,12 +349,12 @@ public class MotorInstanciaService {
             // --- Notificaciones Push ---
             if (guardada.getDispositivosSuscritos() != null && !guardada.getDispositivosSuscritos().isEmpty()) {
                 try {
-                    log.info("Enviando notificación Push a " + guardada.getDispositivosSuscritos().size() + " dispositivos...");
+                    log.info("Enviando notificación Push a " + guardada.getDispositivosSuscritos().size()
+                            + " dispositivos...");
                     pushNotificationService.enviarNotificacion(
                             guardada.getDispositivosSuscritos(),
                             "Trámite Actualizado",
-                            "El trámite ha avanzado a una nueva tarea."
-                    );
+                            "El trámite ha avanzado a una nueva tarea.");
                 } catch (Exception e) {
                     log.error("Error al enviar notificación Push: {}", e.getMessage(), e);
                 }
@@ -375,11 +385,12 @@ public class MotorInstanciaService {
         }
 
         Historial ultima = historialRepository.findFirstByInstanciaIDOrderByFechaTransicionDesc(inst.getId());
-        Date referencia = (ultima != null && ultima.getFechaTransicion() != null) 
-            ? ultima.getFechaTransicion() 
-            : inst.getFechaInicio();
+        Date referencia = (ultima != null && ultima.getFechaTransicion() != null)
+                ? ultima.getFechaTransicion()
+                : inst.getFechaInicio();
 
-        if (referencia == null) return "AMARILLO";
+        if (referencia == null)
+            return "AMARILLO";
 
         long diff = new Date().getTime() - referencia.getTime();
         long horas = diff / (1000 * 60 * 60);

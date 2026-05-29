@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/rastreo/**").permitAll()
                         .requestMatchers("/ws-collab/**").permitAll()
+                        // Agente Inteligente: el cliente no requiere cuenta para iniciar trámites
+                        .requestMatchers("/api/agente/**").permitAll()
                         // Todo lo demás, incluyendo métricas, pasa por el filtro JWT
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
