@@ -10,6 +10,11 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/colony_db}
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${S3_MAX_FILE_SIZE:100MB}
+      max-request-size: ${S3_MAX_REQUEST_SIZE:110MB}
 
 security:
   jwt:
@@ -22,3 +27,11 @@ app:
   ai:
     recommend-url: ${APP_AI_RECOMMEND_URL:http://localhost:8000/api/v1/recommend}
     fix-url: ${APP_AI_FIX_URL:http://localhost:8000/api/v1/fix}
+
+  # Repositorio documental AWS S3
+  s3:
+    access-key: ${CLAVE_ACCESO:}
+    secret-key: ${CLAVE_SECRETA:}
+    bucket: ${S3_BUCKET:colony-documentos}
+    region: ${S3_REGION:us-east-2}
+    presigned-expiration-minutes: ${S3_PRESIGNED_EXPIRATION_MINUTES:60}

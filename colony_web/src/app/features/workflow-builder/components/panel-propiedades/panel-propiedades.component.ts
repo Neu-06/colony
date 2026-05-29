@@ -38,7 +38,8 @@ export class PanelPropiedadesComponent {
     { label: 'Fecha y Hora', value: 'datetime-local' },
     { label: 'Texto Largo (Párrafo)', value: 'textarea' },
     { label: 'Booleano', value: 'boolean' },
-    { label: 'Selección (Lista)', value: 'select' }
+    { label: 'Selección (Lista)', value: 'select' },
+    { label: 'Archivo / Documento', value: 'archivo' }
   ];
 
   nodoSeleccionadoActual: NodoCanvas | null = null;
@@ -276,6 +277,7 @@ export class PanelPropiedadesComponent {
     if (lowercase === 'textolargo' || lowercase === 'textarea') return 'textarea';
     if (lowercase === 'booleano' || lowercase === 'boolean' || lowercase === 'bool') return 'boolean';
     if (lowercase === 'seleccion' || lowercase === 'select') return 'select';
+    if (lowercase === 'archivo' || lowercase === 'file') return 'archivo';
 
     return 'text';
   }

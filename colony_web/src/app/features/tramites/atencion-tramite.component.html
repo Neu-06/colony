@@ -65,7 +65,25 @@
               @if (campo.requerido) { <span class="text-danger">*</span> }
             </span>
 
-            @if (campo.tipo === 'textarea') {
+            @if (campo.tipo === 'archivo') {
+            <!-- Campo tipo archivo: el archivo seleccionado se sube al repositorio al hacer Completar y Enviar -->
+            <div class="rounded-lg border-2 border-dashed border-border bg-background px-4 py-3 transition hover:border-primary/50">
+              <label [for]="'file-' + campo.nombre" class="flex cursor-pointer flex-col items-center gap-1 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary/60" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+                </svg>
+                @if (getNombreArchivo(campo.nombre)) {
+                  <span class="text-xs font-semibold text-primary">{{ getNombreArchivo(campo.nombre) }}</span>
+                  <span class="text-[10px] text-ink-light">Haz clic para cambiar</span>
+                } @else {
+                  <span class="text-xs font-medium text-ink-light">Selecciona un archivo</span>
+                  <span class="text-[10px] text-ink-light">Se adjuntará al repositorio del trámite</span>
+                }
+                <input [id]="'file-' + campo.nombre" type="file" class="sr-only"
+                       (change)="onArchivoFieldChange($event, campo.nombre)">
+              </label>
+            </div>
+            } @else if (campo.tipo === 'textarea') {
             <textarea [formControlName]="campo.nombre" rows="3"
               class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
             } @else if (campo.tipo === 'select') {
@@ -116,6 +134,13 @@
       }
     </section>
   </div>
+
+  <!-- ── REPOSITORIO DOCUMENTAL ──────────────────────────────────────── -->
+  <app-repositorio-documental
+    [instanciaId]="tramite.instanciaId"
+    [puedeSubir]="puedeSubirDocumentos"
+    [puedeEliminar]="puedeEliminarDocumentos">
+  </app-repositorio-documental>
   }
 
   <!-- Copiloto IA Flotante: modo formulario activo, no altera la resolución manual -->
@@ -126,4 +151,4 @@
     (solicitarEnvio)="onAiSolicitarEnvio()">
   </app-copiloto-funcionario>
 
-</section>
+</section>

@@ -1,0 +1,192 @@
+<div class="rounded-2xl border border-border bg-surface overflow-hidden">
+
+  <!-- CABECERA -->
+  <div class="flex items-center justify-between border-b border-border px-4 py-3">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25m19.5 0h.008v.008h-.008V18Zm0 0H18m0 0h-1.5m1.5 0V9M6 18h.008v.008H6V18Zm0 0H4.5m1.5 0V9"/>
+      </svg>
+      <h3 class="text-sm font-bold text-ink">Repositorio Documental</h3>
+      @if (totalDocumentos() > 0) {
+        <span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+          {{ totalDocumentos() }}
+        </span>
+      }
+    </div>
+    @if (vistaActiva() !== 'repositorio') {
+      <button (click)="volverARepositorio()"
+              class="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
+        ← Volver
+      </button>
+    }
+  </div>
+
+  <!-- VISTA: REPOSITORIO -->
+  @if (vistaActiva() === 'repositorio') {
+
+    @if (puedeSubir) {
+      <div class="px-4 pt-4">
+        <label
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop($event)"
+          [for]="'repo-upload-' + instanciaId"
+          class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-6 text-center transition hover:border-primary hover:bg-primary/10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mb-2 h-8 w-8 text-primary/60" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+          </svg>
+          <p class="text-sm font-semibold text-primary">Haz clic o arrastra un archivo</p>
+          <p class="mt-1 text-xs text-ink-light">PDF, Word, Excel, Video, Audio, Imágenes — hasta 100 MB</p>
+          <input [id]="'repo-upload-' + instanciaId" type="file" class="sr-only"
+                 (change)="onArchivoSeleccionado($event)">
+        </label>
+        @if (subiendoId()) {
+          <div class="mt-2 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-primary">
+            <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+            Subiendo archivo a S3…
+          </div>
+        }
+      </div>
+    }
+
+    <div class="p-4 space-y-2">
+      @if (cargando()) {
+        <p class="text-center text-xs text-ink-light py-6 animate-pulse">Cargando repositorio…</p>
+      } @else if (!tieneDocumentos()) {
+        <div class="flex flex-col items-center py-8 opacity-50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-ink-light mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
+          </svg>
+          <p class="text-sm text-ink-light">Sin documentos adjuntos en este trámite.</p>
+        </div>
+      } @else {
+        @for (doc of documentos(); track doc.documentoId) {
+          <div class="group flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition hover:border-primary/40 hover:shadow-sm">
+
+            <!-- Ícono por tipo de archivo -->
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                 [class]="esPdf(doc.tipoMime)     ? 'bg-red-100'    :
+                           esVideo(doc.tipoMime)   ? 'bg-violet-100' :
+                           esAudio(doc.tipoMime)   ? 'bg-amber-100'  :
+                           esImagen(doc.tipoMime)  ? 'bg-green-100'  :
+                           esEditable(doc.tipoMime)? 'bg-blue-100'   : 'bg-slate-100'">
+              @if (esPdf(doc.tipoMime)) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z"/>
+                </svg>
+              } @else if (esVideo(doc.tipoMime)) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.276 2.56 1.06v11.38c0 1.336-1.616 2.005-2.56 1.06Z"/>
+                </svg>
+              } @else if (esAudio(doc.tipoMime)) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z"/>
+                </svg>
+              } @else if (esEditable(doc.tipoMime)) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"/>
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z"/>
+                </svg>
+              }
+            </div>
+
+            <!-- Info -->
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-ink">{{ doc.nombre }}</p>
+              <p class="text-xs text-ink-light">
+                {{ formatearTamano(doc.tamanoBytes) }} · {{ doc.fechaSubida | date:'dd/MM/yy HH:mm' }} · {{ doc.subidoPor }}
+                @if (esEditable(doc.tipoMime)) {
+                  <span class="ml-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-600">COLABORATIVO</span>
+                }
+              </p>
+            </div>
+
+            <!-- Acciones -->
+            <div class="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+              <button (click)="abrirDocumento(doc)"
+                      [disabled]="estaCargandoDoc(doc.documentoId)"
+                      class="rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition disabled:opacity-40"
+                      [title]="esEditable(doc.tipoMime) ? 'Editar colaborativamente' : 'Ver documento'">
+                @if (estaCargandoDoc(doc.documentoId)) {
+                  <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                } @else {
+                  {{ esEditable(doc.tipoMime) ? 'Editar' : 'Ver' }}
+                }
+              </button>
+              @if (puedeEliminar) {
+                <button (click)="verAuditoria(doc)"
+                        class="rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
+                  Historial
+                </button>
+                <button (click)="eliminarDocumento(doc)"
+                        class="rounded-lg border border-red-200 px-2 py-1.5 text-xs text-red-500 hover:bg-red-50 transition">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
+                    <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- VISTA: VISOR INLINE -->
+  @if (vistaActiva() === 'visor' && urlVisor() && docVisorActual()) {
+    <div class="p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-semibold text-ink truncate">{{ docVisorActual()!.nombre }}</p>
+        <a [href]="urlVisor()!" target="_blank" rel="noopener"
+           class="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
+          Abrir en pestaña →
+        </a>
+      </div>
+      @if (esPdf(docVisorActual()!.tipoMime)) {
+        <iframe [src]="urlVisor()!" class="w-full rounded-xl border border-border"
+                style="height:500px" frameborder="0" title="Visor PDF"></iframe>
+      } @else if (esVideo(docVisorActual()!.tipoMime)) {
+        <video [src]="urlVisor()!" controls class="w-full rounded-xl border border-border bg-black" style="max-height:400px">
+          Tu navegador no soporta el reproductor de video.
+        </video>
+      } @else if (esAudio(docVisorActual()!.tipoMime)) {
+        <div class="rounded-xl border border-border bg-background p-6 text-center">
+          <p class="mb-3 text-sm font-semibold text-ink">{{ docVisorActual()!.nombre }}</p>
+          <audio [src]="urlVisor()!" controls class="w-full">Tu navegador no soporta audio.</audio>
+        </div>
+      } @else if (esImagen(docVisorActual()!.tipoMime)) {
+        <img [src]="urlVisor()!" [alt]="docVisorActual()!.nombre"
+             class="mx-auto max-h-96 rounded-xl border border-border object-contain">
+      }
+    </div>
+  }
+
+  <!-- VISTA: AUDITORÍA -->
+  @if (vistaActiva() === 'auditoria') {
+    <div class="p-4 space-y-3">
+      <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+        <p class="text-xs font-semibold text-amber-700">Historial de: <span class="font-bold">{{ docAuditoriaActual()?.nombre }}</span></p>
+      </div>
+      @if (auditoria().length === 0) {
+        <p class="text-center text-xs text-ink-light py-6">Sin registros de auditoría.</p>
+      } @else {
+        <div class="space-y-2">
+          @for (log of auditoria(); track log.id) {
+            <div class="flex items-start gap-3 rounded-lg border border-border bg-background px-3 py-2.5">
+              <div class="mt-1 h-2 w-2 shrink-0 rounded-full" [style.background]="getColorAccion(log.accion)"></div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold text-ink">
+                  <span [style.color]="getColorAccion(log.accion)">{{ getEtiquetaAccion(log.accion) }}</span>
+                  · {{ log.usuarioNombre || log.usuarioId }}
+                </p>
+                <p class="text-[11px] text-ink-light">{{ log.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

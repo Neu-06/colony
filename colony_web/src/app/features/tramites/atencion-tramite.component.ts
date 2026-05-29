@@ -7,11 +7,12 @@ import { AtencionTramiteDto, BandejaService } from '../../core/services/bandeja.
 import { AuthService } from '../../core/services/auth.service';
 import { CopilotoFuncionarioComponent, AiFormFillEvent } from './ai-copiloto-funcionario/copiloto-funcionario.component';
 import { CampoFormularioAI } from './ai-copiloto-funcionario/funcionario-ai.service';
+import { RepositorioDocumentalComponent } from './repositorio-documental/repositorio-documental.component';
 
 @Component({
   selector: 'app-atencion-tramite',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CopilotoFuncionarioComponent],
+  imports: [CommonModule, ReactiveFormsModule, CopilotoFuncionarioComponent, RepositorioDocumentalComponent],
   templateUrl: './atencion-tramite.component.html'
 })
 export class AtencionTramiteComponent implements OnInit {
@@ -26,6 +27,9 @@ export class AtencionTramiteComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
   errorMessage = '';
+
+  // Mapa campo-nombre -> File seleccionado (para campos tipo 'archivo')
+  readonly archivosSeleccionados = new Map<string, File>();
 
   readonly form = this.fb.group({});
 
@@ -84,7 +88,10 @@ export class AtencionTramiteComponent implements OnInit {
         this.tramite = tramite;
         this.form.reset({});
 
-        for (const campo of tramite.esquemaFormulario ?? []) {
+    for (const campo of tramite.esquemaFormulario ?? []) {
+          // Los campos de tipo 'archivo' no se incluyen en el FormGroup reactivo
+          // (se manejan con el repositorio documental o con input de file independiente)
+          if (campo.tipo === 'archivo') continue;
           const validators = campo.requerido ? [Validators.required] : [];
           const esBooleano = campo.tipo === 'boolean' || campo.tipo === 'bool';
           this.form.addControl(campo.nombre, this.fb.control(esBooleano ? false : '', validators));
@@ -92,7 +99,7 @@ export class AtencionTramiteComponent implements OnInit {
 
         this.isLoading = false;
       },
-      error: () => {
+      error: (err: any) => {
         this.isLoading = false;
         this.errorMessage = 'No se pudo cargar el tramite para atencion.';
         this.alertaService.mostrarError(this.errorMessage);
@@ -125,11 +132,36 @@ export class AtencionTramiteComponent implements OnInit {
         this.alertaService.mostrarExito('Tramite enviado al siguiente estado.');
         void this.router.navigate(['/app/bandeja']);
       },
-      error: () => {
+      error: (err: any) => {
         this.isSubmitting = false;
         this.alertaService.mostrarError('No se pudo completar el tramite.');
       }
     });
+  }
+
+  /** Captura el archivo seleccionado en un campo tipo 'archivo'. */
+  onArchivoFieldChange(event: Event, campoNombre: string): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.archivosSeleccionados.set(campoNombre, file);
+    }
+  }
+
+  /** Devuelve el nombre del archivo seleccionado para un campo. */
+  getNombreArchivo(campoNombre: string): string {
+    return this.archivosSeleccionados.get(campoNombre)?.name ?? '';
+  }
+
+  /** Indica si el usuario actual puede subir documentos al repositorio. */
+  get puedeSubirDocumentos(): boolean {
+    return true; // El control fino se hace en el backend por JWT rol
+  }
+
+  /** Indica si el usuario puede eliminar documentos (solo ADMIN+). */
+  get puedeEliminarDocumentos(): boolean {
+    const rol = this.authService.getCurrentRole() ?? '';
+    return rol === 'SUPER_ADMIN' || rol === 'ADMIN';
   }
 
   cancelar(): void {

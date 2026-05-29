@@ -6,11 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Value object embebido en Instancia para referenciar documentos almacenados en
- * AWS S3.
- * No tiene colección propia; vive dentro de la lista documentosAdjuntos de
- * Instancia.
- * CU16 — Gestionar Repositorio Documental Colaborativo (Ciclo 2)
+ * Referencia a un documento almacenado en S3.
+ * Value object embebido en la entidad Instancia.
  */
 @Data
 @NoArgsConstructor
