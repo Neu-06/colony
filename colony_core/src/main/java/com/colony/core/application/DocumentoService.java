@@ -1,11 +1,11 @@
 package com.colony.core.application;
 
 import com.colony.core.application.ports.StoragePort;
-import com.colony.core.domain.AuditoriaDocumento;
-import com.colony.core.domain.DocumentoRef;
-import com.colony.core.domain.Instancia;
+import com.colony.core.domain.*;
 import com.colony.core.infrastructure.repository.AuditoriaDocumentoRepository;
 import com.colony.core.infrastructure.repository.InstanciaRepository;
+import com.colony.core.infrastructure.repository.PoliticaNegocioRepository;
+import com.colony.core.infrastructure.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,6 +25,9 @@ public class DocumentoService {
     private final StoragePort storagePort;
     private final InstanciaRepository instanciaRepository;
     private final AuditoriaDocumentoRepository auditoriaRepository;
+    private final PoliticaNegocioRepository politicaRepository;
+    private final UsuarioRepository usuarioRepository;
+
 
     public DocumentoRef subirDocumento(String instanciaId,
             MultipartFile archivo,
@@ -105,6 +108,48 @@ public class DocumentoService {
             String usuarioId,
             String usuarioNombre) {
         auditar(documentoId, instanciaId, "EDICION", usuarioId, usuarioNombre);
+    }
+
+    public PermisoDocumental resolverPermiso(String instanciaId, String nodoId, String usuarioEmail) {
+        Instancia instancia = obtenerOError(instanciaId);
+
+        PoliticaNegocio politica = politicaRepository.findById(instancia.getPoliticaId())
+                .orElse(null);
+        if (politica == null) {
+            return PermisoDocumental.SOLO_LECTURA;
+        }
+
+        NodoActividad nodo = politica.getNodos().stream()
+                .filter(n -> n.getIdNodo().equals(nodoId) && n instanceof NodoActividad)
+                .map(n -> (NodoActividad) n)
+                .findFirst()
+                .orElse(null);
+
+        if (nodo == null || nodo.getPermisosDocumental() == null || nodo.getPermisosDocumental().isEmpty()) {
+            return PermisoDocumental.SUBIR_Y_LEER;
+        }
+
+        Usuario usuario = usuarioRepository.findByEmail(usuarioEmail).orElse(null);
+        String carrilDelUsuario = null;
+        if (usuario != null && usuario.getDepartamentoId() != null) {
+            carrilDelUsuario = politica.getCarriles() == null ? null :
+                politica.getCarriles().stream()
+                    .filter(c -> usuario.getDepartamentoId().equals(c.getDepartamentoId()))
+                    .map(Carril::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        final String carrilFinal = carrilDelUsuario;
+        if (carrilFinal == null) {
+            return PermisoDocumental.SOLO_LECTURA;
+        }
+
+        return nodo.getPermisosDocumental().stream()
+                .filter(p -> carrilFinal.equals(p.getCarrilId()))
+                .map(PermisoDocumentalCarril::getPermiso)
+                .findFirst()
+                .orElse(PermisoDocumental.SOLO_LECTURA);
     }
 
     private Instancia obtenerOError(String instanciaId) {

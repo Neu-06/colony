@@ -13,18 +13,41 @@
         </span>
       }
     </div>
-    @if (vistaActiva() !== 'repositorio') {
-      <button (click)="volverARepositorio()"
-              class="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
-        ← Volver
-      </button>
-    }
+    <div class="flex items-center gap-2">
+      <!-- Badge de permiso -->
+      @if (permisoActual() === 'SIN_ACCESO') {
+        <span class="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600">Sin acceso</span>
+      } @else if (permisoActual() === 'SOLO_LECTURA') {
+        <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">Solo lectura</span>
+      } @else if (permisoActual() === 'SUBIR_Y_LEER') {
+        <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-600">Subir y Leer</span>
+      } @else if (permisoActual() === 'ADMINISTRAR') {
+        <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Administrador</span>
+      }
+      @if (vistaActiva() !== 'repositorio') {
+        <button (click)="volverARepositorio()"
+                class="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
+          ← Volver
+        </button>
+      }
+    </div>
   </div>
 
-  <!-- VISTA: REPOSITORIO -->
-  @if (vistaActiva() === 'repositorio') {
+  <!-- ACCESO DENEGADO -->
+  @if (permisoActual() === 'SIN_ACCESO') {
+    <div class="flex flex-col items-center py-10 opacity-60 px-6 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-400 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+      </svg>
+      <p class="text-sm font-semibold text-ink">Sin acceso documental</p>
+      <p class="text-xs text-ink-light mt-1">Tu área no tiene permisos para ver los documentos de este trámite.</p>
+    </div>
+  }
 
-    @if (puedeSubir) {
+  <!-- VISTA: REPOSITORIO -->
+  @if (vistaActiva() === 'repositorio' && puedeVer()) {
+
+    @if (puedeSubir()) {
       <div class="px-4 pt-4">
         <label
           (dragover)="onDragOver($event)"
@@ -68,7 +91,7 @@
                            esVideo(doc.tipoMime)   ? 'bg-violet-100' :
                            esAudio(doc.tipoMime)   ? 'bg-amber-100'  :
                            esImagen(doc.tipoMime)  ? 'bg-green-100'  :
-                           esEditable(doc.tipoMime)? 'bg-blue-100'   : 'bg-slate-100'">
+                           esOffice(doc.tipoMime)  ? 'bg-blue-100'   : 'bg-slate-100'">
               @if (esPdf(doc.tipoMime)) {
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z"/>
@@ -81,7 +104,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z"/>
                 </svg>
-              } @else if (esEditable(doc.tipoMime)) {
+              } @else if (esOffice(doc.tipoMime)) {
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"/>
                 </svg>
@@ -97,29 +120,36 @@
               <p class="truncate text-sm font-semibold text-ink">{{ doc.nombre }}</p>
               <p class="text-xs text-ink-light">
                 {{ formatearTamano(doc.tamanoBytes) }} · {{ doc.fechaSubida | date:'dd/MM/yy HH:mm' }} · {{ doc.subidoPor }}
-                @if (esEditable(doc.tipoMime)) {
+                @if (esOffice(doc.tipoMime)) {
                   <span class="ml-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-600">COLABORATIVO</span>
                 }
               </p>
             </div>
 
             <!-- Acciones -->
-            <div class="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+            <div class="flex shrink-0 items-center gap-1">
               <button (click)="abrirDocumento(doc)"
                       [disabled]="estaCargandoDoc(doc.documentoId)"
                       class="rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition disabled:opacity-40"
-                      [title]="esEditable(doc.tipoMime) ? 'Editar colaborativamente' : 'Ver documento'">
+                      [title]="esOffice(doc.tipoMime) ? 'Ver/Editar con Office Online' : 'Visualizar'">
                 @if (estaCargandoDoc(doc.documentoId)) {
                   <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                 } @else {
-                  {{ esEditable(doc.tipoMime) ? 'Editar' : 'Ver' }}
+                  {{ esOffice(doc.tipoMime) ? 'Editar' : 'Ver' }}
                 }
               </button>
-              @if (puedeEliminar) {
-                <button (click)="verAuditoria(doc)"
-                        class="rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
-                  Historial
-                </button>
+              <button (click)="descargarDocumento(doc)"
+                      [disabled]="estaCargandoDoc(doc.documentoId)"
+                      class="rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition disabled:opacity-40"
+                      title="Descargar">
+                ↓
+              </button>
+              <button (click)="verAuditoria(doc)"
+                      class="rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition"
+                      title="Ver historial de cambios">
+                Historial
+              </button>
+              @if (puedeEliminar()) {
                 <button (click)="eliminarDocumento(doc)"
                         class="rounded-lg border border-red-200 px-2 py-1.5 text-xs text-red-500 hover:bg-red-50 transition">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5">
@@ -135,29 +165,47 @@
   }
 
   <!-- VISTA: VISOR INLINE -->
-  @if (vistaActiva() === 'visor' && urlVisor() && docVisorActual()) {
+  @if (vistaActiva() === 'visor' && urlVisorSafe() && docVisorActual()) {
     <div class="p-4 space-y-3">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
         <p class="text-sm font-semibold text-ink truncate">{{ docVisorActual()!.nombre }}</p>
-        <a [href]="urlVisor()!" target="_blank" rel="noopener"
-           class="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
-          Abrir en pestaña →
-        </a>
+        <div class="flex gap-2 shrink-0">
+          @if (esOffice(docVisorActual()!.tipoMime) && puedeSubir()) {
+            <label [for]="'resubir-' + docVisorActual()!.documentoId"
+                   class="cursor-pointer rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                   title="Descargar, editar y volver a subir la nueva versión">
+              ↑ Subir nueva versión
+              <input [id]="'resubir-' + docVisorActual()!.documentoId" type="file" class="sr-only"
+                     (change)="onArchivoSeleccionado($event)">
+            </label>
+          }
+          <a [href]="urlVisorRaw()!" target="_blank" rel="noopener"
+             class="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition">
+            Abrir en pestaña →
+          </a>
+        </div>
       </div>
-      @if (esPdf(docVisorActual()!.tipoMime)) {
-        <iframe [src]="urlVisor()!" class="w-full rounded-xl border border-border"
-                style="height:500px" frameborder="0" title="Visor PDF"></iframe>
+
+      @if (esOffice(docVisorActual()!.tipoMime)) {
+        <div class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          Vista con Microsoft Office Online. Para editar: descarga → edita → sube nueva versión con el botón de arriba.
+        </div>
+        <iframe [src]="urlVisorSafe()!" class="w-full rounded-xl border border-border"
+                style="height:520px" frameborder="0" title="Visor Office"></iframe>
+      } @else if (esPdf(docVisorActual()!.tipoMime)) {
+        <iframe [src]="urlVisorSafe()!" class="w-full rounded-xl border border-border"
+                style="height:520px" frameborder="0" title="Visor PDF"></iframe>
       } @else if (esVideo(docVisorActual()!.tipoMime)) {
-        <video [src]="urlVisor()!" controls class="w-full rounded-xl border border-border bg-black" style="max-height:400px">
+        <video [src]="urlVisorSafe()!" controls class="w-full rounded-xl border border-border bg-black" style="max-height:420px">
           Tu navegador no soporta el reproductor de video.
         </video>
       } @else if (esAudio(docVisorActual()!.tipoMime)) {
         <div class="rounded-xl border border-border bg-background p-6 text-center">
           <p class="mb-3 text-sm font-semibold text-ink">{{ docVisorActual()!.nombre }}</p>
-          <audio [src]="urlVisor()!" controls class="w-full">Tu navegador no soporta audio.</audio>
+          <audio [src]="urlVisorSafe()!" controls class="w-full">Tu navegador no soporta audio.</audio>
         </div>
       } @else if (esImagen(docVisorActual()!.tipoMime)) {
-        <img [src]="urlVisor()!" [alt]="docVisorActual()!.nombre"
+        <img [src]="urlVisorSafe()!" [alt]="docVisorActual()!.nombre"
              class="mx-auto max-h-96 rounded-xl border border-border object-contain">
       }
     </div>
@@ -166,20 +214,26 @@
   <!-- VISTA: AUDITORÍA -->
   @if (vistaActiva() === 'auditoria') {
     <div class="p-4 space-y-3">
-      <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+      <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 flex items-center justify-between">
         <p class="text-xs font-semibold text-amber-700">Historial de: <span class="font-bold">{{ docAuditoriaActual()?.nombre }}</span></p>
+        <span class="text-[10px] text-amber-600">{{ auditoria().length }} registros</span>
       </div>
       @if (auditoria().length === 0) {
-        <p class="text-center text-xs text-ink-light py-6">Sin registros de auditoría.</p>
+        <p class="text-center text-xs text-ink-light py-6">Sin registros de auditoría para este documento.</p>
       } @else {
-        <div class="space-y-2">
+        <div class="space-y-1.5 max-h-96 overflow-y-auto">
           @for (log of auditoria(); track log.id) {
             <div class="flex items-start gap-3 rounded-lg border border-border bg-background px-3 py-2.5">
-              <div class="mt-1 h-2 w-2 shrink-0 rounded-full" [style.background]="getColorAccion(log.accion)"></div>
+              <div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                   [style.background-color]="getColorAccion(log.accion) + '22'"
+                   [style.color]="getColorAccion(log.accion)">
+                {{ getIconoAccion(log.accion) }}
+              </div>
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold text-ink">
                   <span [style.color]="getColorAccion(log.accion)">{{ getEtiquetaAccion(log.accion) }}</span>
-                  · {{ log.usuarioNombre || log.usuarioId }}
+                  <span class="text-ink-light font-normal"> por </span>
+                  {{ log.usuarioNombre || log.usuarioId }}
                 </p>
                 <p class="text-[11px] text-ink-light">{{ log.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</p>
               </div>

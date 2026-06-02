@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import {
   Component,
   Input,
@@ -9,56 +9,83 @@ import {
   signal,
   computed
 } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AlertaService } from '../../../core/services/alerta.service';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   DocumentoService,
   DocumentoRef,
-  AuditoriaDocumento
+  AuditoriaDocumento,
+  PermisoDocumental
 } from '../../../core/services/documento.service';
 
 type Vista = 'repositorio' | 'auditoria' | 'visor';
 interface AccionPendiente { tipo: 'url'; documentoId: string; }
 
-
 @Component({
   selector: 'app-repositorio-documental',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DatePipe],
   templateUrl: './repositorio-documental.component.html'
 })
 export class RepositorioDocumentalComponent implements OnInit, OnChanges {
 
   @Input({ required: true }) instanciaId!: string;
-  @Input() puedeSubir = true;
-  @Input() puedeEliminar = false;
+  @Input() nodoId?: string;
+  /** Permiso calculado externamente (para cuando el padre ya lo conoce sin necesidad de llamada extra) */
+  @Input() permisoExterno?: PermisoDocumental;
 
-  private readonly docService  = inject(DocumentoService);
+  private readonly docService    = inject(DocumentoService);
   private readonly alertaService = inject(AlertaService);
   private readonly authService   = inject(AuthService);
+  private readonly sanitizer     = inject(DomSanitizer);
 
-  readonly documentos        = signal<DocumentoRef[]>([]);
-  readonly auditoria         = signal<AuditoriaDocumento[]>([]);
-  readonly vistaActiva       = signal<Vista>('repositorio');
-  readonly cargando          = signal(false);
-  readonly subiendoId        = signal<string | null>(null);
-  readonly urlVisor          = signal<string | null>(null);
-  readonly docVisorActual    = signal<DocumentoRef | null>(null);
-  readonly accionEnProgreso  = signal<AccionPendiente | null>(null);
+  readonly documentos         = signal<DocumentoRef[]>([]);
+  readonly auditoria          = signal<AuditoriaDocumento[]>([]);
+  readonly vistaActiva        = signal<Vista>('repositorio');
+  readonly cargando           = signal(false);
+  readonly subiendoId         = signal<string | null>(null);
+  readonly urlVisorSafe       = signal<SafeResourceUrl | null>(null);
+  readonly urlVisorRaw        = signal<string | null>(null);
+  readonly docVisorActual     = signal<DocumentoRef | null>(null);
+  readonly accionEnProgreso   = signal<AccionPendiente | null>(null);
   readonly docAuditoriaActual = signal<DocumentoRef | null>(null);
+  readonly permisoActual      = signal<PermisoDocumental>('SUBIR_Y_LEER');
 
   readonly totalDocumentos = computed(() => this.documentos().length);
   readonly tieneDocumentos = computed(() => this.documentos().length > 0);
 
+  readonly puedeSubir    = computed(() => {
+    const p = this.permisoActual();
+    return p === 'SUBIR_Y_LEER' || p === 'ADMINISTRAR';
+  });
+  readonly puedeEliminar = computed(() => this.permisoActual() === 'ADMINISTRAR');
+  readonly puedeVer      = computed(() => this.permisoActual() !== 'SIN_ACCESO');
+
   ngOnInit(): void {
-    if (this.instanciaId) { this.cargarDocumentos(); }
+    if (this.instanciaId) {
+      this.resolverPermiso();
+      this.cargarDocumentos();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['instanciaId']?.currentValue) { this.cargarDocumentos(); }
+    if (changes['instanciaId']?.currentValue) {
+      this.resolverPermiso();
+      this.cargarDocumentos();
+    }
   }
 
-
+  private resolverPermiso(): void {
+    if (this.permisoExterno) {
+      this.permisoActual.set(this.permisoExterno);
+      return;
+    }
+    this.docService.miPermiso(this.instanciaId, this.nodoId).subscribe({
+      next: ({ permiso }) => this.permisoActual.set(permiso),
+      error: () => this.permisoActual.set('SUBIR_Y_LEER')
+    });
+  }
 
   cargarDocumentos(): void {
     this.cargando.set(true);
@@ -70,7 +97,6 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
       }
     });
   }
-
 
   onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -103,18 +129,26 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
     });
   }
 
-
   abrirDocumento(doc: DocumentoRef): void {
     this.accionEnProgreso.set({ tipo: 'url', documentoId: doc.documentoId });
     this.docService.obtenerUrl(this.instanciaId, doc.documentoId).subscribe({
       next: ({ url }) => {
         this.accionEnProgreso.set(null);
         if (this.docService.esEditable(doc.tipoMime)) {
-          const googleUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=false`;
-          window.open(googleUrl, '_blank');
+          // Microsoft Office Online Viewer acepta URLs presignadas de S3 y muestra el archivo en modo lectura.
+          // La URL presignada caduca, por lo que el colaborativo real se logra descargando, editando y volviendo a subir.
+          // Se registra la apertura como auditoría de edición.
+          const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+          const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(officeUrl);
+          this.urlVisorSafe.set(safeUrl);
+          this.urlVisorRaw.set(url);
+          this.docVisorActual.set(doc);
+          this.vistaActiva.set('visor');
           this.docService.registrarEdicion(this.instanciaId, doc.documentoId).subscribe();
         } else if (this.docService.esPrevisualizableInline(doc.tipoMime)) {
-          this.urlVisor.set(url);
+          const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+          this.urlVisorSafe.set(safeUrl);
+          this.urlVisorRaw.set(url);
           this.docVisorActual.set(doc);
           this.vistaActiva.set('visor');
         } else {
@@ -128,24 +162,43 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
     });
   }
 
-  cerrarVisor(): void {
-    this.vistaActiva.set('repositorio');
-    this.urlVisor.set(null);
-    this.docVisorActual.set(null);
+  descargarDocumento(doc: DocumentoRef): void {
+    this.accionEnProgreso.set({ tipo: 'url', documentoId: doc.documentoId });
+    this.docService.obtenerUrl(this.instanciaId, doc.documentoId).subscribe({
+      next: ({ url }) => {
+        this.accionEnProgreso.set(null);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.nombre;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.click();
+      },
+      error: (err: any) => {
+        this.accionEnProgreso.set(null);
+        this.alertaService.mostrarError('No se pudo descargar el documento.');
+      }
+    });
   }
 
+  cerrarVisor(): void {
+    this.vistaActiva.set('repositorio');
+    this.urlVisorSafe.set(null);
+    this.urlVisorRaw.set(null);
+    this.docVisorActual.set(null);
+  }
 
   eliminarDocumento(doc: DocumentoRef): void {
     if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) { return; }
     this.docService.eliminarDocumento(this.instanciaId, doc.documentoId).subscribe({
       next: () => {
         this.documentos.update(docs => docs.filter(d => d.documentoId !== doc.documentoId));
+        if (this.docVisorActual()?.documentoId === doc.documentoId) { this.cerrarVisor(); }
         this.alertaService.mostrarExito(`"${doc.nombre}" eliminado.`);
       },
       error: (err: any) => this.alertaService.mostrarError('Error al eliminar el documento.')
     });
   }
-
 
   verAuditoria(doc: DocumentoRef): void {
     this.docAuditoriaActual.set(doc);
@@ -159,8 +212,10 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
     this.vistaActiva.set('repositorio');
     this.docAuditoriaActual.set(null);
     this.auditoria.set([]);
+    this.urlVisorSafe.set(null);
+    this.urlVisorRaw.set(null);
+    this.docVisorActual.set(null);
   }
-
 
   formatearTamano(bytes: number): string { return this.docService.formatearTamano(bytes); }
   esEditable(mime: string): boolean      { return this.docService.esEditable(mime); }
@@ -168,6 +223,7 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
   esVideo(mime: string): boolean         { return mime?.startsWith('video/'); }
   esAudio(mime: string): boolean         { return mime?.startsWith('audio/'); }
   esImagen(mime: string): boolean        { return mime?.startsWith('image/'); }
+  esOffice(mime: string): boolean        { return this.docService.esEditable(mime); }
 
   estaCargandoDoc(documentoId: string): boolean {
     const acc = this.accionEnProgreso();
@@ -176,7 +232,7 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
 
   getEtiquetaAccion(accion: string): string {
     const map: Record<string, string> = {
-      SUBIDA: 'Subió', VISTA: 'Vio', DESCARGA: 'Descargó',
+      SUBIDA: 'Subió', VISTA: 'Visualizó', DESCARGA: 'Descargó',
       EDICION: 'Editó', ELIMINACION: 'Eliminó'
     };
     return map[accion] ?? accion;
@@ -188,5 +244,12 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
       EDICION: '#f59e0b', ELIMINACION: '#ef4444'
     };
     return map[accion] ?? '#64748b';
+  }
+
+  getIconoAccion(accion: string): string {
+    const map: Record<string, string> = {
+      SUBIDA: '↑', VISTA: '👁', DESCARGA: '↓', EDICION: '✏', ELIMINACION: '🗑'
+    };
+    return map[accion] ?? '·';
   }
 }

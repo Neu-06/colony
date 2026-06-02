@@ -1,3 +1,11 @@
+export type PermisoDocumental = 'SIN_ACCESO' | 'SOLO_LECTURA' | 'SUBIR_Y_LEER' | 'ADMINISTRAR';
+
+export interface PermisoDocumentalCarril {
+  carrilId: string;
+  carrilNombre: string;
+  permiso: PermisoDocumental;
+}
+
 export interface CampoFormulario {
   id?: string;
   nombre: string;
@@ -38,6 +46,7 @@ export interface NodoActividad extends NodoBase {
   nombre: string;
   dptoResponsable?: string;
   esquemaFormulario: CampoFormulario[];
+  permisosDocumental?: PermisoDocumentalCarril[];
 }
 
 export interface NodoCompuerta extends NodoBase {

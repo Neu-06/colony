@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, effect, inject, Input, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta } from '../../models/canvas.models';
+import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta, PermisoDocumentalCarril, PermisoDocumental } from '../../models/canvas.models';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
 import { AiAssistantComponent } from '../ai-assistant/ai-assistant.component';
 import Swal from 'sweetalert2';
@@ -48,6 +48,7 @@ export class PanelPropiedadesComponent {
   nodoCompuertaSeleccionado: NodoCompuerta | null = null;
   aristaSeleccionadaActual: Arista | null = null;
   camposFormulario: CampoFormulario[] = [];
+  permisosDocumentales: PermisoDocumentalCarril[] = [];
 
   readonly actividadForm = this.fb.nonNullable.group({
     nombre: ''
@@ -83,6 +84,7 @@ export class PanelPropiedadesComponent {
         const normalizado = this.normalizarEsquemaFormulario(this.nodoActividadSeleccionado.esquemaFormulario ?? []);
         this.camposFormulario = normalizado;
         this.actividadForm.controls.nombre.setValue(this.nodoActividadSeleccionado.nombre, { emitEvent: false });
+        this.sincronizarPermisos(this.nodoActividadSeleccionado);
       }
 
       if (this.nodoCompuertaSeleccionado) {
@@ -243,6 +245,27 @@ export class PanelPropiedadesComponent {
     }
 
     return 'tarea';
+  }
+
+  persistirPermisos(): void {
+    const nodo = this.nodoActividadSeleccionado;
+    if (!nodo || this.isReadOnly) { return; }
+    this.estado.actualizarNodo(nodo.idNodo, {
+      permisosDocumental: [...this.permisosDocumentales]
+    });
+  }
+
+  private sincronizarPermisos(nodo: NodoActividad): void {
+    const carriles = this.estado.carriles();
+    const existentes = nodo.permisosDocumental ?? [];
+    this.permisosDocumentales = carriles.map(carril => {
+      const existente = existentes.find(p => p.carrilId === carril.id);
+      return {
+        carrilId: carril.id,
+        carrilNombre: carril.nombre,
+        permiso: (existente?.permiso ?? 'SUBIR_Y_LEER') as PermisoDocumental
+      };
+    });
   }
 
   private persistirEsquemaFormulario(campos: CampoFormulario[]): void {

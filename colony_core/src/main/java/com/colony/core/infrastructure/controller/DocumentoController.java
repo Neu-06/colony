@@ -65,7 +65,7 @@ public class DocumentoController {
     }
 
     @GetMapping("/{instanciaId}/{documentoId}/auditoria")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
     public ResponseEntity<List<AuditoriaDocumento>> auditoriaDocumento(
             @PathVariable String instanciaId,
             @PathVariable String documentoId) {
@@ -73,7 +73,7 @@ public class DocumentoController {
     }
 
     @GetMapping("/{instanciaId}/auditoria")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
     public ResponseEntity<List<AuditoriaDocumento>> auditoriaInstancia(
             @PathVariable String instanciaId) {
         return ResponseEntity.ok(documentoService.obtenerAuditoriaInstancia(instanciaId));
@@ -89,5 +89,20 @@ public class DocumentoController {
         String uid = userDetails.getUsername();
         documentoService.registrarEdicion(instanciaId, documentoId, uid, uid);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{instanciaId}/mi-permiso")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
+    public ResponseEntity<Map<String, String>> miPermiso(
+            @PathVariable String instanciaId,
+            @RequestParam(required = false) String nodoId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String email = userDetails.getUsername();
+        com.colony.core.domain.PermisoDocumental permiso = nodoId != null && !nodoId.isBlank()
+                ? documentoService.resolverPermiso(instanciaId, nodoId, email)
+                : com.colony.core.domain.PermisoDocumental.SUBIR_Y_LEER;
+
+        return ResponseEntity.ok(Map.of("permiso", permiso.name()));
     }
 }

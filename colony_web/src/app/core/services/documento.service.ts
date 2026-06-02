@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type PermisoDocumental = 'SIN_ACCESO' | 'SOLO_LECTURA' | 'SUBIR_Y_LEER' | 'ADMINISTRAR';
+
 export interface DocumentoRef {
   documentoId: string;
   nombre: string;
@@ -23,22 +25,20 @@ export interface AuditoriaDocumento {
   fecha: string;
 }
 
-
 @Injectable({ providedIn: 'root' })
 export class DocumentoService {
   private readonly http = inject(HttpClient);
   private readonly api = `${environment.backendBaseUrl}/api/documentos`;
 
-
   listarDocumentos(instanciaId: string): Observable<DocumentoRef[]> {
     return this.http.get<DocumentoRef[]>(`${this.api}/${instanciaId}`);
   }
+
   subirDocumento(instanciaId: string, archivo: File): Observable<DocumentoRef> {
     const form = new FormData();
     form.append('archivo', archivo);
     return this.http.post<DocumentoRef>(`${this.api}/subir/${instanciaId}`, form);
   }
-
 
   obtenerUrl(instanciaId: string, documentoId: string): Observable<{ url: string; documentoId: string }> {
     return this.http.get<{ url: string; documentoId: string }>(
@@ -46,24 +46,28 @@ export class DocumentoService {
     );
   }
 
-
   eliminarDocumento(instanciaId: string, documentoId: string): Observable<void> {
     return this.http.delete<void>(`${this.api}/${instanciaId}/${documentoId}`);
   }
+
   obtenerAuditoria(instanciaId: string, documentoId: string): Observable<AuditoriaDocumento[]> {
     return this.http.get<AuditoriaDocumento[]>(
       `${this.api}/${instanciaId}/${documentoId}/auditoria`
     );
   }
 
-
   obtenerAuditoriaInstancia(instanciaId: string): Observable<AuditoriaDocumento[]> {
     return this.http.get<AuditoriaDocumento[]>(`${this.api}/${instanciaId}/auditoria`);
   }
+
   registrarEdicion(instanciaId: string, documentoId: string): Observable<void> {
     return this.http.post<void>(`${this.api}/${instanciaId}/${documentoId}/edicion`, {});
   }
 
+  miPermiso(instanciaId: string, nodoId?: string): Observable<{ permiso: PermisoDocumental }> {
+    const params = nodoId ? `?nodoId=${encodeURIComponent(nodoId)}` : '';
+    return this.http.get<{ permiso: PermisoDocumental }>(`${this.api}/${instanciaId}/mi-permiso${params}`);
+  }
 
   esEditable(tipoMime: string): boolean {
     return (
@@ -74,7 +78,6 @@ export class DocumentoService {
     );
   }
 
-  
   esPrevisualizableInline(tipoMime: string): boolean {
     return (
       tipoMime?.startsWith('image/') ||
@@ -84,7 +87,6 @@ export class DocumentoService {
     );
   }
 
-  
   formatearTamano(bytes: number): string {
     if (!bytes || bytes < 1024) { return (bytes ?? 0) + ' B'; }
     if (bytes < 1_048_576)      { return (bytes / 1024).toFixed(1) + ' KB'; }
