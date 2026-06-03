@@ -13,6 +13,5 @@ import lombok.NoArgsConstructor;
 public class NodoActividad extends NodoBase {
 
     private List<CampoForm> esquemaFormulario;
-    private List<PermisoDocumentalCarril> permisosDocumental;
+    private PermisoDocumental permisoDocumental;
 }
-

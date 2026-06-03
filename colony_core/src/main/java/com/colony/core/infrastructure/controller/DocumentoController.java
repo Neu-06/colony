@@ -53,7 +53,7 @@ public class DocumentoController {
     }
 
     @DeleteMapping("/{instanciaId}/{documentoId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
     public ResponseEntity<Void> eliminarDocumento(
             @PathVariable String instanciaId,
             @PathVariable String documentoId,

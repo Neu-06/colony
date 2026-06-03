@@ -9,6 +9,7 @@ import { DashboardLayoutComponent } from './features/dashboard/dashboard-layout.
 import { AtencionTramiteComponent } from './features/tramites/atencion-tramite.component';
 import { BandejaTareasComponent } from './features/tramites/bandeja-tareas.component';
 import { DirectorioTramitesComponent } from './features/tramites/directorio-tramites.component';
+import { IniciarTramiteComponent } from './features/tramites/iniciar-tramite.component';
 import { CanvasComponent } from './features/workflow-builder/canvas.component';
 import { CanvasPageComponent } from './features/workflow-builder/canvas-page.component';
 import { PublishedFlowsComponent } from './features/workflow-builder/published-flows.component';
@@ -62,6 +63,11 @@ export const routes: Routes = [
 			{
 				path: 'directorio-tramites',
 				component: DirectorioTramitesComponent,
+				canActivate: [funcionarioGuard]
+			},
+			{
+				path: 'tramites/iniciar/:politicaId',
+				component: IniciarTramiteComponent,
 				canActivate: [funcionarioGuard]
 			},
 			{

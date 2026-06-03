@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, effect, inject, Input, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta, PermisoDocumentalCarril, PermisoDocumental } from '../../models/canvas.models';
+import { Arista, CampoFormulario, NodoActividad, NodoCanvas, NodoCompuerta, PermisoDocumental } from '../../models/canvas.models';
 import { DiagramadorEstadoService } from '../../services/diagramador-estado.service';
 import { AiAssistantComponent } from '../ai-assistant/ai-assistant.component';
 import Swal from 'sweetalert2';
@@ -48,7 +48,7 @@ export class PanelPropiedadesComponent {
   nodoCompuertaSeleccionado: NodoCompuerta | null = null;
   aristaSeleccionadaActual: Arista | null = null;
   camposFormulario: CampoFormulario[] = [];
-  permisosDocumentales: PermisoDocumentalCarril[] = [];
+  permisoDocumentalNodo: PermisoDocumental = 'SUBIR_Y_LEER';
 
   readonly actividadForm = this.fb.nonNullable.group({
     nombre: ''
@@ -251,21 +251,12 @@ export class PanelPropiedadesComponent {
     const nodo = this.nodoActividadSeleccionado;
     if (!nodo || this.isReadOnly) { return; }
     this.estado.actualizarNodo(nodo.idNodo, {
-      permisosDocumental: [...this.permisosDocumentales]
+      permisoDocumental: this.permisoDocumentalNodo
     });
   }
 
   private sincronizarPermisos(nodo: NodoActividad): void {
-    const carriles = this.estado.carriles();
-    const existentes = nodo.permisosDocumental ?? [];
-    this.permisosDocumentales = carriles.map(carril => {
-      const existente = existentes.find(p => p.carrilId === carril.id);
-      return {
-        carrilId: carril.id,
-        carrilNombre: carril.nombre,
-        permiso: (existente?.permiso ?? 'SUBIR_Y_LEER') as PermisoDocumental
-      };
-    });
+    this.permisoDocumentalNodo = nodo.permisoDocumental ?? 'SUBIR_Y_LEER';
   }
 
   private persistirEsquemaFormulario(campos: CampoFormulario[]): void {
@@ -277,7 +268,8 @@ export class PanelPropiedadesComponent {
     const normalizado = this.normalizarEsquemaFormulario(campos);
     this.camposFormulario = normalizado;
     this.estado.actualizarNodo(nodo.idNodo, {
-      esquemaFormulario: normalizado
+      esquemaFormulario: normalizado,
+      permisoDocumental: this.permisoDocumentalNodo
     });
   }
 

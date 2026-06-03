@@ -124,29 +124,23 @@
           <div class="h-4"></div> <!-- Espaciador final -->
         </div>
 
-        <!-- PERMISOS DOCUMENTALES POR CARRIL -->
+        <!-- PERMISOS DOCUMENTALES DEL NODO -->
         <div>
           <div class="mb-3 flex items-center justify-between border-b border-border pb-2">
             <p class="text-xs font-semibold uppercase tracking-wide text-ink-light">Permisos Documentales</p>
           </div>
           <div class="space-y-2">
-            @for (permiso of permisosDocumentales; track permiso.carrilId) {
-              <div class="rounded-lg border border-border bg-background px-3 py-2">
-                <p class="text-xs font-semibold text-ink mb-1.5 truncate">{{ permiso.carrilNombre }}</p>
-                <select [(ngModel)]="permiso.permiso" [disabled]="isReadOnly"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="persistirPermisos()"
-                        class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
-                  <option value="SIN_ACCESO">🔒 Sin acceso</option>
-                  <option value="SOLO_LECTURA">👁 Solo lectura</option>
-                  <option value="SUBIR_Y_LEER">📂 Subir y leer</option>
-                  <option value="ADMINISTRAR">⚙️ Administrar</option>
-                </select>
-              </div>
-            }
-            @if (permisosDocumentales.length === 0) {
-              <p class="text-[11px] text-ink-light italic">Sin carriles definidos. Todos los participantes tendrán acceso de subida por defecto.</p>
-            }
+            <div class="rounded-lg border border-border bg-background px-3 py-2">
+              <p class="text-xs font-semibold text-ink mb-1.5">Permiso Documental</p>
+              <select [(ngModel)]="permisoDocumentalNodo" [disabled]="isReadOnly"
+                [ngModelOptions]="{ standalone: true }" (ngModelChange)="persistirPermisos()"
+                class="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-primary">
+                <option value="SIN_ACCESO">🔒 Sin acceso</option>
+                <option value="SOLO_LECTURA">👁 Solo lectura</option>
+                <option value="SUBIR_Y_LEER">📂 Subir y leer</option>
+                <option value="ADMINISTRAR">⚙️ Administrar</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -230,10 +224,8 @@
 
     <!-- PESTAÑA ASISTENTE IA -->
     @if (tabActiva === 'ia') {
-      <app-ai-assistant 
-        [canvasJson]="datosCanvas()" 
-        (updateCanvas)="recargarLienzo($event)">
-      </app-ai-assistant>
+    <app-ai-assistant [canvasJson]="datosCanvas()" (updateCanvas)="recargarLienzo($event)">
+    </app-ai-assistant>
     }
   </div>
 

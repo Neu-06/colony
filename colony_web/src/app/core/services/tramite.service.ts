@@ -18,6 +18,7 @@ export interface PrimerFormularioDto {
 
 export interface IniciarInstanciaResponse {
   codigoRastreo: string;
+  instanciaId: string;
 }
 
 interface IniciarInstanciaRequest {

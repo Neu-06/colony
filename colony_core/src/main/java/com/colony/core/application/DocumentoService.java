@@ -5,7 +5,7 @@ import com.colony.core.domain.*;
 import com.colony.core.infrastructure.repository.AuditoriaDocumentoRepository;
 import com.colony.core.infrastructure.repository.InstanciaRepository;
 import com.colony.core.infrastructure.repository.PoliticaNegocioRepository;
-import com.colony.core.infrastructure.repository.UsuarioRepository;
+//import com.colony.core.infrastructure.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,8 +26,7 @@ public class DocumentoService {
     private final InstanciaRepository instanciaRepository;
     private final AuditoriaDocumentoRepository auditoriaRepository;
     private final PoliticaNegocioRepository politicaRepository;
-    private final UsuarioRepository usuarioRepository;
-
+    // private final UsuarioRepository usuarioRepository;
 
     public DocumentoRef subirDocumento(String instanciaId,
             MultipartFile archivo,
@@ -125,31 +124,11 @@ public class DocumentoService {
                 .findFirst()
                 .orElse(null);
 
-        if (nodo == null || nodo.getPermisosDocumental() == null || nodo.getPermisosDocumental().isEmpty()) {
+        if (nodo == null || nodo.getPermisoDocumental() == null) {
             return PermisoDocumental.SUBIR_Y_LEER;
         }
 
-        Usuario usuario = usuarioRepository.findByEmail(usuarioEmail).orElse(null);
-        String carrilDelUsuario = null;
-        if (usuario != null && usuario.getDepartamentoId() != null) {
-            carrilDelUsuario = politica.getCarriles() == null ? null :
-                politica.getCarriles().stream()
-                    .filter(c -> usuario.getDepartamentoId().equals(c.getDepartamentoId()))
-                    .map(Carril::getId)
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        final String carrilFinal = carrilDelUsuario;
-        if (carrilFinal == null) {
-            return PermisoDocumental.SOLO_LECTURA;
-        }
-
-        return nodo.getPermisosDocumental().stream()
-                .filter(p -> carrilFinal.equals(p.getCarrilId()))
-                .map(PermisoDocumentalCarril::getPermiso)
-                .findFirst()
-                .orElse(PermisoDocumental.SOLO_LECTURA);
+        return nodo.getPermisoDocumental();
     }
 
     private Instancia obtenerOError(String instanciaId) {

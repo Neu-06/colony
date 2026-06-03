@@ -88,7 +88,7 @@ public class MotorInstanciaService {
         historial.setFechaIngreso(new Date());
         historialRepository.save(historial);
 
-        return new IniciarInstanciaResponse(guardada.getCodigo());
+        return new IniciarInstanciaResponse(guardada.getCodigo(), guardada.getId());
     }
 
     public AtencionTramiteDto obtenerAtencion(String instanciaId, String tareaId) {

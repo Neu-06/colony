@@ -105,7 +105,8 @@ function clonarNodo(nodo: NodoCanvas): NodoCanvas {
       tipo: normalizarTipoCampo(campo.tipo),
       requerido: !!campo.requerido,
       opciones: campo.opciones
-    }))
+    })),
+    permisoDocumental: actividad.permisoDocumental
   };
 }
 
@@ -142,6 +143,7 @@ function normalizarTipoCampo(tipo: string | undefined): string {
   if (lowercase === 'textolargo' || lowercase === 'textarea') return 'textarea';
   if (lowercase === 'booleano' || lowercase === 'boolean' || lowercase === 'bool') return 'boolean';
   if (lowercase === 'seleccion' || lowercase === 'select') return 'select';
+  if (lowercase === 'archivo' || lowercase === 'file') return 'archivo';
 
   return 'text';
 }

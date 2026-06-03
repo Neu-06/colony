@@ -51,6 +51,7 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
   readonly accionEnProgreso   = signal<AccionPendiente | null>(null);
   readonly docAuditoriaActual = signal<DocumentoRef | null>(null);
   readonly permisoActual      = signal<PermisoDocumental>('SUBIR_Y_LEER');
+  readonly documentosSesionIds = signal<Set<string>>(new Set());
 
   readonly totalDocumentos = computed(() => this.documentos().length);
   readonly tieneDocumentos = computed(() => this.documentos().length > 0);
@@ -119,6 +120,11 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
     this.docService.subirDocumento(this.instanciaId, archivo).subscribe({
       next: (ref) => {
         this.documentos.update(docs => [...docs, ref]);
+        this.documentosSesionIds.update(set => {
+          const newSet = new Set(set);
+          newSet.add(ref.documentoId);
+          return newSet;
+        });
         this.subiendoId.set(null);
         this.alertaService.mostrarExito(`"${ref.nombre}" subido correctamente.`);
       },
@@ -188,11 +194,20 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
     this.docVisorActual.set(null);
   }
 
-  eliminarDocumento(doc: DocumentoRef): void {
-    if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) { return; }
+  async eliminarDocumento(doc: DocumentoRef): Promise<void> {
+    const confirmado = await this.alertaService.confirmarAccion(
+      'Eliminar documento',
+      `¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) { return; }
     this.docService.eliminarDocumento(this.instanciaId, doc.documentoId).subscribe({
       next: () => {
         this.documentos.update(docs => docs.filter(d => d.documentoId !== doc.documentoId));
+        this.documentosSesionIds.update(set => {
+          const newSet = new Set(set);
+          newSet.delete(doc.documentoId);
+          return newSet;
+        });
         if (this.docVisorActual()?.documentoId === doc.documentoId) { this.cerrarVisor(); }
         this.alertaService.mostrarExito(`"${doc.nombre}" eliminado.`);
       },

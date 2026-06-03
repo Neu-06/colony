@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertaService } from '../../core/services/alerta.service';
@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CopilotoFuncionarioComponent, AiFormFillEvent } from './ai-copiloto-funcionario/copiloto-funcionario.component';
 import { CampoFormularioAI } from './ai-copiloto-funcionario/funcionario-ai.service';
 import { RepositorioDocumentalComponent } from './repositorio-documental/repositorio-documental.component';
+import { DocumentoService } from '../../core/services/documento.service';
 
 @Component({
   selector: 'app-atencion-tramite',
@@ -23,15 +24,20 @@ export class AtencionTramiteComponent implements OnInit {
   private readonly alertaService = inject(AlertaService);
   private readonly authService = inject(AuthService);
 
+  @ViewChild(RepositorioDocumentalComponent) repositorioComponent!: RepositorioDocumentalComponent;
+
   tramite: AtencionTramiteDto | null = null;
   isLoading = false;
   isSubmitting = false;
   errorMessage = '';
 
-  // Mapa campo-nombre -> File seleccionado (para campos tipo 'archivo')
-  readonly archivosSeleccionados = new Map<string, File>();
-
   readonly form = this.fb.group({});
+
+  get documentosRequeridos(): string[] {
+    return (this.tramite?.esquemaFormulario ?? [])
+      .filter(c => c.tipo === 'archivo')
+      .map(c => c.nombre);
+  }
 
   // Adaptador para que el copiloto entienda el esquema
   get esquemaParaAI(): CampoFormularioAI[] {
@@ -89,9 +95,7 @@ export class AtencionTramiteComponent implements OnInit {
         this.form.reset({});
 
     for (const campo of tramite.esquemaFormulario ?? []) {
-          // Los campos de tipo 'archivo' no se incluyen en el FormGroup reactivo
-          // (se manejan con el repositorio documental o con input de file independiente)
-          if (campo.tipo === 'archivo') continue;
+          if (campo.tipo === 'archivo' || campo.tipo === 'file') continue;
           const validators = campo.requerido ? [Validators.required] : [];
           const esBooleano = campo.tipo === 'boolean' || campo.tipo === 'bool';
           this.form.addControl(campo.nombre, this.fb.control(esBooleano ? false : '', validators));
@@ -107,7 +111,7 @@ export class AtencionTramiteComponent implements OnInit {
     });
   }
 
-  completarYEnviar(): void {
+  async completarYEnviar(): Promise<void> {
     if (!this.tramite) {
       return;
     }
@@ -115,6 +119,12 @@ export class AtencionTramiteComponent implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.alertaService.mostrarError('Completa los campos requeridos antes de enviar.');
+      return;
+    }
+
+    const nuevosDocsCount = this.repositorioComponent ? this.repositorioComponent.documentosSesionIds().size : 0;
+    if (this.documentosRequeridos.length > 0 && nuevosDocsCount < this.documentosRequeridos.length) {
+      this.alertaService.mostrarError(`Faltan documentos requeridos. Por favor, asegúrate de adjuntar al menos ${this.documentosRequeridos.length} documento(s) en esta etapa.`);
       return;
     }
 
@@ -139,24 +149,7 @@ export class AtencionTramiteComponent implements OnInit {
     });
   }
 
-  /** Captura el archivo seleccionado en un campo tipo 'archivo'. */
-  onArchivoFieldChange(event: Event, campoNombre: string): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.archivosSeleccionados.set(campoNombre, file);
-    }
-  }
 
-  /** Devuelve el nombre del archivo seleccionado para un campo. */
-  getNombreArchivo(campoNombre: string): string {
-    return this.archivosSeleccionados.get(campoNombre)?.name ?? '';
-  }
-
-  /** Indica si el usuario actual puede subir documentos al repositorio. */
-  get puedeSubirDocumentos(): boolean {
-    return true; // El control fino se hace en el backend por JWT rol
-  }
 
   /** Indica si el usuario puede eliminar documentos (solo ADMIN+). */
   get puedeEliminarDocumentos(): boolean {
