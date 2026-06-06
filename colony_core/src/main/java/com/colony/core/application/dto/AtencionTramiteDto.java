@@ -8,6 +8,7 @@ public record AtencionTramiteDto(
         String instanciaId,
         String codigoTramite,
         String nodoActualId,
+        String tipoNodo,
         Map<String, Object> datosDinamicos,
         List<CampoForm> esquemaFormulario
 ) {

@@ -88,6 +88,26 @@ public class MotorInstanciaService {
         historial.setFechaIngreso(new Date());
         historialRepository.save(historial);
 
+        // AUTO-AVANCE inicial
+        NodoBase segundoNodo = politica.getNodos().stream()
+                .filter(n -> n.getIdNodo().equals(segundoNodoId))
+                .findFirst()
+                .orElse(null);
+
+        if (segundoNodo != null) {
+            String tipoSig = segundoNodo.getTipo() == null ? "" : segundoNodo.getTipo().toLowerCase(Locale.ROOT);
+            if ("fork".equalsIgnoreCase(tipoSig) || "join".equalsIgnoreCase(tipoSig)
+                    || segundoNodo instanceof com.colony.core.domain.NodoCompuerta) {
+                log.info("INICIO detectó nodo de control: {}. Ejecutando auto-avance inicial.", segundoNodoId);
+                AvanzarInstanciaRequest autoReq = new AvanzarInstanciaRequest(
+                        guardada.getId(),
+                        request.usuarioIniciadorId(),
+                        segundoNodoId,
+                        new HashMap<>());
+                avanzar(autoReq);
+            }
+        }
+
         return new IniciarInstanciaResponse(guardada.getCodigo(), guardada.getId());
     }
 
@@ -113,6 +133,14 @@ public class MotorInstanciaService {
             }
         }
 
+        String tipoNodo = null;
+        if (nodoActualId != null) {
+            tipoNodo = politica.getNodos().stream()
+                    .filter(n -> n.getIdNodo().equals(nodoActualId))
+                    .map(NodoBase::getTipo)
+                    .findFirst().orElse(null);
+        }
+
         Map<String, Object> datos = instancia.getDatosDinamicos() == null
                 ? new HashMap<>()
                 : new HashMap<>(instancia.getDatosDinamicos());
@@ -121,6 +149,7 @@ public class MotorInstanciaService {
                 instancia.getId(),
                 instancia.getCodigo(),
                 nodoActualId,
+                tipoNodo,
                 datos,
                 esquema);
     }

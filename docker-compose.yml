@@ -1,6 +1,18 @@
 version: "3.9"
 
 services:
+  onlyoffice:
+    image: onlyoffice/documentserver
+    container_name: colony_onlyoffice
+    restart: unless-stopped
+    environment:
+      # Deshabilitar JWT para desarrollo. En producción configurar JWT_SECRET y JWT_ENABLED=true
+      - JWT_ENABLED=false
+    ports:
+      - "${ONLYOFFICE_PORT:-8100}:80"
+    networks:
+      - colony-net
+
   mongodb:
     image: mongo:8.2
     container_name: colony_mongodb

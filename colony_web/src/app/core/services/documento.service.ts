@@ -25,6 +25,21 @@ export interface AuditoriaDocumento {
   fecha: string;
 }
 
+export interface OnlyOfficeConfig {
+  documentServerUrl: string;
+  documentKey: string;
+  documentUrl: string;
+  documentTitle: string;
+  documentFileType: string;
+  callbackUrl: string;
+  mode: 'edit' | 'view';
+  userId: string;
+  userName: string;
+  edit: boolean;
+  download: boolean;
+  print: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DocumentoService {
   private readonly http = inject(HttpClient);
@@ -67,6 +82,12 @@ export class DocumentoService {
   miPermiso(instanciaId: string, nodoId?: string): Observable<{ permiso: PermisoDocumental }> {
     const params = nodoId ? `?nodoId=${encodeURIComponent(nodoId)}` : '';
     return this.http.get<{ permiso: PermisoDocumental }>(`${this.api}/${instanciaId}/mi-permiso${params}`);
+  }
+
+  obtenerConfigOnlyOffice(instanciaId: string, documentoId: string, editar = true): Observable<OnlyOfficeConfig> {
+    return this.http.get<OnlyOfficeConfig>(
+      `${this.api}/${instanciaId}/${documentoId}/onlyoffice-config?editar=${editar}`
+    );
   }
 
   esEditable(tipoMime: string): boolean {

@@ -105,4 +105,59 @@ public class DocumentoController {
 
         return ResponseEntity.ok(Map.of("permiso", permiso.name()));
     }
+
+    // ── OnlyOffice ──────────────────────────────────────────────────────────────
+
+    /**
+     * Descarga los bytes del documento directamente.
+     * OnlyOffice Document Server llama a esta URL para obtener el archivo.
+     * ¡No requiere autenticación JWT! (OnlyOffice no puede enviar tokens de usuario).
+     */
+    @GetMapping(value = "/{instanciaId}/{documentoId}/contenido", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> obtenerContenido(
+            @PathVariable String instanciaId,
+            @PathVariable String documentoId) {
+
+        byte[] data = documentoService.obtenerContenido(instanciaId, documentoId);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "inline")
+                .body(data);
+    }
+
+    /**
+     * Genera y devuelve la configuración necesaria para el SDK de OnlyOffice.
+     * El frontend la usa para inicializar el editor embebido.
+     */
+    @GetMapping("/{instanciaId}/{documentoId}/onlyoffice-config")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'FUNCIONARIO')")
+    public ResponseEntity<?> onlyOfficeConfig(
+            @PathVariable String instanciaId,
+            @PathVariable String documentoId,
+            @RequestParam(defaultValue = "true") boolean editar,
+            @AuthenticationPrincipal UserDetails userDetails,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
+
+        String baseUrl = httpRequest.getScheme() + "://" + httpRequest.getServerName() + ":" + httpRequest.getServerPort();
+        var config = documentoService.generarConfigOnlyOffice(
+                instanciaId, documentoId, userDetails.getUsername(), baseUrl, editar);
+        return ResponseEntity.ok(config);
+    }
+
+    /**
+     * Callback que OnlyOffice llama cuando termina una sesión de edición colaborativa.
+     * Recibe el archivo actualizado y lo guarda de vuelta en S3.
+     */
+    @PostMapping("/{instanciaId}/{documentoId}/onlyoffice-callback")
+    public ResponseEntity<Map<String, Integer>> onlyOfficeCallback(
+            @PathVariable String instanciaId,
+            @PathVariable String documentoId,
+            @RequestBody Map<String, Object> body) {
+
+        int status = body.containsKey("status") ? ((Number) body.get("status")).intValue() : 0;
+        String url  = (String) body.getOrDefault("url", "");
+
+        documentoService.procesarCallbackOnlyOffice(instanciaId, documentoId, status, url, "onlyoffice-system");
+        // OnlyOffice espera { "error": 0 } para saber que todo fue OK
+        return ResponseEntity.ok(Map.of("error", 0));
+    }
 }

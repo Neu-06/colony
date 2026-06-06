@@ -35,3 +35,11 @@ app:
     bucket: ${S3_BUCKET:colony-documentos}
     region: ${S3_REGION:us-east-2}
     presigned-expiration-minutes: ${S3_PRESIGNED_EXPIRATION_MINUTES:60}
+
+  onlyoffice:
+    server-url: ${ONLYOFFICE_URL:http://localhost:8100}
+    # URL que OnlyOffice (Docker) usa para descargar documentos y enviar callbacks.
+    # Dentro de Docker, 'localhost' apunta al contenedor, no al host.
+    # En Windows/Mac: host.docker.internal. En Linux: 172.17.0.1
+    backend-url: ${ONLYOFFICE_BACKEND_URL:http://host.docker.internal:8080}
+    jwt-enabled: ${ONLYOFFICE_JWT_ENABLED:false}

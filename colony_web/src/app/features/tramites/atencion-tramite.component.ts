@@ -102,6 +102,11 @@ export class AtencionTramiteComponent implements OnInit {
         }
 
         this.isLoading = false;
+
+        // Si el nodo es automático (fork, join, compuerta, etc.), avanzar inmediatamente
+        if (this.isAutomatica) {
+          setTimeout(() => this.completarYEnviar(), 500);
+        }
       },
       error: (err: any) => {
         this.isLoading = false;
@@ -163,9 +168,10 @@ export class AtencionTramiteComponent implements OnInit {
 
   get isAutomatica(): boolean {
     if (!this.tramite) return false;
-    // Si el backend accidentalmente nos manda un nodo de control, lo detectamos
-    const tipo = (this.tramite.nodoActualId || '').toLowerCase();
-    return tipo.includes('fork') || tipo.includes('join') || tipo.includes('decision') || tipo.includes('gateway');
+    // Usar el tipoNodo que el backend provee directamente
+    const tipo = (this.tramite.tipoNodo || '').toLowerCase();
+    return tipo === 'compuerta' || tipo === 'salida_condicional' ||
+           tipo.includes('fork') || tipo.includes('join') || tipo.includes('gateway');
   }
 
   formatValor(value: unknown): string {

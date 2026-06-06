@@ -128,16 +128,33 @@
 
             <!-- Acciones -->
             <div class="flex shrink-0 items-center gap-1">
-              <button (click)="abrirDocumento(doc)"
-                      [disabled]="estaCargandoDoc(doc.documentoId)"
-                      class="rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition disabled:opacity-40"
-                      [title]="esOffice(doc.tipoMime) ? 'Ver/Editar con Office Online' : 'Visualizar'">
-                @if (estaCargandoDoc(doc.documentoId)) {
-                  <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
-                } @else {
-                  {{ esOffice(doc.tipoMime) ? 'Editar' : 'Ver' }}
+              @if (esOffice(doc.tipoMime)) {
+                <!-- Word/Excel: botones Ver y Editar separados -->
+                <button (click)="abrirEditorColaborativo(doc, false)"
+                        class="rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition"
+                        title="Ver en editor embebido (solo lectura)">
+                  👁 Ver
+                </button>
+                @if (puedeSubir()) {
+                  <button (click)="abrirEditorColaborativo(doc, true)"
+                          class="rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition"
+                          title="Editar colaborativamente en tiempo real">
+                    ✏ Editar
+                  </button>
                 }
-              </button>
+              } @else {
+                <!-- Otros tipos: botón Ver normal -->
+                <button (click)="abrirDocumento(doc)"
+                        [disabled]="estaCargandoDoc(doc.documentoId)"
+                        class="rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition disabled:opacity-40"
+                        title="Visualizar">
+                  @if (estaCargandoDoc(doc.documentoId)) {
+                    <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                  } @else {
+                    Ver
+                  }
+                </button>
+              }
               <button (click)="descargarDocumento(doc)"
                       [disabled]="estaCargandoDoc(doc.documentoId)"
                       class="rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-light hover:bg-background transition disabled:opacity-40"
@@ -243,4 +260,16 @@
       }
     </div>
   }
+
+  <!-- VISTA: EDITOR COLABORATIVO OnlyOffice -->
+  @if (vistaActiva() === 'editor' && docEditorActual()) {
+    <!-- Se le agrega h-[80vh] y min-h-[600px] para garantizar una vista amplia -->
+    <app-editor-colaborativo
+      class="block w-full h-[80vh] min-h-[600px]"
+      [instanciaId]="instanciaId"
+      [documentoId]="docEditorActual()!.documentoId"
+      [modoEdicion]="modoEdicion()">
+    </app-editor-colaborativo>
+  }
+
 </div>

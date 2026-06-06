@@ -1,5 +1,6 @@
 package com.colony.core.application;
 
+import com.colony.core.application.dto.OnlyOfficeConfigDto;
 import com.colony.core.application.ports.StoragePort;
 import com.colony.core.domain.*;
 import com.colony.core.infrastructure.repository.AuditoriaDocumentoRepository;
@@ -8,11 +9,17 @@ import com.colony.core.infrastructure.repository.PoliticaNegocioRepository;
 //import com.colony.core.infrastructure.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+//import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +34,14 @@ public class DocumentoService {
     private final AuditoriaDocumentoRepository auditoriaRepository;
     private final PoliticaNegocioRepository politicaRepository;
     // private final UsuarioRepository usuarioRepository;
+
+    @Value("${app.onlyoffice.server-url:http://localhost:8100}")
+    private String onlyOfficeServerUrl;
+
+    // URL que OnlyOffice (en Docker) usa para acceder al backend.
+    // Dentro del contenedor 'localhost' != host, se usa host.docker.internal
+    @Value("${app.onlyoffice.backend-url:http://host.docker.internal:8080}")
+    private String onlyOfficeBackendUrl;
 
     public DocumentoRef subirDocumento(String instanciaId,
             MultipartFile archivo,
@@ -156,5 +171,116 @@ public class DocumentoService {
                 null, documentoId, instanciaId, accion,
                 usuarioId, usuarioNombre, new Date(), null);
         auditoriaRepository.save(registro);
+    }
+
+    // ─── OnlyOffice ────────────────────────────────────────────────────────────
+
+    /**
+     * Devuelve la configuración que necesita el SDK de OnlyOffice
+     * para inicializar el editor colaborativo.
+     */
+    public OnlyOfficeConfigDto generarConfigOnlyOffice(
+            String instanciaId,
+            String documentoId,
+            String usuarioEmail,
+            String backendBaseUrl,
+            boolean modoEdicion) {
+
+        DocumentoRef ref = buscarDocumento(instanciaId, documentoId);
+        String extension = extensionDe(ref.getNombre());
+        // String mimeType = ref.getTipoMime() != null ? ref.getTipoMime() : "";
+
+        // URL que OnlyOffice descarga (debe ser alcanzable desde el contenedor Docker)
+        String documentUrl = onlyOfficeBackendUrl + "/api/documentos/" + instanciaId + "/" + documentoId + "/contenido";
+        String callbackUrl = onlyOfficeBackendUrl + "/api/documentos/" + instanciaId + "/" + documentoId
+                + "/onlyoffice-callback";
+
+        // Key única por documento (OnlyOffice cachea por key; cambiar key fuerza
+        // recarga)
+        String key = documentoId + "_" + ref.getFechaSubida().getTime();
+
+        OnlyOfficeConfigDto dto = new OnlyOfficeConfigDto();
+        dto.setDocumentServerUrl(onlyOfficeServerUrl);
+        dto.setDocumentKey(key);
+        dto.setDocumentUrl(documentUrl);
+        dto.setDocumentTitle(ref.getNombre());
+        dto.setDocumentFileType(extension);
+        dto.setCallbackUrl(callbackUrl);
+        dto.setMode(modoEdicion ? "edit" : "view");
+        dto.setUserId(usuarioEmail);
+        dto.setUserName(usuarioEmail);
+        dto.setEdit(modoEdicion);
+        dto.setDownload(true);
+        dto.setPrint(true);
+        return dto;
+    }
+
+    /**
+     * Devuelve los bytes del documento directamente (para que OnlyOffice lo
+     * descargue).
+     */
+    public byte[] obtenerContenido(String instanciaId, String documentoId) {
+        DocumentoRef ref = buscarDocumento(instanciaId, documentoId);
+        return storagePort.download(ref.getS3Key());
+    }
+
+    /**
+     * Callback de OnlyOffice: cuando todos salen del editor, OnlyOffice notifica
+     * con status=2 y una URL de descarga del archivo actualizado.
+     * Aquí descargamos ese archivo y lo guardamos de vuelta en S3.
+     */
+    public void procesarCallbackOnlyOffice(
+            String instanciaId, String documentoId,
+            int status, String downloadUrl, String usuarioId) {
+
+        // status 2 = documento guardado (todos salieron); 6 = error. Solo procesamos 2.
+        if (status != 2) {
+            log.info("[OnlyOffice] Callback status={} para doc={}, ignorado.", status, documentoId);
+            return;
+        }
+
+        try {
+            log.info("[OnlyOffice] Guardando doc={} desde URL: {}", documentoId, downloadUrl);
+
+            // Descargar el archivo actualizado desde la URL temporal de OnlyOffice
+            HttpClient httpClient = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(downloadUrl)).GET().build();
+            byte[] data = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
+
+            // Buscar el documento actual
+            Instancia instancia = obtenerOError(instanciaId);
+            DocumentoRef ref = buscarDocumento(instanciaId, documentoId);
+
+            // Eliminar el archivo antiguo de S3
+            try {
+                storagePort.delete(ref.getS3Key());
+            } catch (Exception ignored) {
+            }
+
+            // Subir la nueva versión a S3
+            String newKey = storagePort.uploadBytes(
+                    data, instanciaId, ref.getNombre(),
+                    ref.getTipoMime() != null ? ref.getTipoMime() : "application/octet-stream");
+
+            // Actualizar la referencia en MongoDB
+            ref.setS3Key(newKey);
+            ref.setFechaSubida(new Date());
+            ref.setTamanoBytes((long) data.length);
+            instanciaRepository.save(instancia);
+
+            auditar(documentoId, instanciaId, "EDICION", usuarioId, usuarioId);
+            log.info("[OnlyOffice] Doc={} guardado correctamente. Nuevo key={}", documentoId, newKey);
+
+        } catch (Exception e) {
+            log.error("[OnlyOffice] Error guardando callback para doc={}: {}", documentoId, e.getMessage(), e);
+            throw new RuntimeException("Error procesando callback de OnlyOffice", e);
+        }
+    }
+
+    private String extensionDe(String filename) {
+        if (filename == null)
+            return "docx";
+        int dot = filename.lastIndexOf('.');
+        return (dot >= 0) ? filename.substring(dot + 1).toLowerCase() : "docx";
     }
 }

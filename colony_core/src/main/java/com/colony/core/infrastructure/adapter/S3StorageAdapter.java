@@ -97,4 +97,40 @@ public class S3StorageAdapter implements StoragePort {
             throw new RuntimeException("Error al generar la URL de acceso: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public byte[] download(String storageKey) {
+        try {
+            software.amazon.awssdk.core.ResponseBytes<software.amazon.awssdk.services.s3.model.GetObjectResponse> resp =
+                    s3Client.getObjectAsBytes(GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(storageKey)
+                            .build());
+            log.info("[S3] Descargado: key={}, bytes={}", storageKey, resp.asByteArray().length);
+            return resp.asByteArray();
+        } catch (Exception e) {
+            log.error("[S3] Error al descargar: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al descargar archivo de S3: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String uploadBytes(byte[] data, String instanciaId, String filename, String contentType) {
+        String safeName = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String key = "instancias/" + instanciaId + "/" + UUID.randomUUID() + "_" + safeName;
+        try {
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(contentType)
+                    .contentLength((long) data.length)
+                    .build();
+            s3Client.putObject(putRequest, RequestBody.fromBytes(data));
+            log.info("[S3] uploadBytes: key={}, size={}B", key, data.length);
+            return key;
+        } catch (Exception e) {
+            log.error("[S3] Error en uploadBytes: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al subir bytes a S3: " + e.getMessage(), e);
+        }
+    }
 }

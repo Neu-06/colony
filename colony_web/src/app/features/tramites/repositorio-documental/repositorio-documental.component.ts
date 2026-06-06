@@ -18,14 +18,15 @@ import {
   AuditoriaDocumento,
   PermisoDocumental
 } from '../../../core/services/documento.service';
+import { EditorColaborativoComponent } from './editor-colaborativo/editor-colaborativo.component';
 
-type Vista = 'repositorio' | 'auditoria' | 'visor';
+type Vista = 'repositorio' | 'auditoria' | 'visor' | 'editor';
 interface AccionPendiente { tipo: 'url'; documentoId: string; }
 
 @Component({
   selector: 'app-repositorio-documental',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, EditorColaborativoComponent],
   templateUrl: './repositorio-documental.component.html'
 })
 export class RepositorioDocumentalComponent implements OnInit, OnChanges {
@@ -52,6 +53,8 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
   readonly docAuditoriaActual = signal<DocumentoRef | null>(null);
   readonly permisoActual      = signal<PermisoDocumental>('SUBIR_Y_LEER');
   readonly documentosSesionIds = signal<Set<string>>(new Set());
+  readonly docEditorActual    = signal<DocumentoRef | null>(null);
+  readonly modoEdicion        = signal(true);
 
   readonly totalDocumentos = computed(() => this.documentos().length);
   readonly tieneDocumentos = computed(() => this.documentos().length > 0);
@@ -230,6 +233,14 @@ export class RepositorioDocumentalComponent implements OnInit, OnChanges {
     this.urlVisorSafe.set(null);
     this.urlVisorRaw.set(null);
     this.docVisorActual.set(null);
+    this.docEditorActual.set(null);
+  }
+
+  abrirEditorColaborativo(doc: DocumentoRef, editar: boolean): void {
+    this.docEditorActual.set(doc);
+    this.modoEdicion.set(editar);
+    this.vistaActiva.set('editor');
+    this.docService.registrarEdicion(this.instanciaId, doc.documentoId).subscribe();
   }
 
   formatearTamano(bytes: number): string { return this.docService.formatearTamano(bytes); }

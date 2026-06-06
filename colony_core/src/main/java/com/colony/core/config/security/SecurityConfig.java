@@ -53,6 +53,9 @@ public class SecurityConfig {
                         .requestMatchers("/ws-collab/**").permitAll()
                         // Agente Inteligente: el cliente no requiere cuenta para iniciar trámites
                         .requestMatchers("/api/agente/**").permitAll()
+                        // OnlyOffice Document Server llama a estos endpoints sin token de usuario
+                        .requestMatchers("/api/documentos/*/*/contenido").permitAll()
+                        .requestMatchers("/api/documentos/*/*/onlyoffice-callback").permitAll()
                         // Todo lo demás, incluyendo métricas, pasa por el filtro JWT
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())

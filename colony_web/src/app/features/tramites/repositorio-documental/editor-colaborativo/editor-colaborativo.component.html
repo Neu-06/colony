@@ -1,0 +1,58 @@
+<div class="flex h-full flex-col">
+
+  <!-- Barra superior del editor -->
+  <div class="flex items-center justify-between border-b border-border bg-surface px-4 py-2">
+    <div class="flex items-center gap-2">
+      <!-- Icono Word/Excel -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+      </svg>
+      <span class="text-sm font-semibold text-ink">
+        {{ modoEdicion ? '✏ Editando colaborativamente' : '👁 Visualizando' }}
+      </span>
+      @if (modoEdicion) {
+        <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+          🟢 Guardado automático activo
+        </span>
+      }
+    </div>
+    <ng-content select="[slot=actions]"></ng-content>
+  </div>
+
+  <!-- Estado: Cargando -->
+  @if (cargando()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-3 bg-background py-16">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></div>
+      <p class="text-sm font-medium text-ink-light animate-pulse">Iniciando editor colaborativo...</p>
+    </div>
+  }
+
+  <!-- Estado: Error -->
+  @if (!cargando() && error()) {
+    <div class="flex flex-1 flex-col items-center justify-center gap-4 bg-background p-8 text-center">
+      <div class="rounded-xl border border-rose-200 bg-rose-50 p-6 max-w-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-3 h-10 w-10 text-rose-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+        <p class="text-sm font-semibold text-rose-800">No se pudo iniciar el editor</p>
+        <p class="mt-1 text-xs text-rose-600">{{ error() }}</p>
+        <div class="mt-3 rounded-lg bg-rose-100 p-3 text-left">
+          <p class="text-xs font-semibold text-rose-700">Para activar el editor colaborativo, corre en terminal:</p>
+          <code class="mt-1 block text-xs text-rose-800">
+            docker run -i -t -d -p 8100:80 --restart=always onlyoffice/documentserver
+          </code>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Contenedor del editor de OnlyOffice -->
+  @if (!error()) {
+    <div #editorContainer
+         class="flex-1 overflow-hidden"
+         [class.invisible]="cargando()"
+         style="min-height: 600px;">
+    </div>
+  }
+
+</div>

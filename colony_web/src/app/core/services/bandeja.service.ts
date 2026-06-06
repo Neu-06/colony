@@ -18,6 +18,7 @@ export interface AtencionTramiteDto {
   instanciaId: string;
   codigoTramite: string;
   nodoActualId: string;
+  tipoNodo: string | null;
   datosDinamicos: Record<string, unknown>;
   esquemaFormulario: CampoForm[];
 }
