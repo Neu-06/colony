@@ -9,7 +9,8 @@ server:
 spring:
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/colony_db}
+      #uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/colony_db}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://colonydb_user:pass123@colonydb.sfahnql.mongodb.net/colony_db?appName=colonydb}
   servlet:
     multipart:
       enabled: true

@@ -8,8 +8,6 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
-from google import genai
-from google.genai import types
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -17,22 +15,13 @@ load_dotenv()
 
 router = APIRouter(prefix="/api/v1/funcionario", tags=["Funcionario AI"])
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY no encontrada en .env")
-
-# Nueva SDK google-genai
-client = genai.Client(api_key=GEMINI_API_KEY)
-AI_MODEL_GEMINI = "gemini-2.5-flash" # O gemini-2.5-flash si está disponible en tu tier
-GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-3.1-flash-lite-preview"]
-
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY no encontrada en .env")
+groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_FALLBACK_MODELS = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
 
-# ===========================================================================
-# MODELOS PYDANTIC
-# ===========================================================================
+# modelos pydantic
 
 class CampoFormulario(BaseModel):
     nombre: str
@@ -64,9 +53,7 @@ class ValidarEnvioRequest(BaseModel):
     esquemaFormulario: List[CampoFormulario]
     valoresActuales: Dict[str, Any]
 
-# ===========================================================================
-# PROMPT MAESTRO
-# ===========================================================================
+# prompt
 
 PROMPT_BANDEJA = """
 Eres un asistente de oficina para funcionarios públicos. Tu rol es interpretar comandos de voz 
@@ -131,47 +118,30 @@ FORMATO DE RESPUESTA:
   "mensaje": "Mensaje claro para el funcionario"
 }
 """
-
-# ===========================================================================
-# FALLBACK DE MODELOS
-# ===========================================================================
+# fallback de modelos
 def generar_respuesta_json(prompt: str) -> dict:
     last_error: Exception | None = None
-    for model in GEMINI_FALLBACK_MODELS:
+    
+    for model in GROQ_FALLBACK_MODELS:
         try:
-            response = client.models.generate_content(
+            response = groq_client.chat.completions.create(
                 model=model,
-                contents=prompt,
-                config=types.GenerateContentConfig(response_mime_type='application/json')
+                messages=[
+                    {"role": "system", "content": "Responde SOLO con un JSON valido."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"}
             )
-            return json.loads(response.text)
+            return json.loads(response.choices[0].message.content)
         except Exception as e:
             last_error = e
-
-    if groq_client:
-        for model in GROQ_FALLBACK_MODELS:
-            try:
-                response = groq_client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": "Responde SOLO con un JSON valido."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.2,
-                    response_format={"type": "json_object"}
-                )
-                return json.loads(response.choices[0].message.content)
-            except Exception as e:
-                last_error = e
 
     if last_error:
         raise last_error
     raise RuntimeError("No se pudo obtener respuesta del modelo")
 
-# ===========================================================================
 # ENDPOINTS
-# ===========================================================================
-
 @router.post("/comando-bandeja")
 async def comando_bandeja(request: ComandoTareasRequest):
     """
@@ -190,12 +160,12 @@ COMANDO DEL FUNCIONARIO: "{request.comando}"
 Responde con el JSON de acción correspondiente."""
 
         resultado = generar_respuesta_json(prompt)
-        print(f"✅ Comando bandeja procesado: accion={resultado.get('accion')}")
+        print(f" Comando bandeja procesado: accion={resultado.get('accion')}")
         return resultado
 
     except Exception as e:
         error_text = str(e)
-        print(f"🔥 ERROR en comando-bandeja: {error_text}")
+        print(f" ERROR en comando-bandeja: {error_text}")
         if "503" in error_text or "UNAVAILABLE" in error_text:
             return {
                 "accion": "informar",
@@ -228,17 +198,21 @@ COMANDO/DICTADO DEL FUNCIONARIO: "{request.comando}"
 
 Devuelve el JSON con los campos interpretados."""
 
-        response = client.models.generate_content(
-            model=AI_MODEL_GEMINI,
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type='application/json')
+        response = groq_client.chat.completions.create(
+            model=GROQ_FALLBACK_MODELS[0],
+            messages=[
+                {"role": "system", "content": "Responde SOLO con un JSON valido."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
         )
-        resultado = json.loads(response.text)
-        print(f"✅ Formulario rellenado: {list(resultado.get('camposRellenos', {}).keys())}")
+        resultado = json.loads(response.choices[0].message.content)
+        print(f"Formulario rellenado: {list(resultado.get('camposRellenos', {}).keys())}")
         return resultado
 
     except Exception as e:
-        print(f"🔥 ERROR en rellenar-formulario: {str(e)}")
+        print(f"ERROR en rellenar-formulario: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error rellenando formulario: {str(e)}")
 
 
@@ -262,15 +236,19 @@ VALORES ACTUALES:
 
 Devuelve el JSON de validación."""
 
-        response = client.models.generate_content(
-            model=AI_MODEL_GEMINI,
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type='application/json')
+        response = groq_client.chat.completions.create(
+            model=GROQ_FALLBACK_MODELS[0],
+            messages=[
+                {"role": "system", "content": "Responde SOLO con un JSON valido."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
         )
-        resultado = json.loads(response.text)
-        print(f"✅ Validación: puedeEnviar={resultado.get('puedeEnviar')}, faltantes={resultado.get('camposFaltantes', [])}")
+        resultado = json.loads(response.choices[0].message.content)
+        print(f" Validación: puedeEnviar={resultado.get('puedeEnviar')}, faltantes={resultado.get('camposFaltantes', [])}")
         return resultado
 
     except Exception as e:
-        print(f"🔥 ERROR en validar-envio: {str(e)}")
+        print(f"ERROR en validar-envio: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error validando formulario: {str(e)}")

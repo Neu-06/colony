@@ -13,27 +13,7 @@ services:
     networks:
       - colony-net
 
-  mongodb:
-    image: mongo:8.2
-    container_name: colony_mongodb
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
-      MONGO_INITDB_DATABASE: ${DB_NAME}
-    ports:
-      - "${MONGO_PORT:-27017}:27017"
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - colony-net
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet -u \"$MONGO_INITDB_ROOT_USERNAME\" -p \"$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval \"db.runCommand({ ping: 1 }).ok\""]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+
 
   colony_ai:
     build:
@@ -61,8 +41,6 @@ services:
     ports:
       - "${SERVER_PORT:-8080}:8080"
     depends_on:
-      mongodb:
-        condition: service_healthy
       colony_ai:
         condition: service_healthy
     networks:
@@ -93,5 +71,4 @@ networks:
   colony-net:
     driver: bridge
 
-volumes:
-  mongo_data:
+

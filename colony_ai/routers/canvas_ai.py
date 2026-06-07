@@ -18,22 +18,18 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# Llama 3.3 70B: el modelo más capaz de Groq para razonamiento complejo
+
 AI_MODEL = "llama-3.3-70b-versatile"
 
-# ===========================================================================
-# CONSTANTES DE DISEÑO ESPACIAL
-# Usadas en el post-procesador para corregir coordenadas si la IA falla
-# ===========================================================================
+#  CONSTANTES DE DISEÑO ESPACIAL
+
 HEADER_WIDTH = 80        # Zona prohibida izquierda (cabeceras de carril w-20 = 80px)
 LANE_HEIGHT   = 250      # Altura por carril
 X_STEP        = 260      # Separación horizontal entre pasos del flujo
 X_BRANCH_STEP = 240      # Separación para ramas en compuertas
 Y_BRANCH_OFFSET = 220    # Desplazamiento vertical para ramas alternativas
 
-# ===========================================================================
-# MODELOS PYDANTIC
-# ===========================================================================
+#  MODELOS PYDANTIC
 class CanvasData(BaseModel):
     data: Any
 
@@ -47,10 +43,8 @@ class CanvasChatRequest(BaseModel):
     canvasJson: dict
     comando: str
 
-# ===========================================================================
-# PROMPT MAESTRO DE LA IA
-# Este es el "cerebro" que guía a Llama para ser un experto BPMN completo
-# ===========================================================================
+#  PROMPT 
+
 SYSTEM_PROMPT_CHAT = """
 Eres COLONY-AI, el Arquitecto Senior de Flujos de Trabajo y Experto en Diagramas de Actividades UML con Swimlanes (Carriles).
 Trabajas para un software empresarial de gestión de políticas de negocio. Cuando el usuario te da una instrucción, la ejecutas con maestría y creatividad técnica.
@@ -64,13 +58,13 @@ VOCABULARIO DE TIPOS DE NODO (OBLIGATORIO USAR EXACTAMENTE ESTOS):
 ═══════════════════════════════════════════════════════════════
 
 CAPACIDADES (TUS LIBERTADES ABSOLUTAS):
-✅ CREAR: Generar flujos completos desde cero con carriles, nodos y conexiones.
-✅ AGREGAR: Añadir nodos, carriles o aristas al flujo existente sin destruir lo que ya hay.
-✅ ELIMINAR: Borrar nodos y automáticamente limpiar sus aristas huérfanas.
-✅ MODIFICAR: Renombrar nodos, cambiar tipos, actualizar formularios, reubicar.
-✅ CONECTAR: Crear aristas entre nodos existentes.
-✅ REORGANIZAR: Redistribuir nodos para que no se sobrepongan.
-✅ ANALIZAR: Detectar problemas estructurales y sugerir mejoras.
+ CREAR: Generar flujos completos desde cero con carriles, nodos y conexiones.
+  AGREGAR: Añadir nodos, carriles o aristas al flujo existente sin destruir lo que ya hay.
+  ELIMINAR: Borrar nodos y automáticamente limpiar sus aristas huérfanas.
+  MODIFICAR: Renombrar nodos, cambiar tipos, actualizar formularios, reubicar.
+  CONECTAR: Crear aristas entre nodos existentes.
+  REORGANIZAR: Redistribuir nodos para que no se sobrepongan.
+  ANALIZAR: Detectar problemas estructurales y sugerir mejoras.
 
 ═══════════════════════════════════════════════════════════════
 REGLAS DE DISEÑO DE FLUJOS DE NEGOCIO (CREATIVIDAD OBLIGATORIA):
@@ -162,10 +156,9 @@ Correcciones que debes aplicar:
 Devuelve ÚNICAMENTE el JSON completo corregido con "carriles", "nodos" y "aristas". Sin texto adicional.
 """
 
-# ===========================================================================
-# POST-PROCESADOR: Sanitizador de coordenadas y IDs
-# Capa de seguridad por si la IA genera posiciones o IDs incorrectos
-# ===========================================================================
+#  POST-PROCESADOR: Sanitizador de coordenadas y IDs
+#  Capa de seguridad por si la IA genera posiciones o IDs incorrectos
+
 def sanitizar_resultado(resultado: dict) -> dict:
     """
     Post-procesador completo:
@@ -181,7 +174,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
     nodos_raw    = resultado.get("nodos", [])
     aristas_raw  = resultado.get("aristas", [])
 
-    # ─── 1. NORMALIZAR CARRILES ───────────────────────────────────────────────
+    #  NORMALIZAR CARRILES 
     carriles = []
     lane_ids = set()
     for i, c in enumerate(carriles_raw):
@@ -200,7 +193,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
         carriles = [{"id": "lane-1", "nombre": "Principal", "orden": 1}]
         lane_ids = {"lane-1"}
 
-    # ─── 2. NORMALIZAR NODOS ──────────────────────────────────────────────────
+    #  NORMALIZAR NODOS 
     ALTO_CARRIL = 250
     HEADER_X    = 100   # Mínimo X para no tapar cabeceras (80px + 20px margen)
 
@@ -254,13 +247,13 @@ def sanitizar_resultado(resultado: dict) -> dict:
             y += 25
         posiciones_usadas.add((x, y))
 
-        # — Carril —
+        #  Carril 
         carril_id = str(n.get("carrilId") or n.get("carril_id") or "").strip()
         if not carril_id or carril_id not in lane_ids:
             # Asignar al primer carril disponible
             carril_id = carriles[0]["id"]
 
-        # — Formulario —
+        #  Formulario 
         esquema_raw = n.get("esquemaFormulario") or n.get("esquema_formulario") or n.get("formulario") or []
         esquema = []
         for campo in esquema_raw:
@@ -272,10 +265,10 @@ def sanitizar_resultado(resultado: dict) -> dict:
                     "opciones":  campo.get("opciones") or campo.get("options") or None
                 })
 
-        # — Nombre —
+        #  Nombre 
         nombre = str(n.get("nombre") or n.get("name") or n.get("label") or tipo.capitalize())
 
-        # — Construir nodo en el formato exacto de Angular —
+        #  Construir nodo en el formato exacto de Angular 
         nodo_normalizado = {
             "idNodo":          raw_id,
             "tipo":            tipo,
@@ -292,7 +285,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
 
         nodos.append(nodo_normalizado)
 
-    # ─── 3. NORMALIZAR ARISTAS ────────────────────────────────────────────────
+    #  NORMALIZAR ARISTAS 
     edge_ids = set()
     aristas = []
     for i, a in enumerate(aristas_raw):
@@ -301,7 +294,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
 
         # Eliminar aristas huérfanas
         if origen not in node_ids or destino not in node_ids:
-            print(f"⚠️  Arista huérfana descartada: '{origen}' → '{destino}'")
+            print(f"  Arista huérfana descartada: '{origen}' → '{destino}'")
             continue
 
         edge_id = str(a.get("id") or a.get("_id") or "").strip()
@@ -317,13 +310,11 @@ def sanitizar_resultado(resultado: dict) -> dict:
         }
         aristas.append(arista)
 
-    print(f"✅ Schema normalizado: {len(carriles)} carriles | {len(nodos)} nodos | {len(aristas)} aristas")
+    print(f" Schema normalizado: {len(carriles)} carriles | {len(nodos)} nodos | {len(aristas)} aristas")
     return {"carriles": carriles, "nodos": nodos, "aristas": aristas}
 
 
-# ===========================================================================
-# ENDPOINTS
-# ===========================================================================
+# endpoints
 
 @router.post("/recommend", response_model=IAResponse)
 async def recommend_flow(canvas: CanvasData):
@@ -342,7 +333,7 @@ async def recommend_flow(canvas: CanvasData):
         
         result_dict = json.loads(response.choices[0].message.content)
         
-        # Blindar: asegurar que sugerencias sea lista de strings
+        #  asegurar que sugerencias sea lista de strings
         raw_sugerencias = result_dict.get("sugerencias", [])
         clean_sugerencias = []
         for s in raw_sugerencias:
@@ -356,7 +347,7 @@ async def recommend_flow(canvas: CanvasData):
         return IAResponse(**result_dict)
         
     except Exception as e:
-        print(f"🔥 ERROR EN RECOMMEND: {str(e)}")
+        print(f" ERROR EN RECOMMEND: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -377,7 +368,7 @@ async def fix_flow(canvas: CanvasData):
         resultado = json.loads(response.choices[0].message.content)
         return sanitizar_resultado(resultado)
     except Exception as e:
-        print(f"🔥 ERROR EN FIX: {str(e)}")
+        print(f" ERROR EN FIX: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -397,9 +388,9 @@ async def chat_canvas(request: CanvasChatRequest):
         canvas_vacio = num_nodos == 0
         
         if canvas_vacio:
-            contexto_adicional = "\n\n⚠️ CONTEXTO: El canvas está VACÍO. Debes crear el flujo completo desde cero basándote en la orden del usuario."
+            contexto_adicional = "\n\n CONTEXTO: El canvas está VACÍO. Debes crear el flujo completo desde cero basándote en la orden del usuario."
         else:
-            contexto_adicional = f"\n\n⚠️ CONTEXTO: El canvas YA TIENE {num_nodos} nodos en {num_carriles} carril(es). PRESERVA todo lo existente y aplica SOLO los cambios que el usuario pide."
+            contexto_adicional = f"\n\n CONTEXTO: El canvas YA TIENE {num_nodos} nodos en {num_carriles} carril(es). PRESERVA todo lo existente y aplica SOLO los cambios que el usuario pide."
         
         response = client.chat.completions.create(
             model=AI_MODEL,
@@ -423,9 +414,9 @@ async def chat_canvas(request: CanvasChatRequest):
         # Aplicar post-procesador para garantizar integridad
         resultado_final = sanitizar_resultado(resultado_raw)
         
-        print(f"✅ Chat IA procesado: {len(resultado_final.get('nodos', []))} nodos, {len(resultado_final.get('aristas', []))} aristas")
+        print(f" Chat IA procesado: {len(resultado_final.get('nodos', []))} nodos, {len(resultado_final.get('aristas', []))} aristas")
         return resultado_final
         
     except Exception as e:
-        print(f"🔥 ERROR FATAL EN CHAT: {str(e)}")
+        print(f" ERROR FATAL EN CHAT: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error en Copiloto IA: {str(e)}")
