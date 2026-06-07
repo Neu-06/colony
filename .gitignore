@@ -1,4 +1,6 @@
-# 1. SECRETOS Y CREDENCIALES
+
+# SECRETOS Y CREDENCIALES 
+
 .env
 .env.*
 !.env.example
@@ -6,38 +8,81 @@
 *-adminsdk-*.json
 *.pem
 *.key
+*.jks
+*.keystore
+*.p12
+key.properties
 secrets/
 
-# 2. APP MOVIL
-colony_app/
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+**/macos/Runner/GoogleService-Info.plist
+**/lib/firebase_options.dart
 
-# 3. JAVA - SPRING BOOT
+
+# APP MÓVIL 
+
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+**/android/.gradle/
+**/ios/Pods/
+**/ios/.symlinks/
+
+# JAVA - SPRING BOOT 
+
 target/
 *.class
 *.jar
 *.war
 logs/
 *.log
-# -> (Git subirá 'src/main/resources' automáticamente, está bien)
+.mvn/wrapper/maven-wrapper.jar
 
-# 4. PYTHON - FASTAPI (Ignoramos entornos virtuales y caché)
+.project
+.classpath
+.settings/
+.springBeans
+
+
+# PYTHON - FASTAPI 
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
 env/
 .venv/
+.pytest_cache/
+.coverage
+pip-log.txt
 
 
-# 5. ANGULAR (Ignoramos librerías pesadas, dejamos environments)
+# ANGULAR 
 node_modules/
 dist/
 .angular/
-npm-debug.log
+coverage/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
 
 
- ARCHIVOS DE SISTEMA E IDEs 
+# ARCHIVOS DE SISTEMA E IDEs
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
