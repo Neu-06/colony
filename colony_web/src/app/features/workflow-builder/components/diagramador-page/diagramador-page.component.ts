@@ -315,9 +315,20 @@ export class DiagramadorPageComponent implements AfterViewInit {
     const aristasLienzo = this.jsplumb.obtenerAristasDesdeLienzo();
     const politica = this.estado.toPoliticaNegocio(this.flowName, 'BORRADOR');
     
+    const aristasFusionadas = politica.aristas.map(ar => {
+      const arLienzo = aristasLienzo.find(al => al.origenNodoId === ar.origenNodoId && al.destinoNodoId === ar.destinoNodoId);
+      return {
+        ...ar,
+        salidaOrigenId: arLienzo?.salidaOrigenId || ar.salidaOrigenId,
+        entradaDestinoId: arLienzo?.entradaDestinoId || ar.entradaDestinoId,
+        etiqueta: ar.etiqueta || arLienzo?.etiqueta,
+        condicion: ar.condicion || arLienzo?.condicion
+      };
+    });
+    
     const payload = {
       ...politica,
-      aristas: aristasLienzo.length > 0 ? aristasLienzo : politica.aristas
+      aristas: aristasFusionadas
     };
 
     this.politicaService.guardarPolitica(payload).subscribe({
@@ -502,12 +513,23 @@ export class DiagramadorPageComponent implements AfterViewInit {
     const aristasLienzo = this.jsplumb.obtenerAristasDesdeLienzo();
     const politica = this.estado.toPoliticaNegocio(this.flowName, estado);
     
+    const aristasFusionadas = politica.aristas.map(ar => {
+      const arLienzo = aristasLienzo.find(al => al.origenNodoId === ar.origenNodoId && al.destinoNodoId === ar.destinoNodoId);
+      return {
+        ...ar,
+        salidaOrigenId: arLienzo?.salidaOrigenId || ar.salidaOrigenId,
+        entradaDestinoId: arLienzo?.entradaDestinoId || ar.entradaDestinoId,
+        etiqueta: ar.etiqueta || arLienzo?.etiqueta,
+        condicion: ar.condicion || arLienzo?.condicion
+      };
+    });
+
     const payload = {
       ...politica,
       nombre: politica.nombre,
       carriles: politica.carriles ?? [],
       nodos: politica.nodos ?? [],
-      aristas: aristasLienzo // FORZAR lectura de jsPlumb antes de enviar al backend
+      aristas: aristasFusionadas
     };
 
     if (incrementarVersion) {

@@ -96,62 +96,6 @@ export class LienzoCarrilesComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.jsplumb.inicializar(this.jsplumbContainerRef.nativeElement, {
       onConnection: (origenNodoId, destinoNodoId, connection) => {
-        const nodoOrigen = this.nodos().find((n) => n.idNodo === origenNodoId);
-        const esCompuertaCondicional = nodoOrigen && (nodoOrigen.tipo === 'compuerta' || nodoOrigen.tipo === 'gateway' || nodoOrigen.tipo === 'salida_condicional');
-
-        if (esCompuertaCondicional) {
-          void Swal.fire({
-            title: 'Condición de la Decisión',
-            text: 'Esta arista sale de una compuerta. Define su condición exacta:',
-            icon: 'question',
-            input: 'select',
-            inputOptions: {
-              'Aceptado': 'Aceptado',
-              'Rechazado': 'Rechazado'
-            },
-            inputPlaceholder: 'Selecciona una opción',
-            showCancelButton: true,
-            confirmButtonText: 'Guardar Conexión',
-            cancelButtonText: 'Cancelar',
-            allowOutsideClick: false,
-            inputValidator: (value) => {
-              if (!value) {
-                return '¡Debes seleccionar una opción estricta!';
-              }
-              return null;
-            }
-                    }).then((result) => {
-            if (result.isConfirmed && result.value) {
-              const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
-              if (creada) {
-                // 1. Configuración local de jsPlumb (Overlay visual)
-                connection.setParameter('condicion', result.value);
-                connection.setParameter('etiqueta', `[${result.value}]`);
-                connection.addOverlay(["Label", { 
-                  label: result.value, 
-                  location: 0.5, 
-                  id: "condicion-label",
-                  cssClass: "bg-white p-1 text-xs border rounded text-blue-600" 
-                }]);
-
-                // 2. FORZAR SINCRONIZACIÓN Y BROADCAST (PASO ÚNICO)
-                this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, result.value);
-                this.estado.actualizarEtiquetaArista(origenNodoId, destinoNodoId, `[${result.value}]`);
-                
-                // Actualizar el modelo local extrayendo datos frescos del lienzo
-                const aristasActualizadas = this.jsplumb.obtenerAristasDesdeLienzo();
-                this.estado.setAristas(aristasActualizadas); 
-                
-                // Emitir cambio para que el componente padre realice el broadcast inmediato
-                this.diagramChanged.emit(); 
-              }
-            }
-            this.scheduleBoardSync();
-          });
-
-          return;
-        }
-
         const creada = this.estado.conectarNodos(origenNodoId, destinoNodoId);
         if (creada) {
           this.estado.actualizarCondicionArista(origenNodoId, destinoNodoId, '');
