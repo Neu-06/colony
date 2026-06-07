@@ -127,8 +127,8 @@ export class AtencionTramiteComponent implements OnInit {
       return;
     }
 
-    const nuevosDocsCount = this.repositorioComponent ? this.repositorioComponent.documentosSesionIds().size : 0;
-    if (this.documentosRequeridos.length > 0 && nuevosDocsCount < this.documentosRequeridos.length) {
+    const totalDocsCount = this.repositorioComponent ? this.repositorioComponent.documentos().length : 0;
+    if (this.documentosRequeridos.length > 0 && totalDocsCount < this.documentosRequeridos.length) {
       this.alertaService.mostrarError(`Faltan documentos requeridos. Por favor, asegúrate de adjuntar al menos ${this.documentosRequeridos.length} documento(s) en esta etapa.`);
       return;
     }

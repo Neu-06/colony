@@ -96,7 +96,10 @@ public class DocumentoService {
             String usuarioId,
             String usuarioNombre) {
         Instancia instancia = obtenerOError(instanciaId);
-        DocumentoRef ref = buscarDocumento(instanciaId, documentoId);
+        DocumentoRef ref = instancia.getDocumentosAdjuntos().stream()
+                .filter(d -> d.getDocumentoId().equals(documentoId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Documento no encontrado"));
 
         storagePort.delete(ref.getS3Key());
 
@@ -196,8 +199,8 @@ public class DocumentoService {
                 + "/onlyoffice-callback";
 
         // Key única por documento (OnlyOffice cachea por key; cambiar key fuerza
-        // recarga)
-        String key = documentoId + "_" + ref.getFechaSubida().getTime();
+        // recarga). Usamos el s3Key porque este cambia en cada guardado.
+        String key = documentoId + "_" + (ref.getS3Key() != null ? Math.abs(ref.getS3Key().hashCode()) : ref.getFechaSubida().getTime());
 
         OnlyOfficeConfigDto dto = new OnlyOfficeConfigDto();
         dto.setDocumentServerUrl(onlyOfficeServerUrl);
@@ -247,9 +250,12 @@ public class DocumentoService {
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(downloadUrl)).GET().build();
             byte[] data = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
 
-            // Buscar el documento actual
+            // Buscar el documento actual en la MISMA instancia que vamos a guardar
             Instancia instancia = obtenerOError(instanciaId);
-            DocumentoRef ref = buscarDocumento(instanciaId, documentoId);
+            DocumentoRef ref = instancia.getDocumentosAdjuntos().stream()
+                    .filter(d -> d.getDocumentoId().equals(documentoId))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Documento no encontrado"));
 
             // Eliminar el archivo antiguo de S3
             try {
