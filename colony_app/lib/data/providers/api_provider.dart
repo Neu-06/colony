@@ -7,11 +7,7 @@ import '../../domain/models/instancia_tracking.dart';
 class ApiProvider {
   const ApiProvider();
 
-  // --- Usa esta si pruebas en el EMULADOR de Android Studio ---
-  static const String _baseUrl = 'http://10.0.2.2:8080';
-  
-  // --- Usa esta si pruebas con tu CELULAR FISICO conectado al mismo WiFi ---
-  // static const String _baseUrl = 'http://192.168.1.X:8080'; // <- Reemplaza por la IP local de tu PC
+  static const String _baseUrl = 'http://192.168.1.113:8080';
 
   Future<InstanciaTracking> fetchTrackingByCode(String codigo) async {
     final uri = Uri.parse('$_baseUrl/api/rastreo/$codigo');

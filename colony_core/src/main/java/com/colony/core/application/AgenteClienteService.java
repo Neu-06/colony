@@ -3,8 +3,9 @@ package com.colony.core.application;
 import com.colony.core.application.dto.IniciarInstanciaRequest;
 import com.colony.core.application.dto.IniciarInstanciaResponse;
 import com.colony.core.application.ports.AiClientePort;
+import com.colony.core.domain.Arista;
 import com.colony.core.domain.NodoActividad;
-//import com.colony.core.domain.NodoBase;
+import com.colony.core.domain.NodoBase;
 import com.colony.core.domain.PoliticaNegocio;
 import com.colony.core.infrastructure.repository.PoliticaNegocioRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,11 @@ public class AgenteClienteService {
     private final PoliticaNegocioRepository politicaRepository;
     private final AiClientePort aiClientePort;
     private final MotorInstanciaService motorInstanciaService;
+
+    public List<Map<String, Object>> obtenerFlujosPublicados() {
+        List<PoliticaNegocio> publicadas = politicaRepository.findByEstadoOrderByFechaCreacionDesc("PUBLICADA");
+        return construirContextoFlujos(publicadas);
+    }
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> procesarMensajeChat(
@@ -70,8 +76,11 @@ public class AgenteClienteService {
                         ? identificadorCliente
                         : "cliente-anonimo";
 
+                Map<String, Object> datosParaInstancia = new HashMap<>(datosFusionados);
+                datosParaInstancia.remove("__flujoId__");
+
                 IniciarInstanciaRequest iniciarReq = new IniciarInstanciaRequest(
-                        flujoId, iniciadorId, datosFusionados);
+                        flujoId, iniciadorId, datosParaInstancia);
                 IniciarInstanciaResponse respuestaInstancia = motorInstanciaService.iniciar(iniciarReq);
                 instanciaId = respuestaInstancia.instanciaId();
                 codigoTramite = respuestaInstancia.codigoRastreo();
@@ -99,7 +108,7 @@ public class AgenteClienteService {
             Map<String, Object> flujoInfo = new LinkedHashMap<>();
             flujoInfo.put("flujoId", p.getId());
             flujoInfo.put("nombre", p.getNombre() != null ? p.getNombre() : "Sin nombre");
-            flujoInfo.put("descripcion", "Trámite: " + (p.getNombre() != null ? p.getNombre() : ""));
+            flujoInfo.put("descripcion", p.getNombre() != null ? p.getNombre() : "");
             flujoInfo.put("camposRequeridos", camposRequeridos);
             resultado.add(flujoInfo);
         }
@@ -107,24 +116,38 @@ public class AgenteClienteService {
     }
 
     private List<Map<String, Object>> extraerCamposInicio(PoliticaNegocio politica) {
-        if (politica.getNodos() == null)
-            return List.of();
+        if (politica.getNodos() == null || politica.getAristas() == null) return List.of();
 
-        // Buscar el primer nodo de tipo ACTIVIDAD que no sea el nodo inicio
+        String nodoInicioId = politica.getNodos().stream()
+                .filter(n -> "inicio".equalsIgnoreCase(n.getTipo()))
+                .map(NodoBase::getIdNodo)
+                .findFirst()
+                .orElse(null);
+
+        if (nodoInicioId == null) return List.of();
+
+        String primerNodoActividadId = politica.getAristas().stream()
+                .filter(a -> a.getOrigenNodoId().equals(nodoInicioId))
+                .map(Arista::getDestinoNodoId)
+                .findFirst()
+                .orElse(null);
+
+        if (primerNodoActividadId == null) return List.of();
+
+        String finalId = primerNodoActividadId;
         return politica.getNodos().stream()
-                .filter(n -> n instanceof NodoActividad)
+                .filter(n -> n.getIdNodo().equals(finalId) && n instanceof NodoActividad)
                 .map(n -> (NodoActividad) n)
                 .findFirst()
                 .map(nodo -> {
-                    if (nodo.getEsquemaFormulario() == null)
-                        return List.<Map<String, Object>>of();
+                    if (nodo.getEsquemaFormulario() == null) return List.<Map<String, Object>>of();
                     return nodo.getEsquemaFormulario().stream()
                             .map(campo -> {
                                 Map<String, Object> c = new LinkedHashMap<>();
                                 c.put("nombre", campo.getNombre());
                                 c.put("tipo", campo.getTipo() != null ? campo.getTipo() : "text");
                                 c.put("requerido", campo.isRequerido());
-                                if (campo.getOpciones() != null)
+                                if (campo.getOpciones() != null && !campo.getOpciones().isBlank())
                                     c.put("opciones", campo.getOpciones());
                                 return c;
                             })

@@ -19,7 +19,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise RuntimeError("GROQ_API_KEY no encontrada en .env")
 groq_client = Groq(api_key=GROQ_API_KEY)
-GROQ_FALLBACK_MODELS = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+GROQ_FALLBACK_MODELS = [ "llama-3.3-70b-versatile","llama-3.1-8b-instant"]
 
 # modelos pydantic
 

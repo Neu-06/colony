@@ -124,15 +124,13 @@ class _RastreoScreenState extends State<RastreoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
+    return CustomScrollView(
+      slivers: [
+        _buildAppBar(),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 100),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSearchCard(),
@@ -149,8 +147,7 @@ class _RastreoScreenState extends State<RastreoScreen> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildAppBar() {
