@@ -106,6 +106,17 @@ public class MotorInstanciaService {
                         segundoNodoId,
                         new HashMap<>());
                 avanzar(autoReq);
+            } else {
+                // Si NO hay auto-avance, publicamos el evento aquí para que la IA asigne el riesgo inicial
+                eventPublisher.publishEvent(
+                        new InstanciaAvanzadaEvent(
+                                guardada.getId(),
+                                guardada.getPoliticaId(),
+                                segundoNodoId,
+                                guardada.getDatosDinamicos(),
+                                request.usuarioIniciadorId()
+                        )
+                );
             }
         }
 

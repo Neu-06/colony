@@ -11,11 +11,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
+import java.util.HashMap;
 
 @Slf4j
 @Component
@@ -23,12 +25,15 @@ public class PrediccionEventListener {
 
     private final InstanciaRepository instanciaRepository;
     private final RestTemplate restTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
     private final String aiBaseUrl;
 
     public PrediccionEventListener(
             InstanciaRepository instanciaRepository,
+            SimpMessagingTemplate messagingTemplate,
             @Value("${app.ai.recommend-url:http://localhost:8000/api/v1/recommend}") String recommendUrl) {
         this.instanciaRepository = instanciaRepository;
+        this.messagingTemplate = messagingTemplate;
         this.restTemplate = new RestTemplate();
         this.aiBaseUrl = recommendUrl.replaceAll("/api/v1/.*$", "");
     }
@@ -78,6 +83,21 @@ public class PrediccionEventListener {
                     instanciaRepository.save(inst);
                     log.info("[PrediccionEvent] Instancia {} actualizada: Riesgo={}, Prioridad={}, Anomalía={}",
                             inst.getId(), riesgo, prioridad, anomalia);
+                            
+                    // BROADCAST WebSocket al frontend para actualizar vistas en vivo
+                    try {
+                        Map<String, Object> updateMsg = new HashMap<>();
+                        updateMsg.put("instanciaId", inst.getId());
+                        updateMsg.put("scoreRiesgo", inst.getScoreRiesgo());
+                        updateMsg.put("prioridadAnalitica", inst.getPrioridadAnalitica());
+                        updateMsg.put("anomaliaDetectada", inst.getAnomaliaDetectada());
+                        updateMsg.put("semaforo", inst.getSemaforo());
+                        
+                        messagingTemplate.convertAndSend("/topic/ai-updates", updateMsg);
+                        log.info("[PrediccionEvent] Broadcast enviado a /topic/ai-updates");
+                    } catch (Exception ex) {
+                        log.warn("[PrediccionEvent] Falló el broadcast de AI Updates: {}", ex.getMessage());
+                    }
                 });
             }
         } catch (Exception e) {

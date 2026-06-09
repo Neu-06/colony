@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertaService } from '../../core/services/alerta.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BandejaItemDto, BandejaService } from '../../core/services/bandeja.service';
 import { CopilotoFuncionarioComponent } from './ai-copiloto-funcionario/copiloto-funcionario.component';
 import { TareaItemAI } from './ai-copiloto-funcionario/funcionario-ai.service';
+import { Client } from '@stomp/stompjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-bandeja-tareas',
@@ -13,7 +15,7 @@ import { TareaItemAI } from './ai-copiloto-funcionario/funcionario-ai.service';
   imports: [CommonModule, CopilotoFuncionarioComponent],
   templateUrl: './bandeja-tareas.component.html'
 })
-export class BandejaTareasComponent implements OnInit {
+export class BandejaTareasComponent implements OnInit, OnDestroy {
   private readonly bandejaService = inject(BandejaService);
   private readonly authService = inject(AuthService);
   private readonly alertaService = inject(AlertaService);
@@ -23,6 +25,8 @@ export class BandejaTareasComponent implements OnInit {
   isLoading = false;
   openingId: string | null = null;
   errorMessage = '';
+  
+  private stompClient: Client | null = null;
 
   get tareasParaAI(): TareaItemAI[] {
     return this.tareas.map(t => ({
@@ -44,6 +48,39 @@ export class BandejaTareasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarBandeja();
+    this.conectarWebSocket();
+  }
+
+  ngOnDestroy(): void {
+    this.stompClient?.deactivate();
+  }
+
+  conectarWebSocket(): void {
+    const wsUrl = environment.aiBaseUrl || 'ws://localhost:8080/ws';
+    this.stompClient = new Client({
+      brokerURL: wsUrl,
+      reconnectDelay: 5000,
+      onConnect: () => {
+        this.stompClient?.subscribe('/topic/ai-updates', (message) => {
+          try {
+            const aiData = JSON.parse(message.body);
+            // Mutación optimista: actualizar las tarjetas en vivo
+            const tareaIdx = this.tareas.findIndex(t => t.instanciaId === aiData.instanciaId);
+            if (tareaIdx !== -1) {
+              this.tareas[tareaIdx] = {
+                ...this.tareas[tareaIdx],
+                scoreRiesgo: aiData.scoreRiesgo,
+                prioridadAnalitica: aiData.prioridadAnalitica,
+                semaforo: aiData.semaforo || this.tareas[tareaIdx].semaforo
+              };
+            }
+          } catch (error) {
+            console.error('Error parseando AI update:', error);
+          }
+        });
+      }
+    });
+    this.stompClient.activate();
   }
 
   cargarBandeja(): void {
