@@ -11,11 +11,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @Document(collection = "historial")
 @CompoundIndex(name = "idx_instancia_fecha", def = "{'instanciaID': 1, 'fechaIngreso': -1}")
+@CompoundIndex(name = "idx_politica_nodo", def = "{'politicaId': 1, 'nodoDestino': 1}")
 public class Historial {
 
     @Id
     private String id;
     private String instanciaID;
+    private String politicaId;
     private String nodoOrigen;
     private String nodoDestino;
     private String ejecutadoPor;

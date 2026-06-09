@@ -14,4 +14,6 @@ public interface InstanciaRepository extends MongoRepository<Instancia, String> 
     long countByEstadoGeneral(String estadoGeneral);
 
     Optional<Instancia> findByCodigo(String codigo);
+
+    List<Instancia> findByAnomaliaDetectadaTrueOrScoreRiesgoGreaterThanEqualOrderByScoreRiesgoDesc(Double scoreRiesgo);
 }

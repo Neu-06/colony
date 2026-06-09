@@ -27,6 +27,10 @@ public class Instancia {
 
     // Campo legado para compatibilidad con datos antiguos.
     private String semaforo;
+    private Integer prioridadAnalitica = 0;
+    private Double scoreRiesgo;
+    private Boolean anomaliaDetectada = false;
+    
     private Map<String, Object> datosDinamicos;
     private List<Observacion> observaciones;
     private Date fechaInicio;

@@ -80,6 +80,7 @@ public class MotorInstanciaService {
 
         Historial historial = new Historial();
         historial.setInstanciaID(guardada.getId());
+        historial.setPoliticaId(politica.getId());
         historial.setNodoOrigen(nodoInicio.getIdNodo());
         historial.setNodoDestino(segundoNodoId);
         historial.setEjecutadoPor(request.usuarioIniciadorId());
@@ -269,6 +270,7 @@ public class MotorInstanciaService {
                         log.info("JOIN esperando ramas: {}/{}", llegadasAlJoin + 1, aristasEntrada);
                         Historial hSync = new Historial();
                         hSync.setInstanciaID(instancia.getId());
+                        hSync.setPoliticaId(politica.getId());
                         hSync.setNodoOrigen(nodoActualId);
                         hSync.setNodoDestino(sigId);
                         hSync.setFechaIngreso(new Date());
@@ -305,6 +307,7 @@ public class MotorInstanciaService {
                     instancia.getNodosActualesIds().add(sigId);
                     Historial nuevoHist = new Historial();
                     nuevoHist.setInstanciaID(instancia.getId());
+                    nuevoHist.setPoliticaId(politica.getId());
                     nuevoHist.setNodoOrigen(nodoActualId);
                     nuevoHist.setNodoDestino(sigId);
                     nuevoHist.setFechaIngreso(new Date());
@@ -315,6 +318,7 @@ public class MotorInstanciaService {
                     // Registrar fin en el historial para el Join si fuera necesario
                     Historial hFin = new Historial();
                     hFin.setInstanciaID(instancia.getId());
+                    hFin.setPoliticaId(politica.getId());
                     hFin.setNodoOrigen(nodoActualId);
                     hFin.setNodoDestino(sigId);
                     hFin.setFechaIngreso(new Date());
@@ -338,7 +342,14 @@ public class MotorInstanciaService {
 
             // informa de manera asincrona el avance de la instancia
             eventPublisher.publishEvent(
-                    new InstanciaAvanzadaEvent(guardada.getId(), guardada.getPoliticaId(), nodoActualId));
+                    new InstanciaAvanzadaEvent(
+                            guardada.getId(), 
+                            guardada.getPoliticaId(), 
+                            nodoActualId, 
+                            guardada.getDatosDinamicos(), 
+                            request.usuarioId()
+                    )
+            );
 
             // BROADCAST WebSocket al dashboard de monitoreo
             try {

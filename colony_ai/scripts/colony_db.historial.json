@@ -1,0 +1,280 @@
+[{
+  "_id": {
+    "$oid": "6a26daebc790df73570038f1"
+  },
+  "instanciaID": "6a26daebc790df73570038f0",
+  "politicaId": "6a2474ba0a4dbb4b8b709d88",
+  "nodoOrigen": "inicio-1",
+  "nodoDestino": "tarea-3",
+  "ejecutadoPor": "6a246f540a4dbb4b8b709d80",
+  "accionTomada": "AVANZAR",
+  "fechaTransicion": {
+    "$date": "2026-06-08T15:08:27.772Z"
+  },
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:08:27.772Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:12:19.049Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26db09c790df73570038f4"
+  },
+  "instanciaID": "6a26db09c790df73570038f3",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "nodoOrigen": "inicio-1",
+  "nodoDestino": "fork-3",
+  "ejecutadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "accionTomada": "AVANZAR",
+  "fechaTransicion": {
+    "$date": "2026-06-08T15:08:57.648Z"
+  },
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:08:57.648Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:08:58.182Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26db0ac790df73570038f5"
+  },
+  "instanciaID": "6a26db09c790df73570038f3",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "nodoOrigen": "fork-3",
+  "nodoDestino": "tarea-4",
+  "ejecutadoPor": "6a246f540a4dbb4b8b709d80",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:08:58.322Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:16:34.513Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26db0ac790df73570038f6"
+  },
+  "instanciaID": "6a26db09c790df73570038f3",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "nodoOrigen": "fork-3",
+  "nodoDestino": "tarea-5",
+  "ejecutadoPor": "6a246f7b0a4dbb4b8b709d82",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:08:58.459Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:17:04.790Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26db3bc790df73570038f9"
+  },
+  "instanciaID": "6a26db3bc790df73570038f8",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "inicio-1",
+  "nodoDestino": "tarea-3",
+  "ejecutadoPor": "6a246f540a4dbb4b8b709d80",
+  "accionTomada": "AVANZAR",
+  "fechaTransicion": {
+    "$date": "2026-06-08T15:09:47.454Z"
+  },
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:09:47.454Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:12:40.452Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26db8cc790df73570038fc"
+  },
+  "instanciaID": "6a26db8cc790df73570038fb",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "inicio-1",
+  "nodoDestino": "tarea-3",
+  "ejecutadoPor": "6a246f540a4dbb4b8b709d80",
+  "accionTomada": "AVANZAR",
+  "fechaTransicion": {
+    "$date": "2026-06-08T15:11:08.806Z"
+  },
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:11:08.806Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:12:57.877Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dbd3c790df7357003902"
+  },
+  "instanciaID": "6a26daebc790df73570038f0",
+  "politicaId": "6a2474ba0a4dbb4b8b709d88",
+  "nodoOrigen": "tarea-3",
+  "nodoDestino": "tarea-4",
+  "ejecutadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:12:19.193Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:18:36.876Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dbe8c790df7357003903"
+  },
+  "instanciaID": "6a26db3bc790df73570038f8",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "tarea-3",
+  "nodoDestino": "tarea-7",
+  "ejecutadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:12:40.587Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:18:50.394Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dbfac790df7357003904"
+  },
+  "instanciaID": "6a26db8cc790df73570038fb",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "tarea-3",
+  "nodoDestino": "tarea-5",
+  "ejecutadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:12:58.008Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:18:56.499Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dcd2c790df735700390d"
+  },
+  "instanciaID": "6a26db09c790df73570038f3",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "nodoOrigen": "tarea-4",
+  "nodoDestino": "join-7",
+  "accionTomada": "SYNC_WAIT",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:16:34.781Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dcf1c790df7357003911"
+  },
+  "instanciaID": "6a26db09c790df73570038f3",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "nodoOrigen": "tarea-5",
+  "nodoDestino": "tarea-6",
+  "ejecutadoPor": "6a246f620a4dbb4b8b709d81",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:17:05.073Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:22:29.578Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dd4dc790df7357003913"
+  },
+  "instanciaID": "6a26daebc790df73570038f0",
+  "politicaId": "6a2474ba0a4dbb4b8b709d88",
+  "nodoOrigen": "tarea-4",
+  "nodoDestino": "fin-5",
+  "accionTomada": "FIN",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:18:37.009Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dd5ac790df7357003914"
+  },
+  "instanciaID": "6a26db3bc790df73570038f8",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "tarea-7",
+  "nodoDestino": "tarea-8",
+  "ejecutadoPor": "6a246f620a4dbb4b8b709d81",
+  "accionTomada": "AVANZAR",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:18:50.523Z"
+  },
+  "fechaFinAtencion": {
+    "$date": "2026-06-08T15:19:38.882Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dd60c790df7357003915"
+  },
+  "instanciaID": "6a26db8cc790df73570038fb",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "tarea-5",
+  "nodoDestino": "fin-6",
+  "accionTomada": "FIN",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:18:56.622Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26dd8bc790df7357003917"
+  },
+  "instanciaID": "6a26db3bc790df73570038f8",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "nodoOrigen": "tarea-8",
+  "nodoDestino": "fin-6",
+  "accionTomada": "FIN",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:19:39.011Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+},
+{
+  "_id": {
+    "$oid": "6a26de35c790df735700391a"
+  },
+  "instanciaID": "6a26db09c790df73570038f3",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "nodoOrigen": "tarea-6",
+  "nodoDestino": "fin-8",
+  "accionTomada": "FIN",
+  "fechaIngreso": {
+    "$date": "2026-06-08T15:22:29.722Z"
+  },
+  "_class": "com.colony.core.domain.Historial"
+}]

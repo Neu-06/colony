@@ -1,8 +1,11 @@
 package com.colony.core.application.events;
 
-public record InstanciaAvanzadaEvent(
+import java.util.Map;
 
-        String instanciaId,
-        String politicaId,
-        String nodoOrigenId) {
-}
+public record InstanciaAvanzadaEvent(
+    String instanciaId,
+    String politicaId,
+    String nodoActualId,
+    Map<String, Object> datosDinamicos,
+    String usuarioEjecutor
+) {}

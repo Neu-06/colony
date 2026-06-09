@@ -12,6 +12,8 @@ export interface KpiGeneralDTO {
 
 export interface MetricaRendimientoDTO {
   identificador: string;
+  nombrePolitica?: string;
+  tipoNodo?: string;
   tiempoPromedioSegundos: number;
   cantidadTramites: number;
 }
@@ -33,5 +35,9 @@ export class MetricasService {
 
   getCuellosBotella(): Observable<MetricaRendimientoDTO[]> {
     return this.http.get<MetricaRendimientoDTO[]>(`${this.apiUrl}/cuellos-botella`);
+  }
+
+  getAnomalias(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/anomalias`);
   }
 }

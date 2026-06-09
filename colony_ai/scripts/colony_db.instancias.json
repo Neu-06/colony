@@ -1,0 +1,240 @@
+[{
+  "_id": {
+    "$oid": "6a26daebc790df73570038f0"
+  },
+  "codigo": "TRM-59FA4F9F",
+  "politicaId": "6a2474ba0a4dbb4b8b709d88",
+  "iniciadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "estadoGeneral": "FINALIZADO",
+  "nodosActualesIds": [],
+  "semaforo": "VERDE",
+  "prioridadAnalitica": 1,
+  "scoreRiesgo": 0.2,
+  "anomaliaDetectada": false,
+  "datosDinamicos": {
+    "notas finales": "aceptable",
+    "Nombre Cliente": "jorge",
+    "motivo reclamo": "retraso en el tramite",
+    "devolver dinero": true,
+    "satisfaccion 1- 10": 9
+  },
+  "fechaInicio": {
+    "$date": "2026-06-08T15:08:27.596Z"
+  },
+  "fechaFin": {
+    "$date": "2026-06-08T15:18:37.144Z"
+  },
+  "documentosAdjuntos": [
+    {
+      "documentoId": "10e775cb-2058-40e8-bfcf-e685c438a6f1",
+      "nombre": "factura.jpg",
+      "tipoMime": "image/jpeg",
+      "s3Key": "instancias/6a26daebc790df73570038f0/6457ff17-c77d-4856-9368-3943da4d3512_factura.jpg",
+      "subidoPor": "funcionario@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:08:29.958Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "42856"
+      }
+    },
+    {
+      "documentoId": "42bc90df-5845-4938-a084-e95a82385d47",
+      "nombre": "Contrato.docx",
+      "tipoMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "s3Key": "instancias/6a26daebc790df73570038f0/8d50dbd2-33b8-4035-860c-bd7963cdc0d7_Contrato.docx",
+      "subidoPor": "funcionario1@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:12:14.707Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "29603"
+      }
+    }
+  ],
+  "_class": "com.colony.core.domain.Instancia"
+},
+{
+  "_id": {
+    "$oid": "6a26db09c790df73570038f3"
+  },
+  "codigo": "TRM-2AFD62DB",
+  "politicaId": "6a24881b0a4dbb4b8b709d8c",
+  "iniciadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "estadoGeneral": "FINALIZADO",
+  "nodosActualesIds": [],
+  "semaforo": "VERDE",
+  "prioridadAnalitica": 1,
+  "scoreRiesgo": 0.2,
+  "anomaliaDetectada": false,
+  "datosDinamicos": {
+    "nombre cliente": "jose",
+    "telefono": "7818373342",
+    "cantidad de paneles": 76,
+    "codigo de tramite": "7auajd7",
+    "dias totales": 7
+  },
+  "fechaInicio": {
+    "$date": "2026-06-08T15:08:57.511Z"
+  },
+  "fechaFin": {
+    "$date": "2026-06-08T15:22:29.857Z"
+  },
+  "documentosAdjuntos": [
+    {
+      "documentoId": "58be8869-37a3-43d4-ad64-7fe65e2395f5",
+      "nombre": "factura.jpg",
+      "tipoMime": "image/jpeg",
+      "s3Key": "instancias/6a26db09c790df73570038f3/1a4d0221-207e-4d7c-9ab1-2a24d48fb56a_factura.jpg",
+      "subidoPor": "funcionario@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:08:59.969Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "42856"
+      }
+    },
+    {
+      "documentoId": "70245139-56d0-4581-8a9a-0466c4dd5013",
+      "nombre": "Hoja.xlsx",
+      "tipoMime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "s3Key": "instancias/6a26db09c790df73570038f3/ddebf61a-f8f8-46c6-8643-a08b307a9992_Hoja.xlsx",
+      "subidoPor": "funcionario3@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:16:04.541Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "8559"
+      }
+    },
+    {
+      "documentoId": "79d456b3-820a-41c3-a6f2-b07c50d3d762",
+      "nombre": "Contrato.docx",
+      "tipoMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "s3Key": "instancias/6a26db09c790df73570038f3/9c1b824f-9507-4bba-a8d1-7331d33b844c_Contrato.docx",
+      "subidoPor": "funcionario1@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:22:33.073Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "29819"
+      }
+    },
+    {
+      "documentoId": "0e8fb72c-eb1b-4083-99a1-236b5e3dbe09",
+      "nombre": "plano.jpg",
+      "tipoMime": "image/jpeg",
+      "s3Key": "instancias/6a26db09c790df73570038f3/a298fed2-336a-4156-8bb3-e358aad73a88_plano.jpg",
+      "subidoPor": "funcionario2@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:19:55.670Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "245305"
+      }
+    }
+  ],
+  "_class": "com.colony.core.domain.Instancia"
+},
+{
+  "_id": {
+    "$oid": "6a26db3bc790df73570038f8"
+  },
+  "codigo": "TRM-2E7BC8AD",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "iniciadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "estadoGeneral": "FINALIZADO",
+  "nodosActualesIds": [],
+  "semaforo": "VERDE",
+  "prioridadAnalitica": 1,
+  "scoreRiesgo": 0.2,
+  "anomaliaDetectada": false,
+  "datosDinamicos": {
+    "nombre ": "rosales",
+    "plan requerido": "50",
+    "direccion": "calle 34",
+    "telefono ": "763399023",
+    "factible": "Aceptado",
+    "fecha y hora": "2026-06-18T11:18",
+    "metros cable": 78
+  },
+  "fechaInicio": {
+    "$date": "2026-06-08T15:09:47.299Z"
+  },
+  "fechaFin": {
+    "$date": "2026-06-08T15:19:39.138Z"
+  },
+  "documentosAdjuntos": [
+    {
+      "documentoId": "dc2ee1ba-0177-4f72-98c6-296794bd7315",
+      "nombre": "factura.jpg",
+      "tipoMime": "image/jpeg",
+      "s3Key": "instancias/6a26db3bc790df73570038f8/6e74efd1-30fd-4c22-8576-68ee5f75701a_factura.jpg",
+      "subidoPor": "funcionario@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:09:48.715Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "42856"
+      }
+    },
+    {
+      "documentoId": "95f3409a-31ea-4a48-b1f0-d985cfbb718b",
+      "nombre": "plano.jpg",
+      "tipoMime": "image/jpeg",
+      "s3Key": "instancias/6a26db3bc790df73570038f8/df041db6-c630-4c5e-9eb2-1f0fd7cd12bf_plano.jpg",
+      "subidoPor": "funcionario2@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:19:35.359Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "245305"
+      }
+    }
+  ],
+  "_class": "com.colony.core.domain.Instancia"
+},
+{
+  "_id": {
+    "$oid": "6a26db8cc790df73570038fb"
+  },
+  "codigo": "TRM-53DE59F3",
+  "politicaId": "6a248d190a4dbb4b8b709d8d",
+  "iniciadoPor": "6a246f3c0a4dbb4b8b709d7f",
+  "estadoGeneral": "FINALIZADO",
+  "nodosActualesIds": [],
+  "semaforo": "VERDE",
+  "prioridadAnalitica": 1,
+  "scoreRiesgo": 0.2,
+  "anomaliaDetectada": false,
+  "datosDinamicos": {
+    "direccion": "calle sentenario",
+    "telefono ": "82772873",
+    "factible": "Rechazado",
+    "nombre ": "ana",
+    "plan requerido": "100",
+    "informado?": true
+  },
+  "fechaInicio": {
+    "$date": "2026-06-08T15:11:08.655Z"
+  },
+  "fechaFin": {
+    "$date": "2026-06-08T15:18:56.772Z"
+  },
+  "documentosAdjuntos": [
+    {
+      "documentoId": "9da46a8e-929b-4757-9492-e4aefccaa4de",
+      "nombre": "factura.jpg",
+      "tipoMime": "image/jpeg",
+      "s3Key": "instancias/6a26db8cc790df73570038fb/9351bf38-5fce-480e-bb3b-eeec7718e64f_factura.jpg",
+      "subidoPor": "funcionario@colony.dev",
+      "fechaSubida": {
+        "$date": "2026-06-08T15:11:10.123Z"
+      },
+      "tamanoBytes": {
+        "$numberLong": "42856"
+      }
+    }
+  ],
+  "_class": "com.colony.core.domain.Instancia"
+}]

@@ -6,6 +6,7 @@ import com.colony.core.infrastructure.repository.DepartamentoRepository;
 import com.colony.core.infrastructure.repository.UsuarioRepository;
 
 import com.colony.core.infrastructure.repository.InstanciaRepository;
+import com.colony.core.infrastructure.repository.PoliticaNegocioRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -28,6 +29,7 @@ public class MetricasController {
     private final MongoTemplate mongoTemplate;
     private final UsuarioRepository usuarioRepository;
     private final DepartamentoRepository departamentoRepository;
+    private final PoliticaNegocioRepository politicaNegocioRepository;
 
     @GetMapping("/general")
     public ResponseEntity<KpiGeneralDTO> getKpiGeneral() {
@@ -80,20 +82,63 @@ public class MetricasController {
 
     @GetMapping("/cuellos-botella")
     public ResponseEntity<List<MetricaRendimientoDTO>> getCuellosBotella() {
-        // Top 5 Cuellos de Botella (Promedio de resolución)
+        // Top 10 Cuellos de Botella (Promedio de resolución)
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("tiempoResolucionSegundos").gt(0)),
-                Aggregation.group("nodoDestino")
+                Aggregation.group("politicaId", "nodoDestino")
                         .avg("tiempoResolucionSegundos").as("tiempoPromedioSegundos")
                         .count().as("cantidadTramites"),
                 Aggregation.project("tiempoPromedioSegundos", "cantidadTramites")
-                        .and("_id").as("identificador"),
-                Aggregation.sort(Sort.Direction.DESC, "tiempoPromedioSegundos"),
-                Aggregation.limit(5));
+                        .and("_id.politicaId").as("nombrePolitica")
+                        .and("_id.nodoDestino").as("identificador"),
+                Aggregation.sort(Sort.Direction.DESC, "tiempoPromedioSegundos"));
 
         AggregationResults<MetricaRendimientoDTO> results = mongoTemplate.aggregate(
                 aggregation, "historial", MetricaRendimientoDTO.class);
 
-        return ResponseEntity.ok(results.getMappedResults());
+        List<MetricaRendimientoDTO> lista = results.getMappedResults();
+
+        // Mapear Nombres y Filtrar
+        java.util.List<MetricaRendimientoDTO> listaFiltrada = new java.util.ArrayList<>();
+
+        lista.forEach(item -> {
+            if (item.getNombrePolitica() != null) {
+                politicaNegocioRepository.findById(item.getNombrePolitica()).ifPresent(p -> {
+                    item.setNombrePolitica(p.getNombre());
+                    if (p.getNodos() != null) {
+                        p.getNodos().stream()
+                                .filter(n -> n.getIdNodo().equals(item.getIdentificador()))
+                                .findFirst()
+                                .ifPresent(n -> {
+                                    item.setIdentificador(n.getNombre());
+                                    item.setTipoNodo(n.getTipo());
+                                });
+                    }
+                });
+            }
+
+            // Excluir nodos que no son áreas de trabajo
+            if (item.getTipoNodo() != null &&
+                    !item.getTipoNodo().equals("inicio") &&
+                    !item.getTipoNodo().equals("fin") &&
+                    !item.getTipoNodo().equals("compuerta") &&
+                    !item.getTipoNodo().equals("join")) {
+                listaFiltrada.add(item);
+            }
+        });
+
+        // Retornar solo el Top 10 de áreas funcionales
+        java.util.List<MetricaRendimientoDTO> top10 = listaFiltrada.stream()
+                .limit(10)
+                .collect(java.util.stream.Collectors.toList());
+
+        return ResponseEntity.ok(top10);
+    }
+
+    @GetMapping("/anomalias")
+    public ResponseEntity<List<com.colony.core.domain.Instancia>> getAnomaliasYRiesgos() {
+        List<com.colony.core.domain.Instancia> anomalas = instanciaRepository
+                .findByAnomaliaDetectadaTrueOrScoreRiesgoGreaterThanEqualOrderByScoreRiesgoDesc(0.6);
+        return ResponseEntity.ok(anomalas);
     }
 }
