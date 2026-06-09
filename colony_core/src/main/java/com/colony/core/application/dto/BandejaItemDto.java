@@ -9,6 +9,9 @@ public record BandejaItemDto(
         String semaforo,
         String nombrePolitica,
         String nombreNodoActual,
-        String nodoActualId
+        String nodoActualId,
+        Double scoreRiesgo,
+        Integer prioridadAnalitica,
+        Integer tiempoEstimadoMinutos
 ) {
 }

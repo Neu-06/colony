@@ -14,9 +14,10 @@
         <thead class="bg-background text-ink-light">
           <tr>
             <th class="px-4 py-3 text-left font-semibold">Codigo de Tramite</th>
+            <th class="px-4 py-3 text-left font-semibold">Prioridad</th>
             <th class="px-4 py-3 text-left font-semibold">Trámite / Flujo</th>
             <th class="px-4 py-3 text-left font-semibold">Tarea Actual</th>
-            <th class="px-4 py-3 text-left font-semibold">Fecha</th>
+            <th class="px-4 py-3 text-left font-semibold">Riesgo IA</th>
             <th class="px-4 py-3 text-left font-semibold">Semaforo</th>
             <th class="px-4 py-3 text-left font-semibold">Accion</th>
           </tr>
@@ -31,7 +32,7 @@
 
           @if (!isLoading && tareas.length === 0) {
           <tr>
-            <td colspan="6" class="px-4 py-5 text-center text-ink-light">No hay tramites pendientes en tu departamento.
+            <td colspan="7" class="px-4 py-5 text-center text-ink-light">No hay tramites pendientes en tu departamento.
             </td>
           </tr>
           }
@@ -39,13 +40,37 @@
           @for (tarea of tareas; track tarea.instanciaId) {
           <tr>
             <td class="px-4 py-3 font-semibold text-ink">{{ tarea.codigoTramite }}</td>
+            <td class="px-4 py-3">
+              <span *ngIf="tarea.prioridadAnalitica === 3" class="text-rose-600 font-bold text-xs flex items-center gap-1 w-max">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd" /></svg> Alta
+              </span>
+              <span *ngIf="tarea.prioridadAnalitica === 2" class="text-amber-600 font-bold text-xs">Media</span>
+              <span *ngIf="tarea.prioridadAnalitica === 1" class="text-slate-500 font-bold text-xs">Baja</span>
+            </td>
             <td class="px-4 py-3 text-ink">
               <div class="font-medium">{{ tarea.nombrePolitica }}</div>
+              <div class="text-[10px] text-ink-light mt-0.5">{{ tarea.fecha ? (tarea.fecha | date:'short') : 'Sin fecha' }}</div>
             </td>
             <td class="px-4 py-3">
-              <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">{{ tarea.nombreNodoActual }}</span>
+              <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500 block w-max">{{ tarea.nombreNodoActual }}</span>
+              <div class="mt-1 flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Est. {{ tarea.tiempoEstimadoMinutos || 60 }} min
+              </div>
             </td>
-            <td class="px-4 py-3 text-ink-light">{{ tarea.fecha ? (tarea.fecha | date:'short') : 'Sin fecha' }}</td>
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-1 w-20">
+                <div class="w-full bg-slate-200 rounded-full h-1.5">
+                  <div class="h-1.5 rounded-full" 
+                    [ngClass]="{'bg-rose-500': (tarea.scoreRiesgo || 0) >= 0.8, 'bg-amber-400': (tarea.scoreRiesgo || 0) >= 0.5 && (tarea.scoreRiesgo || 0) < 0.8, 'bg-emerald-400': (tarea.scoreRiesgo || 0) < 0.5}"
+                    [style.width.%]="(tarea.scoreRiesgo || 0) * 100">
+                  </div>
+                </div>
+                <span class="text-[10px] font-bold" [ngClass]="{'text-rose-600': (tarea.scoreRiesgo || 0) >= 0.8, 'text-amber-600': (tarea.scoreRiesgo || 0) >= 0.5 && (tarea.scoreRiesgo || 0) < 0.8, 'text-emerald-600': (tarea.scoreRiesgo || 0) < 0.5}">
+                  {{ (tarea.scoreRiesgo || 0) * 100 | number:'1.0-0' }}%
+                </span>
+              </div>
+            </td>
             <td class="px-4 py-3">
               <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
                 [class.bg-red-100]="tarea.semaforo === 'ROJO'" [class.text-red-700]="tarea.semaforo === 'ROJO'"

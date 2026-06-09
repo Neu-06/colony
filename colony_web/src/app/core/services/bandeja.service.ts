@@ -12,6 +12,9 @@ export interface BandejaItemDto {
   nombrePolitica: string;
   nombreNodoActual: string;
   nodoActualId: string;
+  scoreRiesgo?: number;
+  prioridadAnalitica?: number;
+  tiempoEstimadoMinutos?: number;
 }
 
 export interface AtencionTramiteDto {
