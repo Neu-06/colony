@@ -26,7 +26,10 @@ export class DashboardMetricasComponent implements OnInit {
   isLoading = true;
 
   chatInput: string = '';
-  chatMessages: { text: string, isUser: boolean }[] = [];
+  chatMessages: { text: string, isUser: boolean, isFile?: boolean, fileData?: any }[] = [];
+  isListening = false;
+  isMuted = false;
+  recognition: any;
 
   // Chart 1: Distribución (Doughnut)
   public distChartOptions: ChartConfiguration['options'] = {
@@ -90,6 +93,66 @@ export class DashboardMetricasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarDatos();
+    this.initSpeechRecognition();
+  }
+
+  initSpeechRecognition() {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'es-ES';
+      this.recognition.interimResults = false;
+      this.recognition.maxAlternatives = 1;
+
+      this.recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.chatInput = transcript;
+        this.enviarMensajeChat();
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+      };
+    } else {
+      console.warn('Speech Recognition API not supported in this browser.');
+    }
+  }
+
+  toggleMicrophone() {
+    if (!this.recognition) {
+      alert('Tu navegador no soporta reconocimiento de voz.');
+      return;
+    }
+    if (this.isListening) {
+      this.recognition.stop();
+    } else {
+      this.recognition.start();
+      this.isListening = true;
+    }
+  }
+
+  toggleMute() {
+    this.isMuted = !this.isMuted;
+    if (this.isMuted && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  speakResponse(text: string) {
+    if ('speechSynthesis' in window && !this.isMuted) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  downloadFile(file: any) {
+    if (!file) return;
+    const link = document.createElement('a');
+    link.href = `data:${file.mime};base64,${file.data}`;
+    link.download = file.filename;
+    link.click();
   }
 
   cargarDatos(): void {
@@ -192,38 +255,37 @@ export class DashboardMetricasComponent implements OnInit {
   enviarMensajeChat() {
     if (!this.chatInput.trim()) return;
     
-    // Add user message
-    this.chatMessages.push({ text: this.chatInput, isUser: true });
-    
-    // Simulate AI response based on the input
-    const input = this.chatInput.toLowerCase();
+    const userMsg = this.chatInput;
+    this.chatMessages.push({ text: userMsg, isUser: true });
     this.chatInput = '';
     
     setTimeout(() => {
-      let response = "Interesante. Los datos muestran una correlación directa entre el tiempo en tareas manuales y el riesgo de abandono.";
-      
-      if (input.includes("anomalia") || input.includes("anomalía")) {
-        response = `He detectado ${this.anomalias.length} trámites con comportamiento anómalo. Las anomalías más comunes involucran tiempos atípicamente largos o retrocesos extraños.`;
-      } else if (input.includes("riesgo")) {
-        response = "El modelo predictivo clasifica los riesgos en base al tiempo promedio, la prioridad detectada en los documentos (usando NLP) y el estado de los nodos paralelos.";
-      } else if (input.includes("retraso") || input.includes("cuello") || input.includes("lento") || input.includes("demora")) {
-        if (this.cuellos.length > 0) {
-           const top = this.cuellos[0];
-           response = `El mayor cuello de botella detectado está en el área de trabajo "${top.identificador}" del flujo "${top.nombrePolitica}". `;
+      const chatDiv = document.getElementById('chat-messages');
+      if (chatDiv) chatDiv.scrollTop = chatDiv.scrollHeight;
+    }, 100);
+
+    this.metricasService.sendChatMessage(userMsg).subscribe({
+      next: (response) => {
+        const replyText = response.text;
+        
+        if (response.file) {
+          this.chatMessages.push({ text: replyText, isUser: false, isFile: true, fileData: response.file });
+          // Optionally download instantly
+          this.downloadFile(response.file);
         } else {
-           response = "Actualmente no se registran cuellos de botella severos en áreas de trabajo.";
+          this.chatMessages.push({ text: replyText, isUser: false });
         }
-      } else if (input.includes("documentos") || input.includes("nlp")) {
-        response = "El NLP determinó prioridades altas basado en palabras clave como 'urgente' o 'emergencia' en los reclamos.";
+        
+        this.speakResponse(replyText);
+        
+        setTimeout(() => {
+          const chatDiv = document.getElementById('chat-messages');
+          if (chatDiv) chatDiv.scrollTop = chatDiv.scrollHeight;
+        }, 100);
+      },
+      error: (err) => {
+        this.chatMessages.push({ text: 'Ocurrió un error conectando con el modelo NLU en Python.', isUser: false });
       }
-      
-      this.chatMessages.push({ text: response, isUser: false });
-      
-      // Scroll to bottom
-      setTimeout(() => {
-        const chatDiv = document.getElementById('chat-messages');
-        if (chatDiv) chatDiv.scrollTop = chatDiv.scrollHeight;
-      }, 100);
-    }, 800);
+    });
   }
 }

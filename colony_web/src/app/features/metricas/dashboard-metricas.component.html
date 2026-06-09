@@ -195,21 +195,50 @@
       <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50" id="chat-messages">
         <div *ngFor="let msg of chatMessages" [ngClass]="msg.isUser ? 'justify-end' : 'justify-start'" class="flex">
           <div [ngClass]="msg.isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'"
-               class="max-w-[80%] p-3 rounded-2xl shadow-sm text-sm">
-            {{ msg.text }}
+               class="max-w-[80%] p-3 rounded-2xl shadow-sm text-sm flex flex-col gap-2">
+            <span>{{ msg.text }}</span>
+            <button *ngIf="msg.isFile" (click)="downloadFile(msg.fileData)" class="flex items-center gap-2 mt-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg transition border border-indigo-200 font-bold text-xs w-max">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Descargar {{ msg.fileData?.filename }}
+            </button>
           </div>
         </div>
       </div>
       <div class="p-3 bg-white border-t border-slate-100">
-        <div class="relative flex items-center">
-          <input type="text" [(ngModel)]="chatInput" (keyup.enter)="enviarMensajeChat()"
-            placeholder="Ej: Resume las anomalías detectadas..." 
-            class="w-full bg-slate-50 border border-slate-200 text-sm rounded-full py-2.5 pl-4 pr-12 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition">
-          <button (click)="enviarMensajeChat()" class="absolute right-2 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        <div class="relative flex items-center gap-2">
+          <button (click)="toggleMicrophone()" 
+                  [ngClass]="isListening ? 'bg-rose-500 hover:bg-rose-600 animate-pulse' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'"
+                  class="p-2.5 rounded-full transition text-white shadow-sm flex-shrink-0"
+                  title="Hablar por micrófono">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
           </button>
+          
+          <button (click)="toggleMute()" 
+                  [ngClass]="isMuted ? 'bg-amber-100 text-amber-600 hover:bg-amber-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                  class="p-2.5 rounded-full transition shadow-sm flex-shrink-0"
+                  [title]="isMuted ? 'Activar Voz' : 'Silenciar Voz'">
+            <svg *ngIf="!isMuted" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" />
+            </svg>
+            <svg *ngIf="isMuted" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          </button>
+          <div class="relative flex-1">
+            <input type="text" [(ngModel)]="chatInput" (keyup.enter)="enviarMensajeChat()"
+              [placeholder]="isListening ? 'Escuchando...' : 'Ej: Genera un reporte en Excel...'" 
+              class="w-full bg-slate-50 border border-slate-200 text-sm rounded-full py-2.5 pl-4 pr-12 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition">
+            <button (click)="enviarMensajeChat()" class="absolute right-1.5 top-1.5 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

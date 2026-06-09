@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from routers import canvas_ai, funcionario_ai, cliente_ai, prediccion_ai
+from routers import canvas_ai, funcionario_ai, cliente_ai, prediccion_ai, nlu_chat_router
 
 app = FastAPI(title="Colony AI Microservice")
 
@@ -21,6 +21,7 @@ app.include_router(canvas_ai.router)
 app.include_router(funcionario_ai.router)
 app.include_router(cliente_ai.router)
 app.include_router(prediccion_ai.router)
+app.include_router(nlu_chat_router.router)
 
 @app.get("/")
 async def root():

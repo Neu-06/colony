@@ -40,4 +40,9 @@ export class MetricasService {
   getAnomalias(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/anomalias`);
   }
+
+  sendChatMessage(message: string): Observable<any> {
+    const aiUrl = environment.backendBaseUrl.replace('8080', '8000'); // Assuming AI is on port 8000
+    return this.http.post<any>(`${aiUrl}/api/v1/chat/nlu`, { message });
+  }
 }

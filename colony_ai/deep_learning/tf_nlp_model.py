@@ -39,7 +39,7 @@ class NLPModelPredictor:
             return False
             
         # labels: lista de enteros 0, 1, 2
-        X = np.array(texts)
+        X = tf.constant(texts)
         y = np.array(labels)
         
         self.vectorizer.adapt(X)
@@ -60,6 +60,7 @@ class NLPModelPredictor:
                 return 2
             return 1
             
-        pred = self.model.predict(np.array([text]), verbose=0)[0]
+        text_tensor = tf.constant([text])
+        pred = self.model.predict(text_tensor, verbose=0)[0]
         clase = np.argmax(pred)
         return int(clase) + 1 # 1: BAJA, 2: MEDIA, 3: ALTA
