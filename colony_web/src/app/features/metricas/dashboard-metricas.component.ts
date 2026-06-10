@@ -30,6 +30,8 @@ export class DashboardMetricasComponent implements OnInit {
   isListening = false;
   isMuted = false;
   recognition: any;
+  isWaitingForResponse = false;
+  private speechTimeout: any;
 
   // Chart 1: Distribución (Doughnut)
   public distChartOptions: ChartConfiguration['options'] = {
@@ -101,13 +103,23 @@ export class DashboardMetricasComponent implements OnInit {
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
       this.recognition.lang = 'es-ES';
-      this.recognition.interimResults = false;
+      this.recognition.continuous = true;
+      this.recognition.interimResults = true;
       this.recognition.maxAlternatives = 1;
 
       this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
         this.chatInput = transcript;
-        this.enviarMensajeChat();
+        
+        clearTimeout(this.speechTimeout);
+        this.speechTimeout = setTimeout(() => {
+          if (!this.isWaitingForResponse && this.chatInput.trim()) {
+            this.enviarMensajeChat();
+          }
+        }, 2000);
       };
 
       this.recognition.onend = () => {
@@ -253,11 +265,18 @@ export class DashboardMetricasComponent implements OnInit {
   }
 
   enviarMensajeChat() {
-    if (!this.chatInput.trim()) return;
+    if (!this.chatInput.trim() || this.isWaitingForResponse) return;
     
+    clearTimeout(this.speechTimeout);
+    this.isWaitingForResponse = true;
     const userMsg = this.chatInput;
     this.chatMessages.push({ text: userMsg, isUser: true });
     this.chatInput = '';
+    
+    if (this.isListening && this.recognition) {
+       this.recognition.stop();
+       this.isListening = false;
+    }
     
     setTimeout(() => {
       const chatDiv = document.getElementById('chat-messages');
@@ -266,11 +285,11 @@ export class DashboardMetricasComponent implements OnInit {
 
     this.metricasService.sendChatMessage(userMsg).subscribe({
       next: (response) => {
+        this.isWaitingForResponse = false;
         const replyText = response.text;
         
         if (response.file) {
           this.chatMessages.push({ text: replyText, isUser: false, isFile: true, fileData: response.file });
-          // Optionally download instantly
           this.downloadFile(response.file);
         } else {
           this.chatMessages.push({ text: replyText, isUser: false });
@@ -284,6 +303,7 @@ export class DashboardMetricasComponent implements OnInit {
         }, 100);
       },
       error: (err) => {
+        this.isWaitingForResponse = false;
         this.chatMessages.push({ text: 'Ocurrió un error conectando con el modelo NLU en Python.', isUser: false });
       }
     });

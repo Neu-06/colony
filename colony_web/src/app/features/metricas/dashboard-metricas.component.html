@@ -120,13 +120,15 @@
   <div class="mb-6 mt-10 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
     <div>
       <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
         Inteligencia Artificial & Riesgos
       </h3>
       <p class="text-sm text-slate-500 mt-1">Predicciones y análisis estructural automático</p>
     </div>
+    <!--
     <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm">
       <span class="text-sm font-bold text-slate-600">Salud del Sistema:</span>
       <div class="flex items-center gap-2">
@@ -140,6 +142,7 @@
         </span>
       </div>
     </div>
+    -->
   </div>
 
   <!-- Deep Learning Section Grid -->
@@ -158,21 +161,27 @@
     <div class="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
       <div class="px-6 py-4 border-b border-rose-50 bg-rose-50/30 flex justify-between items-center">
         <h4 class="text-sm font-bold text-rose-800 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-500" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           Anomalías Predictivas (TensorFlow)
         </h4>
-        <span class="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">{{ anomalias.length }} Riesgos Altos</span>
+        <span class="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">{{ anomalias.length }} Riesgos
+          Altos</span>
       </div>
       <div class="divide-y divide-slate-50 max-h-[300px] overflow-y-auto">
-        <div *ngFor="let anomalia of anomalias" class="p-4 hover:bg-slate-50 transition flex justify-between items-center">
+        <div *ngFor="let anomalia of anomalias"
+          class="p-4 hover:bg-slate-50 transition flex justify-between items-center">
           <div>
             <p class="text-sm font-bold text-slate-800">{{ anomalia.codigo }}</p>
-            <p class="text-xs text-slate-500">Riesgo: <span class="font-bold text-rose-600">{{ anomalia.scoreRiesgo | percent }}</span> | Prioridad ML: {{ anomalia.prioridadAnalitica }}</p>
+            <p class="text-xs text-slate-500">Riesgo: <span class="font-bold text-rose-600">{{ anomalia.scoreRiesgo |
+                percent }}</span> | Prioridad ML: {{ anomalia.prioridadAnalitica }}</p>
           </div>
           <div>
-            <span *ngIf="anomalia.anomaliaDetectada" class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded">Anomalía Estructural</span>
+            <span *ngIf="anomalia.anomaliaDetectada"
+              class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded">Anomalía Estructural</span>
           </div>
         </div>
         <div *ngIf="anomalias.length === 0" class="p-8 text-center text-slate-400 italic text-sm">
@@ -185,8 +194,10 @@
     <div class="bg-white rounded-2xl border border-indigo-100 shadow-sm flex flex-col h-[380px]">
       <div class="px-6 py-4 border-b border-indigo-50 bg-indigo-50/30">
         <h4 class="text-sm font-bold text-indigo-800 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
           Asistente Analista NLP
         </h4>
@@ -194,12 +205,16 @@
       </div>
       <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50" id="chat-messages">
         <div *ngFor="let msg of chatMessages" [ngClass]="msg.isUser ? 'justify-end' : 'justify-start'" class="flex">
-          <div [ngClass]="msg.isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'"
-               class="max-w-[80%] p-3 rounded-2xl shadow-sm text-sm flex flex-col gap-2">
+          <div
+            [ngClass]="msg.isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none'"
+            class="max-w-[80%] p-3 rounded-2xl shadow-sm text-sm flex flex-col gap-2">
             <span>{{ msg.text }}</span>
-            <button *ngIf="msg.isFile" (click)="downloadFile(msg.fileData)" class="flex items-center gap-2 mt-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg transition border border-indigo-200 font-bold text-xs w-max">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <button *ngIf="msg.isFile" (click)="downloadFile(msg.fileData)"
+              class="flex items-center gap-2 mt-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg transition border border-indigo-200 font-bold text-xs w-max">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Descargar {{ msg.fileData?.filename }}
             </button>
@@ -208,34 +223,43 @@
       </div>
       <div class="p-3 bg-white border-t border-slate-100">
         <div class="relative flex items-center gap-2">
-          <button (click)="toggleMicrophone()" 
-                  [ngClass]="isListening ? 'bg-rose-500 hover:bg-rose-600 animate-pulse' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'"
-                  class="p-2.5 rounded-full transition text-white shadow-sm flex-shrink-0"
-                  title="Hablar por micrófono">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          <button (click)="toggleMicrophone()"
+            [ngClass]="isListening ? 'bg-rose-500 hover:bg-rose-600 animate-pulse' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'"
+            class="p-2.5 rounded-full transition text-white shadow-sm flex-shrink-0" title="Hablar por micrófono">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
           </button>
-          
-          <button (click)="toggleMute()" 
-                  [ngClass]="isMuted ? 'bg-amber-100 text-amber-600 hover:bg-amber-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                  class="p-2.5 rounded-full transition shadow-sm flex-shrink-0"
-                  [title]="isMuted ? 'Activar Voz' : 'Silenciar Voz'">
-            <svg *ngIf="!isMuted" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" />
+
+          <button (click)="toggleMute()"
+            [ngClass]="isMuted ? 'bg-amber-100 text-amber-600 hover:bg-amber-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+            class="p-2.5 rounded-full transition shadow-sm flex-shrink-0"
+            [title]="isMuted ? 'Activar Voz' : 'Silenciar Voz'">
+            <svg *ngIf="!isMuted" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" />
             </svg>
-            <svg *ngIf="isMuted" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            <svg *ngIf="isMuted" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h2.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
             </svg>
           </button>
           <div class="relative flex-1">
             <input type="text" [(ngModel)]="chatInput" (keyup.enter)="enviarMensajeChat()"
-              [placeholder]="isListening ? 'Escuchando...' : 'Ej: Genera un reporte en Excel...'" 
+              [placeholder]="isListening ? 'Escuchando...' : 'Ej: Genera un reporte en Excel...'"
               class="w-full bg-slate-50 border border-slate-200 text-sm rounded-full py-2.5 pl-4 pr-12 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition">
-            <button (click)="enviarMensajeChat()" class="absolute right-1.5 top-1.5 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            <button (click)="enviarMensajeChat()"
+              class="absolute right-1.5 top-1.5 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>
           </div>
@@ -262,7 +286,8 @@
             <p class="text-sm font-bold text-slate-800">
               {{ item.identificador }}
             </p>
-            <p class="text-[11px] text-indigo-600 font-bold uppercase tracking-wide mt-0.5">{{ item.nombrePolitica }}</p>
+            <p class="text-[11px] text-indigo-600 font-bold uppercase tracking-wide mt-0.5">{{ item.nombrePolitica }}
+            </p>
             <p class="text-xs text-slate-400 mt-0.5">{{ item.cantidadTramites }} ejecuciones registradas</p>
           </div>
         </div>
