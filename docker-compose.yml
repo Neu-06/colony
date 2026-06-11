@@ -26,7 +26,7 @@ services:
     networks:
       - colony-net
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:${FASTAPI_PORT:-8880}/').read()\""]
       interval: 10s
       timeout: 5s
       retries: 5

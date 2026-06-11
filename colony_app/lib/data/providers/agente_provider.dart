@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-const String _baseUrl = 'http://192.168.1.112:8080';
+// Cambia a https://javi-dev.me:8080 si configuras SSL, de momento http
+const String _baseUrl = 'https://javi-dev.me:8080';
 
 class CampoRequerido {
   final String nombre;
