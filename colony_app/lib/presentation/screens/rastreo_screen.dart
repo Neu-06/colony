@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/providers/notification_provider.dart';
-
+import '../../data/providers/network_info_service.dart';
+import '../../data/providers/offline_queue_service.dart';
 import '../../data/providers/api_provider.dart';
 import '../../data/repositories_impl/rastreo_repository_impl.dart';
 import '../../domain/models/instancia_tracking.dart';
 import '../../domain/repositories/rastreo_repository.dart';
 import '../widgets/timeline_widget.dart';
+import '../../main.dart' show offlineQueue;
 
 class RastreoScreen extends StatefulWidget {
   const RastreoScreen({super.key});
@@ -21,11 +25,14 @@ class _RastreoScreenState extends State<RastreoScreen> {
   final RastreoRepository _repository = RastreoRepositoryImpl(
     const ApiProvider(),
   );
+  final NetworkInfoService _network = NetworkInfoService();
 
   InstanciaTracking? _tracking;
   String? _error;
   bool _loading = false;
   bool _yaSuscrito = false;
+  bool _isOffline = false;
+  StreamSubscription<bool>? _connectivitySub;
 
   Future<void> _verificarSuscripcion() async {
     if (_tracking == null) return;
@@ -39,7 +46,49 @@ class _RastreoScreenState extends State<RastreoScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initConnectivity();
+  }
+
+  Future<void> _initConnectivity() async {
+    final online = await _network.isOnline;
+    if (mounted) setState(() => _isOffline = !online);
+
+    _connectivitySub = _network.onConnectivityChanged.listen((online) async {
+      if (!mounted) return;
+      setState(() => _isOffline = !online);
+      if (online) {
+        await _flushOfflineQueue();
+      }
+    });
+  }
+
+  Future<void> _flushOfflineQueue() async {
+    final pending = offlineQueue.getAll();
+    for (final item in pending) {
+      try {
+        final result = await _repository.rastrear(item.codigo);
+        if (mounted) setState(() => _tracking = result);
+        await offlineQueue.remove(item.codigo);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tu consulta del trámite ${item.codigo} ya está lista.'),
+              backgroundColor: const Color(0xFF16A34A),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } catch (_) {
+        // Will retry on next reconnection
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    _connectivitySub?.cancel();
     _codigoController.dispose();
     super.dispose();
   }
@@ -54,6 +103,38 @@ class _RastreoScreenState extends State<RastreoScreen> {
       return;
     }
 
+    // ----- OFFLINE BRANCH -----
+    if (_isOffline) {
+      String? fcmToken;
+      try {
+        fcmToken = await FirebaseMessaging.instance.getToken();
+      } catch (_) {}
+
+      await offlineQueue.enqueue(PendingRastreo(
+        codigo: codigo,
+        fcmToken: fcmToken ?? '',
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+      ));
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Sin conexión. Te notificaremos cuando tu trámite esté disponible.',
+          ),
+          backgroundColor: const Color(0xFFF59E0B),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+      return;
+    }
+
+    // ----- ONLINE BRANCH -----
     setState(() {
       _loading = true;
       _error = null;
@@ -127,6 +208,7 @@ class _RastreoScreenState extends State<RastreoScreen> {
     return CustomScrollView(
       slivers: [
         _buildAppBar(),
+        if (_isOffline) _buildOfflineBanner(),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 100),
@@ -184,6 +266,36 @@ class _RastreoScreenState extends State<RastreoScreen> {
               colors: [Color(0xFF1D4ED8), Color(0xFF1E40AF)],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner() {
+    return SliverToBoxAdapter(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFF59E0B)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.wifi_off, color: Color(0xFFB45309), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Sin conexión. Las consultas se guardarán y se enviarán cuando vuelva el internet.',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF92400E),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

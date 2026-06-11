@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'presentation/screens/rastreo_screen.dart';
 import 'presentation/screens/agente_screen.dart';
+import 'data/providers/offline_queue_service.dart';
+
+final offlineQueue = OfflineQueueService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Init Hive for persistent offline queue
+  await Hive.initFlutter();
+  await offlineQueue.init();
+
   print("INICIANDO FIREBASE...");
   try {
     await Firebase.initializeApp(

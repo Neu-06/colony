@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/providers/agente_provider.dart';
 import '../../data/providers/notification_provider.dart';
 import '../../data/providers/api_provider.dart';
+import '../../data/providers/network_info_service.dart';
 
 class AgenteScreen extends StatefulWidget {
   const AgenteScreen({super.key});
@@ -39,6 +41,9 @@ class _AgenteScreenState extends State<AgenteScreen>
   List<Map<String, String>> _historialChat = [];
   Map<String, dynamic> _datosAcumulados = {};
   List<FlujoDisponible> _flujosDisponibles = [];
+  bool _isOffline = false;
+  StreamSubscription<bool>? _connectivitySub;
+  final NetworkInfoService _network = NetworkInfoService();
   
   // Mapa de CampoNombre -> Path del archivo local
   final Map<String, String> _archivosPendientes = {};
@@ -48,12 +53,21 @@ class _AgenteScreenState extends State<AgenteScreen>
     super.initState();
     _speechToText.initialize();
     _initTts();
+    _initConnectivity();
     _mensajes.add(_ChatMessage(
       texto: '¡Hola! 👋 Soy el asistente de Colony. Puedo ayudarte a iniciar un trámite.\n\n'
           'Describe lo que necesitas o consulta los servicios disponibles abajo.',
       esAgente: true,
     ));
     _cargarFlujos();
+  }
+
+  Future<void> _initConnectivity() async {
+    final online = await _network.isOnline;
+    if (mounted) setState(() => _isOffline = !online);
+    _connectivitySub = _network.onConnectivityChanged.listen((online) {
+      if (mounted) setState(() => _isOffline = !online);
+    });
   }
 
   Future<void> _initTts() async {
@@ -65,6 +79,7 @@ class _AgenteScreenState extends State<AgenteScreen>
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     _inputController.dispose();
     _scrollController.dispose();
     _speechToText.stop();
@@ -103,6 +118,18 @@ class _AgenteScreenState extends State<AgenteScreen>
   Future<void> _enviarMensaje([String? textoForzado]) async {
     final texto = textoForzado ?? _inputController.text.trim();
     if (texto.isEmpty || _cargando) return;
+
+    // Block AI messages when offline
+    if (_isOffline) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El asistente requiere conexión a internet. Por favor, conéctate e intenta de nuevo.'),
+          backgroundColor: Color(0xFFF59E0B),
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
 
     if (_isListening) {
       _speechToText.stop();

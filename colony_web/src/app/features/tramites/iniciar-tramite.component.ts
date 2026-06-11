@@ -185,9 +185,22 @@ export class IniciarTramiteComponent implements OnInit {
 
           void this.router.navigate(['/app/bandeja']);
         },
-        error: () => {
+        error: (err) => {
           this.isSubmitting = false;
-          this.alertaService.mostrarError('No se pudo crear y derivar el trámite.');
+          if (err?.offlineQueued) {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'info',
+              title: 'Guardado sin conexión',
+              text: 'Tu trámite se enviará automáticamente cuando vuelva el internet.',
+              showConfirmButton: false,
+              timer: 5000,
+              timerProgressBar: true,
+            });
+          } else {
+            this.alertaService.mostrarError('No se pudo crear y derivar el trámite.');
+          }
         }
       });
   }
