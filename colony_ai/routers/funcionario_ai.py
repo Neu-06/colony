@@ -30,10 +30,10 @@ class CampoFormulario(BaseModel):
     opciones: Optional[str] = None
 
 class TareaItem(BaseModel):
-    instanciaId: str
-    codigoTramite: str
-    nombrePolitica: str
-    nombreNodoActual: str
+    instanciaId: Optional[str] = None
+    codigoTramite: Optional[str] = None
+    nombrePolitica: Optional[str] = None
+    nombreNodoActual: Optional[str] = None
     fecha: Optional[str] = None
     semaforo: Optional[str] = None
 

@@ -59,6 +59,7 @@ export class DiagramadorPageComponent implements AfterViewInit {
   isSidebarOpen = false;
   saveMessage = '';
   isReadOnlyMode = false;
+  hasReceivedInitialSync = false;
 
   readonly politicaActivaId = this.estado.politicaActivaId;
   readonly zoomNivel = this.estado.zoomNivel;
@@ -94,6 +95,7 @@ export class DiagramadorPageComponent implements AfterViewInit {
     this.collabSub = this.collabService.actionReceived$.subscribe(action => {
       if (action.type === 'SYNC_STATE') {
         this.isApplyingSync = true;
+        this.hasReceivedInitialSync = true; // Guest received initial sync
         this.flowName = action.payload.flowName;
         this.estado.hidratarDesdePolitica(action.payload.politica);
         this.lastSyncStr = JSON.stringify(action.payload.politica);
@@ -135,6 +137,10 @@ export class DiagramadorPageComponent implements AfterViewInit {
 
     this.syncInterval = setInterval(() => {
       if (this.collabService.isConnected() && !this.isApplyingSync) {
+        // Prevent guest from broadcasting empty canvas before receiving initial state
+        if (!this.collabService.isInitiator() && !this.hasReceivedInitialSync) {
+          return;
+        }
         this.broadcastEstadoColaborativo(true); // Sincronización pasiva
       }
     }, 1000);

@@ -171,18 +171,17 @@ _FORMATO_PATTERNS = {
 _TEMA_PATTERNS = [
     # ORDEN CRÍTICO: anomalias > flujos > recientes > cuellos > metricas
     ("anomalias", [
-        r"\banomal[ií]a",
-        r"\bmayor.?anomal",
-        r"\bmayor.?riesgo\b",
-        r"\bcr[ií]tic\b",
+        r"\banomal[ií]as?\b",
+        r"\briesg[oa]s?\b",
+        r"\briesgos[oa]s?\b",
+        r"\bcr[ií]tic[oa]s?\b",
         r"\bsem[aá]foro.?rojo\b",
-        r"\briesgo.+\d",
-        r"\binstancias.*riesgo\b",
+        r"\bproblemas?\b",
     ]),
-    ("flujos",    [r"\bflujo\b", r"\bpol[ií]tica\b", r"\bpublicad\b"]),
-    ("recientes", [r"\breciente", r"\b[uú]ltim", r"\bhoy\b", r"\bingresad", r"\bantigu"]),
-    ("cuellos",   [r"\bcuello\b", r"\blatencia\b", r"\batasco\b", r"\bm[aá]s lent", r"\b[aá]rea(?:s)? de trabajo\b", r"\bactividad(?:es)?\b", r"\btarea(?:s)?\b", r"\bejecuci[oó]n(?:es)?\b", r"\bejecutad[oa]s?\b"]),
-    ("metricas",  [r"\bkpi\b", r"\bm[eé]tric", r"\bindi?cad", r"\brendimiento\b"]),
+    ("flujos",    [r"\bflujos?\b", r"\bpol[ií]ticas?\b", r"\bprocesos?\b", r"\bpublicad[oa]s?\b"]),
+    ("recientes", [r"\brecientes?\b", r"\b[uú]ltim[oa]s?\b", r"\bhoy\b", r"\bnuev[oa]s?\b", r"\bingresad[oa]s?\b", r"\bantigu[oa]s?\b", r"\bayer\b"]),
+    ("cuellos",   [r"\bcuellos?\b", r"\blatencias?\b", r"\batasco\b", r"\bdemoras?\b", r"\bdemorad[oa]s?\b", r"\blent[oa]s?\b", r"\bretrasos?\b", r"\b[aá]rea(?:s)? de trabajo\b", r"\bactividad(?:es)?\b", r"\btarea(?:s)?\b", r"\bejecuci[oó]n(?:es)?\b", r"\bejecutad[oa]s?\b", r"\btardan?\b", r"\btard[oó]\b"]),
+    ("metricas",  [r"\bkpis?\b", r"\bm[eé]tricas?\b", r"\bindicador(?:es)?\b", r"\brendimiento\b", r"\bestad[ií]sticas?\b", r"\bresumen\b"]),
 ]
 _NUMERO_RE  = re.compile(r"\b(\d+)\b")
 _PORCENTAJE = re.compile(r"(\d+)\s*(?:por\s*ciento|%)")
