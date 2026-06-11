@@ -322,7 +322,7 @@ class NLUReportPredictor:
         self.model.fit(
             X,
             {"out_intent": y_int, "out_tema": y_tema, "out_limite": y_lim, "out_orden": y_ord},
-            epochs=120, batch_size=16, verbose=0,
+            epochs=10, batch_size=16, verbose=0,
         )
         self.is_trained = True
         print("[NLU] Modelo TensorFlow entrenado exitosamente.")
