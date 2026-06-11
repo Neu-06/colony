@@ -9,11 +9,9 @@ services:
       # Deshabilitar JWT para desarrollo. En producción configurar JWT_SECRET y JWT_ENABLED=true
       - JWT_ENABLED=false
     ports:
-      - "${ONLYOFFICE_PORT:-8100}:80"
+      - "${ONLYOFFICE_PORT:-2053}:80"
     networks:
       - colony-net
-
-
 
   colony_ai:
     build:
@@ -26,7 +24,7 @@ services:
     networks:
       - colony-net
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')\""]
+      test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')\"" ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -70,5 +68,3 @@ services:
 networks:
   colony-net:
     driver: bridge
-
-
