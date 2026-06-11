@@ -17,7 +17,7 @@ class RoutingAndAnomalyModel:
         self.is_trained = False
         
         # Hyperparams
-        self.input_dim = 10 # Feature vector size
+        self.input_dim = 10  # Tamaño del vector de características
         
         if TF_AVAILABLE:
             self._build_models()
@@ -25,7 +25,7 @@ class RoutingAndAnomalyModel:
     def _build_models(self):
         if not TF_AVAILABLE: return
         
-        # 1. DNN Model para Riesgo de Demora
+        # 1. Modelo DNN para Riesgo de Demora
         self.risk_model = Sequential([
             Dense(32, activation='relu', input_shape=(self.input_dim,)),
             Dropout(0.2),
@@ -50,7 +50,7 @@ class RoutingAndAnomalyModel:
         vec[0] = min(historial_count / 10.0, 1.0)
         vec[1] = min(avg_time / 86400.0, 1.0)
         vec[2] = urgency / 3.0
-        # El resto son features categóricas/temporales mockeadas
+        # Resto de características simuladas
         return vec
 
     def train(self, instances_data):
@@ -77,10 +77,10 @@ class RoutingAndAnomalyModel:
         y_risk = np.array(y_risk)
         X_normal = np.array(X_normal)
         
-        # Entrenar modelo de riesgo
+        # Entrenamiento del modelo de riesgo
         self.risk_model.fit(X, y_risk, epochs=20, batch_size=16, verbose=0)
         
-        # Entrenar Autoencoder solo con data normal
+        # Entrenamiento del Autoencoder con datos normales
         if len(X_normal) > 10:
             self.anomaly_model.fit(X_normal, X_normal, epochs=20, batch_size=16, verbose=0)
             
@@ -99,9 +99,9 @@ class RoutingAndAnomalyModel:
         
         riesgo = self.risk_model.predict(vec_batch, verbose=0)[0][0]
         
-        # Anomalía usando Autoencoder
+        # Detección de anomalía usando el Autoencoder
         reconstructed = self.anomaly_model.predict(vec_batch, verbose=0)[0]
         mse = np.mean(np.square(vec - reconstructed))
-        anomalia = bool(mse > 0.05) # Threshold empírico
+        anomalia = bool(mse > 0.05)  # Umbral empírico
         
         return float(riesgo), anomalia

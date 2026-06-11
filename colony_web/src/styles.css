@@ -3,45 +3,45 @@
 @tailwind utilities;
 
 :root {
-  /* 1. FONDOS Y SUPERFICIES (Para dar profundidad limpia) */
-  --color-background: #f8fafc; /* Gris hiper claro para el fondo principal de la App */
-  --color-surface: #ffffff; /* Blanco puro para las Tarjetas, Modales y el Canvas */
+  /* Backgrounds & Surfaces */
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
 
-  /* 2. TEXTOS Y BORDES (Contraste perfecto para lectura) */
-  --color-ink: #0f172a; /* Texto principal (casi negro, más elegante que el #000) */
-  --color-ink-light: #64748b; /* Texto secundario (Para subtítulos, fechas, labels) */
-  --color-border: #e2e8f0; /* Líneas divisorias muy sutiles (minimalismo puro) */
+  /* Typography & Borders */
+  --color-ink: #0f172a;
+  --color-ink-light: #64748b;
+  --color-border: #e2e8f0;
 
-  /* 3. COLORES DE ACCIÓN / MARCA */
-  --color-primary: #2563eb; /* Azul principal (Botones primarios, enlaces activos) */
-  --color-primary-hover: #1d4ed8; /* Azul más oscuro al pasar el mouse */
+  /* Brand Colors */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
 
-  --color-secondary: #f1f5f9; /* Botones secundarios (Fondo gris claro, texto ink) */
+  --color-secondary: #f1f5f9;
   --color-secondary-hover: #e2e8f0;
 
-  /* 4. SEMÁNTICA DE ESTADOS (El Semáforo del Workflow) */
-  --color-success: #10b981; /* Verde Esmeralda: Trámite Finalizado / OK */
-  --color-warning: #f59e0b; /* Amarillo Ámbar: Trámite Pendiente / En revisión */
-  --color-danger: #ef4444; /* Rojo: Trámite Rechazado / Error / Eliminar */
-  --color-info: #3b82f6; /* Azul claro: Alertas informativas */
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
 
-  /* COLORES ESPECÍFICOS DEL CANVAS (Nodos y Calles) */
-  --color-canvas-bg: #f8fafc; /* Gris muy claro para el fondo del lienzo (estilo Miro/Figma) */
+  /* Canvas Specific Colors */
+  --color-canvas-bg: #f8fafc;
   --color-lane-header: #f1f5f9;
-  --color-canvas-grid: #cbd5e1; /* Gris medio para los puntos o líneas de la cuadrícula */
-  --color-swimlane-border: #94a3b8; /* Borde para separar las calles/departamentos */
-  --color-swimlane-bg-alt: #ffffff; /* Fondo alterno para las calles (cebreado sutil) */
+  --color-canvas-grid: #cbd5e1;
+  --color-swimlane-border: #94a3b8;
+  --color-swimlane-bg-alt: #ffffff;
 
-  /* Semántica de Nodos */
-  --color-node-start: #10b981; /* Verde: Nodo de Inicio */
-  --color-node-task: #dbeafe; /* Azul claro para nodo de tarea */
+  /* Node Semantics */
+  --color-node-start: #10b981;
+  --color-node-task: #dbeafe;
   --color-node-border: #3b82f6;
-  --color-node-gateway: #312e81; /* Azul indigo para nodo de compuerta */
-  --color-node-end: #ef4444; /* Rojo: Nodo de Fin */
-  --color-node-line: #64748b; /* Color de las flechas conectoras */
+  --color-node-gateway: #312e81;
+  --color-node-end: #ef4444;
+  --color-node-line: #64748b;
   --color-glow-success: #22c55e;
 
-  /* Alias para clases utilitarias en el Canvas */
+  /* Canvas Utility Aliases */
   --canvas-bg: var(--color-canvas-bg);
   --canvas-grid: var(--color-canvas-grid);
   --swimlane-border: var(--color-swimlane-border);
@@ -100,7 +100,7 @@
     fill: #111111 !important;
   }
 
-  /* Scrollbar Personalizada */
+  /* Custom Scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
   }

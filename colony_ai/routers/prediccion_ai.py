@@ -30,7 +30,7 @@ async def analizar_instancia(req: PrediccionRequest):
     Evalúa el riesgo, anomalía y prioridad de una instancia
     en tiempo real cada vez que avanza en el motor BPMS.
     """
-    # 1. NLP Prioridad: Analizar todos los textos en datosDinamicos
+    #NLP Prioridad: Analizar todos los textos en datosDinamicos
     text_content = ""
     for k, v in req.datosDinamicos.items():
         if isinstance(v, str) and len(v) > 10:
@@ -38,7 +38,7 @@ async def analizar_instancia(req: PrediccionRequest):
             
     prioridad = nlp_model.predict_urgency(text_content) if text_content else 1
     
-    # 2. Riesgo y Anomalía
+    #Riesgo y Anomalía
     # En un caso real, leeríamos el tiempo acumulado de la base de datos
     # Para la demostración, derivamos features de los datos dinámicos simulados
     historial_count = len(req.datosDinamicos) # Aproximación

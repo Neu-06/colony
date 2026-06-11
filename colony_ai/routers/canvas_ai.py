@@ -21,15 +21,14 @@ client = Groq(api_key=api_key)
 
 AI_MODEL = "llama-3.3-70b-versatile"
 
-#  CONSTANTES DE DISEÑO ESPACIAL
+# CONSTANTES DE DISEÑO ESPACIAL
+HEADER_WIDTH = 80
+LANE_HEIGHT = 250
+X_STEP = 260
+X_BRANCH_STEP = 240
+Y_BRANCH_OFFSET = 220
 
-HEADER_WIDTH = 80        # Zona prohibida izquierda (cabeceras de carril w-20 = 80px)
-LANE_HEIGHT   = 250      # Altura por carril
-X_STEP        = 260      # Separación horizontal entre pasos del flujo
-X_BRANCH_STEP = 240      # Separación para ramas en compuertas
-Y_BRANCH_OFFSET = 220    # Desplazamiento vertical para ramas alternativas
-
-#  MODELOS PYDANTIC
+# MODELOS PYDANTIC
 class CanvasData(BaseModel):
     data: Any
 
@@ -43,7 +42,7 @@ class CanvasChatRequest(BaseModel):
     canvasJson: dict
     comando: str
 
-#  PROMPT 
+# PROMPT
 
 SYSTEM_PROMPT_CHAT = """
 Eres COLONY-AI, el Arquitecto Senior de Flujos de Trabajo y Experto en Diagramas de Actividades UML con Swimlanes (Carriles).
@@ -156,8 +155,8 @@ Correcciones que debes aplicar:
 Devuelve ÚNICAMENTE el JSON completo corregido con "carriles", "nodos" y "aristas". Sin texto adicional.
 """
 
-#  POST-PROCESADOR: Sanitizador de coordenadas y IDs
-#  Capa de seguridad por si la IA genera posiciones o IDs incorrectos
+# POST-PROCESADOR: Sanitizador de coordenadas y IDs
+# Capa de seguridad para evitar fallos de posiciones o IDs incorrectos
 
 def sanitizar_resultado(resultado: dict) -> dict:
     """
@@ -174,7 +173,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
     nodos_raw    = resultado.get("nodos", [])
     aristas_raw  = resultado.get("aristas", [])
 
-    #  NORMALIZAR CARRILES 
+    # NORMALIZAR CARRILES
     carriles = []
     lane_ids = set()
     for i, c in enumerate(carriles_raw):
@@ -193,7 +192,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
         carriles = [{"id": "lane-1", "nombre": "Principal", "orden": 1}]
         lane_ids = {"lane-1"}
 
-    #  NORMALIZAR NODOS 
+    # NORMALIZAR NODOS
     ALTO_CARRIL = 250
     HEADER_X    = 100   # Mínimo X para no tapar cabeceras (80px + 20px margen)
 
@@ -247,13 +246,13 @@ def sanitizar_resultado(resultado: dict) -> dict:
             y += 25
         posiciones_usadas.add((x, y))
 
-        #  Carril 
+        # Carril
         carril_id = str(n.get("carrilId") or n.get("carril_id") or "").strip()
         if not carril_id or carril_id not in lane_ids:
             # Asignar al primer carril disponible
             carril_id = carriles[0]["id"]
 
-        #  Formulario 
+        # Formulario
         esquema_raw = n.get("esquemaFormulario") or n.get("esquema_formulario") or n.get("formulario") or []
         esquema = []
         for campo in esquema_raw:
@@ -265,10 +264,10 @@ def sanitizar_resultado(resultado: dict) -> dict:
                     "opciones":  campo.get("opciones") or campo.get("options") or None
                 })
 
-        #  Nombre 
+        # Nombre
         nombre = str(n.get("nombre") or n.get("name") or n.get("label") or tipo.capitalize())
 
-        #  Construir nodo en el formato exacto de Angular 
+        # Construir nodo en el formato de Angular
         nodo_normalizado = {
             "idNodo":          raw_id,
             "tipo":            tipo,
@@ -285,7 +284,7 @@ def sanitizar_resultado(resultado: dict) -> dict:
 
         nodos.append(nodo_normalizado)
 
-    #  NORMALIZAR ARISTAS 
+    # NORMALIZAR ARISTAS
     edge_ids = set()
     aristas = []
     for i, a in enumerate(aristas_raw):

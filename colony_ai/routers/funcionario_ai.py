@@ -21,7 +21,7 @@ if not GROQ_API_KEY:
 groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_FALLBACK_MODELS = [ "llama-3.3-70b-versatile","llama-3.1-8b-instant"]
 
-# modelos pydantic
+# Modelos Pydantic
 
 class CampoFormulario(BaseModel):
     nombre: str
@@ -53,7 +53,7 @@ class ValidarEnvioRequest(BaseModel):
     esquemaFormulario: List[CampoFormulario]
     valoresActuales: Dict[str, Any]
 
-# prompt
+# Prompt
 
 PROMPT_BANDEJA = """
 Eres un asistente de oficina para funcionarios públicos. Tu rol es interpretar comandos de voz 
@@ -118,7 +118,7 @@ FORMATO DE RESPUESTA:
   "mensaje": "Mensaje claro para el funcionario"
 }
 """
-# fallback de modelos
+# Fallback de modelos
 def generar_respuesta_json(prompt: str) -> dict:
     last_error: Exception | None = None
     
@@ -141,7 +141,7 @@ def generar_respuesta_json(prompt: str) -> dict:
         raise last_error
     raise RuntimeError("No se pudo obtener respuesta del modelo")
 
-# ENDPOINTS
+# Endpoints
 @router.post("/comando-bandeja")
 async def comando_bandeja(request: ComandoTareasRequest):
     """

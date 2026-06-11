@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-const String _baseUrl = 'http://192.168.1.113:8080';
+const String _baseUrl = 'http://192.168.1.112:8080';
 
 class CampoRequerido {
   final String nombre;
@@ -152,24 +152,33 @@ class AgenteProvider {
     throw Exception('Error del agente (${response.statusCode})');
   }
 
-  Future<void> subirDocumento(String instanciaId, String filePath, String fileName) async {
+  Future<void> subirDocumento(
+    String instanciaId,
+    String filePath,
+    String fileName,
+  ) async {
     final uri = Uri.parse('$_baseUrl/api/agente/subir-documento/$instanciaId');
     final request = http.MultipartRequest('POST', uri);
-    
+
     String mimeType = 'application/octet-stream';
     final nameLower = fileName.toLowerCase();
-    if (nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg')) mimeType = 'image/jpeg';
-    else if (nameLower.endsWith('.png')) mimeType = 'image/png';
-    else if (nameLower.endsWith('.pdf')) mimeType = 'application/pdf';
-    
+    if (nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg'))
+      mimeType = 'image/jpeg';
+    else if (nameLower.endsWith('.png'))
+      mimeType = 'image/png';
+    else if (nameLower.endsWith('.pdf'))
+      mimeType = 'application/pdf';
+
     final typeData = mimeType.split('/');
 
-    request.files.add(await http.MultipartFile.fromPath(
-      'archivo', 
-      filePath, 
-      filename: fileName,
-      contentType: MediaType(typeData[0], typeData[1])
-    ));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'archivo',
+        filePath,
+        filename: fileName,
+        contentType: MediaType(typeData[0], typeData[1]),
+      ),
+    );
 
     final response = await request.send();
     if (response.statusCode != 200) {

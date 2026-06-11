@@ -23,7 +23,6 @@ module.exports = {
           hover: 'var(--color-secondary-hover)',
         },
         
-        // El semáforo
         success: 'var(--color-success)',
         warning: 'var(--color-warning)',
         danger: 'var(--color-danger)',
@@ -31,14 +30,16 @@ module.exports = {
 
         canvasBg: 'var(--color-canvas-bg)',
         canvasGrid: 'var(--color-canvas-grid)',
+        laneHeader: 'var(--color-lane-header)',
         swimlaneBorder: 'var(--color-swimlane-border)',
         swimlaneBgAlt: 'var(--color-swimlane-bg-alt)',
         nodeStart: 'var(--color-node-start)',
         nodeTask: 'var(--color-node-task)',
+        nodeBorder: 'var(--color-node-border)',
         nodeGateway: 'var(--color-node-gateway)',
         nodeEnd: 'var(--color-node-end)',
         nodeLine: 'var(--color-node-line)',
-
+        glowSuccess: 'var(--color-glow-success)',
       }
     },
   },

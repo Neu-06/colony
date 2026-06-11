@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-# Intentamos importar tensorflow; si falla, mockeamos para no romper FastAPI en entornos sin TF
+# Importación segura de TensorFlow para evitar fallos si no está instalado
 try:
     import tensorflow as tf
     from tensorflow.keras.models import Sequential
@@ -29,7 +29,7 @@ class NLPModelPredictor:
             Embedding(input_dim=5000, output_dim=16),
             GlobalAveragePooling1D(),
             Dense(16, activation='relu'),
-            Dense(3, activation='softmax') # 3 clases de urgencia (0: BAJA, 1: MEDIA, 2: ALTA)
+            Dense(3, activation='softmax')  # 3 clases de urgencia (0: BAJA, 1: MEDIA, 2: ALTA)
         ])
         
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -63,4 +63,4 @@ class NLPModelPredictor:
         text_tensor = tf.constant([text])
         pred = self.model.predict(text_tensor, verbose=0)[0]
         clase = np.argmax(pred)
-        return int(clase) + 1 # 1: BAJA, 2: MEDIA, 3: ALTA
+        return int(clase) + 1  # 1: BAJA, 2: MEDIA, 3: ALTA

@@ -20,7 +20,7 @@ from services.knowledge_base import KnowledgeBase
 
 router = APIRouter(prefix="/api/v1/chat", tags=["Chat NLU & Voice"])
 
-# ── Singletons — se crean una sola vez al arrancar ──────────────
+# Singletons — se crean una sola vez al arrancar
 nlu_model  = NLUReportPredictor()
 report_gen = ReportGenerator()
 kb         = KnowledgeBase()
@@ -41,7 +41,7 @@ async def process_chat(req: ChatRequest):
         return {"text": "No recibí ningún mensaje. ¿En qué puedo ayudarte?",
                 "intent": "AYUDA", "entities": {}, "file": None}
 
-    # ── 1. Análisis de intención TensorFlow ─────────────────────
+    #Análisis de intención TensorFlow 
     try:
         analysis = nlu_model.analyze_intent(text)
         intent   = analysis["intent"]
@@ -56,7 +56,7 @@ async def process_chat(req: ChatRequest):
 
     response = {"text": "", "intent": intent, "entities": entities, "file": None}
 
-    # ── 2. Despacho principal ────────────────────────────────────
+    # Despacho principal 
     if intent == "AYUDA":
         response["text"] = report_gen.nlg.ayuda()
 
@@ -66,13 +66,13 @@ async def process_chat(req: ChatRequest):
             result = report_gen.generate_dynamic_report(text, entities)
             text_resp = result["resumen_chat"]
 
-            # ── 3. Fallback KB si la respuesta es vacía o insuficiente ──
+
             if _respuesta_insuficiente(text_resp) and kb.is_available():
                 kb_resp, kb_sim = kb.search(text)
                 if kb_resp:
                     text_resp = kb_resp
 
-            # ── 4. Fallback KB cuando confianza del LSTM es baja ────────
+
             elif conf < _KB_FALLBACK_THRESHOLD and kb.is_available():
                 kb_resp, kb_sim = kb.search(text)
                 if kb_resp and kb_sim >= 0.30:

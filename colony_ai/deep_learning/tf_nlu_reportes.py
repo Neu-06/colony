@@ -27,19 +27,19 @@ except ImportError:
     TF_AVAILABLE = False
     print("Warning: TensorFlow no instalado. NLU correrá en modo heurístico.")
 
-# ─────────────────────────────────────────────────────────────
+
 # Vocabularios de salida
-# ─────────────────────────────────────────────────────────────
+
 INTENT_LABELS = ["GENERAR_REPORTE", "CONSULTA_ESTADO", "AYUDA"]
 TEMA_LABELS   = ["anomalias", "cuellos", "metricas", "recientes", "flujos", "general"]
 LIMITE_VALUES = [5, 10, 20, 50, 100, 0]   # 0 = ALL
 ORDEN_LABELS  = ["asc", "desc"]
 
-# ─────────────────────────────────────────────────────────────
+
 # Corpus de entrenamiento
 # Formato: (texto, intent_idx, tema_idx, limite_idx, orden_idx)
 # tema_idx: 0=anomalias,1=cuellos,2=metricas,3=recientes,4=flujos,5=general
-# ─────────────────────────────────────────────────────────────
+
 _CORPUS = [
     # ── GENERAR_REPORTE + anomalias ──────────────────────────────────
     ("dame un pdf de las 5 anomalias mas graves",                     0, 0, 0, 1),
@@ -161,9 +161,8 @@ _CORPUS = [
     ("que informacion me puedes dar",                                 2, 5, 5, 1),
 ]
 
-# ─────────────────────────────────────────────────────────────
-# Heurísticas léxicas (ORDEN CRÍTICO: anomalias antes que cuellos)
-# ─────────────────────────────────────────────────────────────
+# Heurísticas léxicas 
+
 _FORMATO_PATTERNS = {
     "excel": [r"\bexcel\b", r"\bxls\b", r"\bxlsx\b"],
     "pdf":   [r"\bpdf\b"],

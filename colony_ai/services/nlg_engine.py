@@ -20,14 +20,13 @@ class NLGEngine:
     def __init__(self, nombres_reales: dict):
         self.nombres = nombres_reales
         self.client = Groq(api_key=GROQ_API_KEY) if GROQ_AVAILABLE and GROQ_API_KEY else None
-        self.model = "llama-3.1-8b-instant"  # Modelo rápido y excelente en español
-
+        self.model = "llama-3.1-8b-instant"  
     def generar(self, tema: str, df: pd.DataFrame, req_message: str, col_target: str = "instancias") -> str:
         """Genera una respuesta natural usando Groq (RAG)."""
         if "Mensaje" in df.columns and len(df) == 1 and df.iloc[0].get("Mensaje") == "No se encontraron registros.":
             return "No encontré registros en la base de datos que coincidan con tu consulta en este momento."
 
-        # Convertir DF a JSON compacto (limitado a 15 para no romper contexto y mantener velocidad)
+        # Convertir DF a JSON compacto (limitado a 15 registros)
         data_subset = df.head(15).to_dict(orient="records")
         data_json = json.dumps(data_subset, ensure_ascii=False)
 
