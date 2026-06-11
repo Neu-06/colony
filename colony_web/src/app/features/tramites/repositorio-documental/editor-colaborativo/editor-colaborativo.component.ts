@@ -62,7 +62,7 @@ export class EditorColaborativoComponent implements OnInit, OnDestroy {
       this.cargando.set(false);
       this.error.set(
         `No se pudo conectar con OnlyOffice en ${config.documentServerUrl}. ` +
-        `Ejecuta: docker run -d -p 8100:80 onlyoffice/documentserver`
+        `Verifica que el contenedor colony_onlyoffice esté corriendo.`
       );
     });
     document.head.appendChild(script);
