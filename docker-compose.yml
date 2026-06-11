@@ -42,7 +42,9 @@ services:
       colony_ai:
         condition: service_healthy
     networks:
-      - colony-net
+      colony-net:
+        aliases:
+          - colony-net
 
   colony_web:
     build:
