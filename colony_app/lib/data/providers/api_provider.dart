@@ -7,8 +7,8 @@ import '../../domain/models/instancia_tracking.dart';
 class ApiProvider {
   const ApiProvider();
 
-  // Cambia a https://javi-dev.me:8080 si configuras SSL, de momento http
-  static const String _baseUrl = 'https://javi-dev.me:8080';
+  // Cambia a https://javi-dev.me si usas el proxy inverso (Nginx) en el servidor de produccion
+  static const String _baseUrl = 'https://javi-dev.me';
 
   Future<InstanciaTracking> fetchTrackingByCode(String codigo) async {
     final uri = Uri.parse('$_baseUrl/api/rastreo/$codigo');

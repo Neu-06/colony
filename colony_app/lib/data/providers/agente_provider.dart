@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-// Cambia a https://javi-dev.me:8080 si configuras SSL, de momento http
-const String _baseUrl = 'https://javi-dev.me:8080';
+// Cambia a https://javi-dev.me si usas el proxy inverso (Nginx) en el servidor de produccion
+const String _baseUrl = 'https://javi-dev.me';
 
 class CampoRequerido {
   final String nombre;
